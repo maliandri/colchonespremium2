@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // nuevo servidor de backend una vez que lo hayas desplegado en Render.
   const API_URL = 'https://colchonespremium2.onrender.com/api/colchones';
   const CATEGORIAS_URL = 'https://colchonespremium2.onrender.com/api/categorias';
+
   // ===== Elementos del DOM =====
   const productosGrid = document.getElementById('productos-grid');
   const categoriaSelect = document.getElementById('categoria');
@@ -26,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const cerrarModalImagen = document.querySelector('.cerrar-modal');
   const modalNotificacion = document.getElementById('modalNotificacion');
   const notificacionMensaje = document.getElementById('notificacionMensaje');
-  // IDs corregidos para que coincidan con el nuevo index.html
   const productosVendedorGrid = document.getElementById('listaProductosVendedor');
   const btnDescargarPresupuesto = document.getElementById('descargarPresupuesto');
   const btnResetearPresupuesto = document.getElementById('resetearPresupuesto');
@@ -39,6 +39,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const provinciaSelect = document.getElementById('provinciaCliente');
   const localidadSelect = document.getElementById('localidadCliente');
 
+  // ===== Nuevos elementos para el modal de registro =====
+  const btnRegistro = document.getElementById('registro-link');
+  const modalRegistro = document.getElementById('modalRegistro');
+  const formRegistro = document.getElementById('formRegistro');
 
   // ===== Datos de localidades por provincia (simulados) =====
   // En una implementación real, estos datos podrían venir de una API.
@@ -71,14 +75,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ===== Funciones Principales de la Tienda (Cliente) =====
 
-  // Carga los productos desde la API
   async function cargarProductos() {
     try {
       const response = await fetch(API_URL);
       if (!response.ok) throw new Error('Error al cargar los productos');
       const allProducts = await response.json();
       
-      // Filtrar los productos que se deben mostrar en la tienda
       productos = allProducts.filter(producto => producto.Mostrar === 'si' && producto.Imagen && producto.Imagen.length > 0);
 
       if (productos.length === 0) {
@@ -105,7 +107,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Renderiza la tarjeta de un producto para la vista de cliente
   function renderizarProducto(producto) {
     return `
       <div class="producto-card">
@@ -124,16 +125,13 @@ document.addEventListener('DOMContentLoaded', function () {
     `;
   }
   
-  // Aplica los filtros de búsqueda y orden y renderiza los productos del cliente
   function aplicarFiltros() {
     let productosFiltrados = [...productos];
 
-    // Filtrar por categoría
     if (categoriaSelect.value !== 'todos') {
       productosFiltrados = productosFiltrados.filter(p => p.Categoria.toLowerCase() === categoriaSelect.value);
     }
 
-    // Filtrar por búsqueda
     const searchTerm = searchInput.value.toLowerCase();
     if (searchTerm) {
       productosFiltrados = productosFiltrados.filter(p =>
@@ -142,7 +140,6 @@ document.addEventListener('DOMContentLoaded', function () {
       );
     }
 
-    // Ordenar productos
     const orden = ordenSelect.value;
     if (orden === 'precio-asc') {
       productosFiltrados.sort((a, b) => a.Precio - b.Precio);
@@ -150,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function () {
       productosFiltrados.sort((a, b) => b.Precio - a.Precio);
     }
 
-    // Renderizar productos filtrados y ordenados
     if (productosFiltrados.length === 0) {
       productosGrid.innerHTML = `
         <div class="no-results">
@@ -164,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Carga las categorías de productos desde la API
   async function cargarCategorias() {
     try {
       const response = await fetch(CATEGORIAS_URL);
@@ -173,17 +168,14 @@ document.addEventListener('DOMContentLoaded', function () {
       
       categorias = uniqueCategories;
       
-      // Renderiza las categorías en los select
       renderizarCategorias(categoriaSelect);
       renderizarCategorias(filtroCategoriaVendedor);
 
     } catch (error) {
       console.error('Error:', error);
-      // Opcional: mostrar un mensaje de error en la UI
     }
   }
 
-  // Renderiza las opciones de categorías en un select
   function renderizarCategorias(selectElement) {
     selectElement.innerHTML = '<option value="todos">Todas las categorías</option>';
     categorias.forEach(categoria => {
@@ -194,10 +186,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-
-  // ===== Funciones del Carrito de Compras (Cliente) =====
-
-  // Añade un producto al carrito
   function agregarAlCarrito(productoId) {
     const producto = productos.find(p => p.Nombre === productoId);
     if (producto) {
@@ -218,14 +206,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Actualiza el contador del carrito en el encabezado
   function actualizarContadorCarrito() {
     const totalItems = carrito.reduce((total, item) => total + item.cantidad, 0);
     cartCount.textContent = totalItems;
     cartCount.style.display = totalItems > 0 ? 'flex' : 'none';
   }
 
-  // Muestra el modal del carrito con los productos actuales
   function mostrarCarrito() {
     const listaCarrito = document.getElementById('listaCarrito');
     const totalCarrito = document.getElementById('totalCarrito');
@@ -258,7 +244,6 @@ document.addEventListener('DOMContentLoaded', function () {
         listaCarrito.appendChild(itemDiv);
       });
       
-      // Actualiza los totales en el resumen del pedido
       detalleCarrito.innerHTML = carrito.map(item => `
         <p class="detalle-item">${item.nombre} x${item.cantidad} - **$${(item.precio * item.cantidad).toLocaleString('es-AR')}**</p>
       `).join('');
@@ -268,7 +253,6 @@ document.addEventListener('DOMContentLoaded', function () {
     totalCarrito.textContent = total.toLocaleString('es-AR');
     modalCarrito.style.display = 'block';
     
-    // Listener para los cambios de cantidad en el carrito
     document.querySelectorAll('.cantidad-carrito').forEach(input => {
       input.addEventListener('change', (e) => {
         const itemId = e.target.dataset.id;
@@ -281,23 +265,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         localStorage.setItem('carrito', JSON.stringify(carrito));
         actualizarContadorCarrito();
-        mostrarCarrito(); // Vuelve a renderizar el carrito para actualizar los totales
+        mostrarCarrito();
       });
     });
     
-    // Listener para los botones de eliminar del carrito
     document.querySelectorAll('.btn-eliminar-item').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const itemId = e.currentTarget.dataset.id;
         carrito = carrito.filter(item => item.id !== itemId);
         localStorage.setItem('carrito', JSON.stringify(carrito));
         actualizarContadorCarrito();
-        mostrarCarrito(); // Vuelve a renderizar el carrito para actualizar los totales
+        mostrarCarrito();
       });
     });
   }
   
-  // Vacía todo el carrito
   function vaciarCarrito() {
     carrito = [];
     localStorage.setItem('carrito', JSON.stringify(carrito));
@@ -306,22 +288,18 @@ document.addEventListener('DOMContentLoaded', function () {
     mostrarNotificacion('El carrito ha sido vaciado.');
   }
   
-  // Simula una compra y vacía el carrito
   function realizarCompra() {
     if (carrito.length === 0) {
       mostrarNotificacion('El carrito está vacío. Agrega productos para comprar.');
       return;
     }
-    // Aquí iría la lógica real de pago
     mostrarNotificacion('¡Compra realizada con éxito! En breve recibirás los detalles de tu pedido.');
     vaciarCarrito();
     modalCarrito.style.display = 'none';
   }
 
-
   // ===== Funciones para Vendedores (Presupuestos) =====
 
-  // Carga todos los productos en la vista de vendedor
   function cargarProductosParaVendedor() {
     let productosFiltrados = [...productos];
     if (filtroCategoriaVendedor.value !== 'todos') {
@@ -352,7 +330,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }).join('');
     }
 
-    // Listener para los campos de cantidad
     document.querySelectorAll('.cantidad-vendedor').forEach(input => {
       input.addEventListener('change', (e) => {
         const card = e.target.closest('.producto-vendedor-card');
@@ -381,7 +358,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Actualiza el resumen del presupuesto en el modal de vendedor
   function actualizarResumenPedido() {
     listaPresupuestoVendedor.innerHTML = '';
     let total = 0;
@@ -400,7 +376,6 @@ document.addEventListener('DOMContentLoaded', function () {
     totalPresupuestoVendedor.textContent = total.toLocaleString('es-AR');
   }
 
-  // Genera y descarga un PDF del presupuesto
   function generarPDF() {
     if (carritoVendedor.length === 0) {
       mostrarNotificacion('No hay productos para generar un presupuesto.');
@@ -450,7 +425,6 @@ document.addEventListener('DOMContentLoaded', function () {
     mostrarNotificacion('Presupuesto PDF generado y descargado.');
   }
   
-  // Envía el presupuesto por correo (simulado)
   function enviarPresupuesto() {
     if (carritoVendedor.length === 0) {
       mostrarNotificacion('No hay productos para enviar un presupuesto.');
@@ -465,17 +439,9 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // Aquí iría la lógica para enviar el correo electrónico
-    // Por ahora, solo mostramos una notificación
     mostrarNotificacion(`Presupuesto enviado por correo a ${email} para ${cliente}.`);
-    
-    // Opcionalmente, resetear el presupuesto después de enviar
-    // resetearPresupuesto();
   }
 
-
-  // ===== Carga de Localidades y Provincias =====
-  // Carga las provincias y sus localidades en los select
   function cargarLocalidades() {
     const provincias = Object.keys(LOCALIDADES_POR_PROVINCIA);
     provinciaSelect.innerHTML = '<option value="">Selecciona una Provincia</option>';
@@ -505,25 +471,48 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ===== Modales y Notificaciones =====
   
-  // Muestra una notificación temporal
   function mostrarNotificacion(mensaje) {
     notificacionMensaje.textContent = mensaje;
     modalNotificacion.style.display = 'flex';
     setTimeout(() => {
       modalNotificacion.style.display = 'none';
-    }, 3000); // La notificación desaparece después de 3 segundos
+    }, 3000);
   }
 
-  // Muestra una imagen ampliada en un modal
   function mostrarImagenAmpliada(src) {
     imagenAmpliada.src = src;
     modalImagen.style.display = 'block';
   }
 
-
   // ===== Event Listeners =====
   
-  // Evento para agregar productos al carrito de cliente
+  // Evento para abrir el modal de registro
+  if (btnRegistro) {
+    btnRegistro.addEventListener('click', (e) => {
+      e.preventDefault();
+      modalRegistro.style.display = 'block';
+    });
+  }
+  
+  // Evento para el envío del formulario de registro (simulado)
+  if (formRegistro) {
+    formRegistro.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const nombre = document.getElementById('regNombre').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+
+      console.log('Datos del cliente para registro:', { nombre, email, password });
+      
+      // Aquí iría la llamada a tu API de backend
+      
+      mostrarNotificacion('¡Registro exitoso! Revisa tu email para más detalles.');
+      modalRegistro.style.display = 'none';
+      formRegistro.reset();
+    });
+  }
+
   productosGrid.addEventListener('click', e => {
     if (e.target.classList.contains('btn-agregar-carrito')) {
       const productoId = e.target.dataset.id;
@@ -531,13 +520,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Evento para abrir el modal del carrito
   document.querySelector('.cart-icon').closest('a').addEventListener('click', e => {
     e.preventDefault();
     mostrarCarrito();
   });
 
-  // Evento para abrir el modal del vendedor
   btnVendedores.addEventListener('click', e => {
     e.preventDefault();
     cargarProductosParaVendedor();
@@ -545,23 +532,18 @@ document.addEventListener('DOMContentLoaded', function () {
     modalVendedores.style.display = 'block';
   });
 
-  // Evento para cerrar los modales
   spanCerrar.forEach(b => b.addEventListener('click', function(){
     this.closest('.modal').style.display = 'none';
   }));
 
-  // Evento para el botón de "Vaciar Carrito"
   document.getElementById('vaciarCarrito').addEventListener('click', vaciarCarrito);
 
-  // Evento para el botón de "Comprar Ahora"
   document.getElementById('comprarAhora').addEventListener('click', realizarCompra);
   
-  // Evento para los filtros de búsqueda y orden del cliente
   categoriaSelect.addEventListener('change', aplicarFiltros);
   ordenSelect.addEventListener('change', aplicarFiltros);
   searchInput.addEventListener('input', aplicarFiltros);
 
-  // Evento para abrir el modal de imagen al hacer clic en una foto
   productosGrid.addEventListener('click', e => {
     const imagen = e.target.closest('.producto-imagen-container img');
     if (imagen) {
@@ -569,19 +551,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Evento para cerrar el modal de imagen
   cerrarModalImagen.addEventListener('click', () => {
     modalImagen.style.display = 'none';
   });
   
-  // Cerrar el modal de imagen haciendo clic fuera del contenido
   window.addEventListener('click', (e) => {
     if (e.target === modalImagen) {
       modalImagen.style.display = 'none';
     }
   });
   
-  // Eventos para el modal de vendedor
   filtroCategoriaVendedor.addEventListener('change', cargarProductosParaVendedor);
   btnDescargarPresupuesto.addEventListener('click', generarPDF);
   btnEnviarPresupuesto.addEventListener('click', enviarPresupuesto);
@@ -594,7 +573,6 @@ document.addEventListener('DOMContentLoaded', function () {
     actualizarResumenPedido();
     mostrarNotificacion('Presupuesto reseteado');
   });
-
 
   // ================= INICIALIZACIÓN FINAL =================
   cargarCategorias();
