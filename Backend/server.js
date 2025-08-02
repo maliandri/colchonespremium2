@@ -4,11 +4,11 @@ import xlsx from 'xlsx';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose'; // Importamos Mongoose
-import bcrypt from 'bcryptjs'; // Para encriptar contraseñas
-import jwt from 'jsonwebtoken'; // Para los tokens de seguridad
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
-// Configuración __dirname para ES Modules
+// =================== CONFIGURACIÓN INICIAL ===================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -19,7 +19,11 @@ const PORT = process.env.PORT || 3000;
 // =================== CONFIGURACIÓN DE LA BASE DE DATOS ===================
 const dbUri = process.env.DB_URI || 'mongodb://localhost:27017/colchonespremium_v2';
 mongoose.connect(dbUri)
-    .then(() => console.log('✅ Conectado a la base de datos MongoDB'))
+    .then(() => {
+        console.log('✅ Conectado a la base de datos MongoDB');
+        // Llamar a la función de migración aquí para asegurar que se ejecute después de la conexión
+        migrateExcelDataToMongoDB();
+    })
     .catch(err => console.error('❌ Error de conexión a la base de datos:', err));
 
 // =================== MIDDLEWARES ===================
@@ -37,7 +41,6 @@ const UserSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-// Encriptar la contraseña antes de guardar
 UserSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
     const salt = await bcrypt.genSalt(10);
@@ -46,6 +49,18 @@ UserSchema.pre('save', async function(next) {
 });
 
 const User = mongoose.model('User', UserSchema);
+
+// Esquema para el modelo de productos
+const ProductSchema = new mongoose.Schema({
+    _id: { type: String, required: true },
+    nombre: { type: String, required: true },
+    descripcion: { type: String },
+    precio: { type: Number, required: true },
+    categoria: { type: String, required: true },
+    imagen: { type: String },
+    mostrar: { type: String }
+});
+const Product = mongoose.model('Product', ProductSchema);
 
 // Esquema para el modelo de ventas/presupuestos
 const VentaSchema = new mongoose.Schema({
@@ -64,8 +79,6 @@ const VentaSchema = new mongoose.Schema({
 const Venta = mongoose.model('Venta', VentaSchema);
 
 // =================== MIDDLEWARE DE AUTENTICACIÓN (JWT) ===================
-
-// Middleware para verificar el token JWT en las rutas protegidas
 const verifyToken = (req, res, next) => {
     const token = req.header('auth-token');
     if (!token) return res.status(401).send('Acceso denegado: Token no proporcionado.');
@@ -73,15 +86,13 @@ const verifyToken = (req, res, next) => {
     try {
         const verified = jwt.verify(token, process.env.TOKEN_SECRET || 'mi_clave_secreta_por_defecto');
         req.user = verified;
-        next(); // Continúa con la siguiente función en la ruta
+        next();
     } catch (err) {
         res.status(400).send('Token inválido.');
     }
 };
 
 // =================== RUTAS DE AUTENTICACIÓN ===================
-
-// Ruta para registrar un nuevo usuario
 app.post('/api/auth/register', async (req, res) => {
     try {
         const salt = await bcrypt.genSalt(10);
@@ -102,7 +113,6 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
-// Ruta para el inicio de sesión de un usuario
 app.post('/api/auth/login', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.body.email });
@@ -118,8 +128,54 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// =================== LÓGICA DE MIGRACIÓN (EJECUCIÓN ÚNICA AL INICIAR) ===================
 
-// =================== RUTAS PARA PRODUCTOS Y CATEGORÍAS (CÓDIGO ORIGINAL) ===================
+// Función para generar IDs únicos
+const generarIdUnico = (categoria, contador) => {
+    const prefijo = categoria ? categoria.slice(0, 3).toUpperCase() : 'GEN';
+    return `${prefijo}-${contador.toString().padStart(3, '0')}`;
+};
+
+const migrateExcelDataToMongoDB = async () => {
+    try {
+        const productCount = await Product.countDocuments();
+        if (productCount === 0) { // Solo migrar si la colección de productos está vacía
+            const workbook = xlsx.readFile(path.join(__dirname, 'precios_colchones.xlsx'));
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const data = xlsx.utils.sheet_to_json(sheet);
+
+            const productsToInsert = [];
+            const contadores = {};
+
+            data.forEach(item => {
+                if (item.Mostrar?.toLowerCase() === "si" && item.Imagen?.trim() !== "") {
+                    const categoria = item.Categoria || 'General';
+                    contadores[categoria] = (contadores[categoria] || 0) + 1;
+                    productsToInsert.push({
+                        _id: generarIdUnico(categoria, contadores[categoria]),
+                        nombre: item.Nombre || '',
+                        descripcion: item.Descripcion || '',
+                        precio: item.Precio || 0,
+                        categoria: categoria,
+                        imagen: item.Imagen || '',
+                        mostrar: item.Mostrar || 'no'
+                    });
+                }
+            });
+
+            if (productsToInsert.length > 0) {
+                await Product.insertMany(productsToInsert);
+                console.log(`✅ Migración exitosa: ${productsToInsert.length} productos guardados en la base de datos.`);
+            }
+        } else {
+            console.log(`ℹ️ La colección de productos ya contiene ${productCount} documentos. No se realizó la migración.`);
+        }
+    } catch (err) {
+        console.error('❌ Error durante la migración del archivo Excel:', err);
+    }
+};
+
+// =================== RUTAS PARA PRODUCTOS Y CATEGORÍAS (AHORA USANDO MONGO) ===================
 
 // Ruta raíz
 app.get('/', (req, res) => {
@@ -137,77 +193,26 @@ app.get('/', (req, res) => {
     });
 });
 
-
-// Cache de productos (mejora rendimiento)
-let cacheProductos = null;
-let cacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
-
-// Función para generar IDs únicos
-const generarIdUnico = (categoria, contador) => {
-    const prefijo = categoria ? categoria.slice(0, 3).toUpperCase() : 'GEN';
-    return `${prefijo}-${contador.toString().padStart(3, '0')}`;
-};
-
-// Leer Excel con cache
-const leerExcel = () => {
-    const now = Date.now();
-    if (cacheProductos && (now - cacheTimestamp) < CACHE_DURATION) {
-        return cacheProductos;
-    }
-
+// Endpoint para productos
+app.get('/api/colchones', async (req, res) => {
     try {
-        const workbook = xlsx.readFile(path.join(__dirname, 'precios_colchones.xlsx'));
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const data = xlsx.utils.sheet_to_json(sheet);
-        
-        // Procesar datos y actualizar cache
-        const contadores = {};
-        cacheProductos = data
-            .filter(item => 
-                item.Mostrar?.toLowerCase() === "si" && 
-                item.Imagen?.trim() !== ""
-            )
-            .map(item => {
-                const categoria = item.Categoria || 'General';
-                contadores[categoria] = (contadores[categoria] || 0) + 1;
-                
-                return {
-                    ...item,
-                    _id: generarIdUnico(categoria, contadores[categoria])
-                };
-            });
-
-        cacheTimestamp = now;
-        return cacheProductos;
-
+        const productos = await Product.find({ mostrar: 'si' });
+        res.json(productos);
     } catch (err) {
-        console.error('Error al leer Excel:', err);
-        return null;
+        console.error('Error al obtener productos:', err);
+        res.status(500).json({ error: 'Error al cargar productos' });
     }
-};
-
-// Endpoint para productos (con cache)
-app.get('/api/colchones', (req, res) => {
-    const productos = leerExcel();
-    if (!productos) {
-        return res.status(500).json({ error: 'Error al cargar productos' });
-    }
-    res.json(productos);
 });
 
-// Endpoint para categorías (optimizado)
-app.get('/api/categorias', (req, res) => {
-    const productos = leerExcel();
-    if (!productos) {
-        return res.status(500).json({ error: 'Error al cargar categorías' });
+// Endpoint para categorías
+app.get('/api/categorias', async (req, res) => {
+    try {
+        const categorias = await Product.distinct('categoria', { mostrar: 'si' });
+        res.json(categorias);
+    } catch (err) {
+        console.error('Error al obtener categorías:', err);
+        res.status(500).json({ error: 'Error al cargar categorías' });
     }
-
-    const categorias = [...new Set(
-        productos.map(p => p.Categoria).filter(Boolean)
-    )];
-    
-    res.json(categorias);
 });
 
 // Endpoint para guardar presupuestos/ventas (protegido con el token)
@@ -215,7 +220,7 @@ app.post('/api/ventas', verifyToken, async (req, res) => {
     try {
         const { productos, total, estado } = req.body;
         const newVenta = new Venta({
-            userId: req.user.id, // ID del usuario obtenido del token
+            userId: req.user.id,
             productos,
             total,
             estado
@@ -228,14 +233,7 @@ app.post('/api/ventas', verifyToken, async (req, res) => {
     }
 });
 
-
-// Manejo de errores global
-app.use((err, req, res, next) => {
-    console.error('Error global:', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
-});
-
-// Iniciar servidor
+// =================== INICIAR SERVIDOR ===================
 app.listen(PORT, () => {
     console.log(`🚀 Servidor en http://localhost:${PORT}`);
     console.log('Endpoints disponibles:');
