@@ -7,9 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // ===== URLs de la API =====
   // IMPORTANTE: Debes actualizar estas URLs con la dirección de tu
   // nuevo servidor de backend una vez que lo hayas desplegado en Render.
-  const API_URL = 'https://colchonqn2.onrender.com/api/colchones';
-  const CATEGORIAS_URL = 'https://colchonqn2.onrender.com/api/categorias';
-
+  const API_URL = 'https://colchonespremium2.onrender.com/api/colchones';
+  const CATEGORIAS_URL = 'https://colchonespremium2.onrender.com/api/categorias';
   // ===== Elementos del DOM =====
   const productosGrid = document.getElementById('productos-grid');
   const categoriaSelect = document.getElementById('categoria');
