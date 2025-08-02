@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const categoriaSelect = document.getElementById('categoria');
   const ordenSelect = document.getElementById('orden');
   const searchInput = document.getElementById('searchInput');
-  const cartCount = document.querySelector('.cart-icon .cart-count');
+  const cartCount = document.querySelector('.cart-count');
   
   // Elementos de Modales
   const btnVendedores = document.getElementById('accesoVendedores');
