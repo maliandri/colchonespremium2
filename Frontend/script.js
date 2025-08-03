@@ -486,18 +486,40 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   }
 
-  formRegistro.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const nombre = document.getElementById('regNombre').value;
-    const email = document.getElementById('regEmail').value;
-    const password = document.getElementById('regPassword').value;
+// CÓDIGO NUEVO (Conectado a la API)
+formRegistro.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nombre = document.getElementById('regNombre').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
 
-    // Aquí iría la lógica para enviar los datos al backend (simulado)
-    console.log('Datos de registro:', { nombre, email, password });
-    mostrarNotificacion('¡Registro exitoso! (Simulado)', 'success');
-    modalRegistro.style.display = 'none';
-    formRegistro.reset();
-  });
+    // URL completa de tu endpoint de registro en Render
+    const registroUrl = 'https://colchonespremium2.onrender.com/api/auth/register';
+
+    try {
+        const response = await fetch(registroUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }) // Enviamos solo email y password que es lo que espera el backend
+        });
+
+        const data = await response.json();
+
+        if (response.ok) { // Si el registro fue exitoso (código 201)
+            mostrarNotificacion('¡Registro exitoso!', 'success');
+            modalRegistro.style.display = 'none';
+            formRegistro.reset();
+        } else { // Si hubo un error (ej: email ya existe)
+            throw new Error(data.error || 'Ocurrió un error al registrarse.');
+        }
+
+    } catch (error) {
+        console.error('Error en el registro:', error);
+        mostrarNotificacion(error.message, 'warning'); // Muestra el error específico de la API
+    }
+});
 
   // Eventos para el modal de vendedor
   btnVendedores.addEventListener('click', e => {
