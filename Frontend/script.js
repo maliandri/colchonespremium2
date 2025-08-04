@@ -1,15 +1,9 @@
 // ============== SCRIPT COMPLETO CORREGIDO ==============
-// Este script gestiona todas las funcionalidades del frontend,
-// incluyendo la conexión a la API para obtener los datos de los productos
-// y la lógica de autenticación para clientes y vendedores.
-
 document.addEventListener('DOMContentLoaded', function () {
 
     // ===== URLs de la API =====
     const API_URL = 'https://colchonespremium2.onrender.com/api/colchones';
     const CATEGORIAS_URL = 'https://colchonespremium2.onrender.com/api/categorias';
-    const VENDEDORES_URL = 'https://colchonespremium2.onrender.com/api/vendedores';
-    const CLIENTES_URL = 'https://colchonespremium2.onrender.com/api/clientes';
 
     // ===== Elementos del DOM =====
     const productosGrid = document.getElementById('productos-grid');
@@ -26,9 +20,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalRegistro = document.getElementById('modalRegistro');
     
     // ======================================
-    // ELEMENTOS PARA AUTENTICACIÓN
+    // ELEMENTOS PARA AUTENTICACIÓN DE CLIENTES
     // ======================================
-    // Elementos de registro/login de clientes
     const btnRegistro = document.getElementById('registro-link');
     const formRegistro = document.getElementById('formRegistro');
     const formLoginCliente = document.getElementById('formLoginCliente');
@@ -37,18 +30,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const registroStatusMessage = document.getElementById('registro-status-message');
     const loginStatusMessage = document.getElementById('login-status-message');
     const cerrarRegistro = document.getElementById('cerrarRegistro');
-
-    // Elementos de login de vendedores
-    const formLoginVendedor = document.getElementById('formLoginVendedor');
-    const loginVendedorStatusMessage = document.getElementById('login-vendedor-status-message');
-    const cerrarVendedores = document.getElementById('cerrarVendedores');
-    
-    // Botón de cerrar sesión universal
     const logoutBtn = document.getElementById('logout-btn');
     const authButtonsContainer = document.getElementById('auth-buttons-container');
     // ======================================
 
     // Elementos del modal de vendedores
+    const cerrarVendedores = document.getElementById('cerrarVendedores');
     const filtroCategoriaVendedor = document.getElementById('filtroCategoriaVendedor');
     const btnDescargarPresupuesto = document.getElementById('descargarPresupuesto');
     const btnEnviarPresupuesto = document.getElementById('enviarPresupuesto');
@@ -82,8 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let carrito = JSON.parse(localStorage.getItem('carrito')) || {};
     let carritoVendedor = [];
 
-    // ===== Funciones de Autenticación (NUEVO) =====
-    // Función para alternar entre los formularios de cliente
+    // ===== Funciones de Autenticación de Clientes =====
     function switchClientAuthForm(formId) {
         document.querySelectorAll('#client-auth-forms-container .auth-form').forEach(form => {
             form.classList.add('hidden');
@@ -93,17 +79,15 @@ document.addEventListener('DOMContentLoaded', function () {
         loginStatusMessage.textContent = '';
     }
 
-    // Función para verificar el estado de la sesión al cargar la página
     function checkLoginStatus() {
         const token = localStorage.getItem('authToken');
-        const isLoggedIn = !!token; // Convierte a booleano
+        const isLoggedIn = !!token;
 
         btnRegistro.style.display = isLoggedIn ? 'none' : 'block';
         btnVendedores.style.display = isLoggedIn ? 'none' : 'block';
         logoutBtn.style.display = isLoggedIn ? 'block' : 'none';
     }
 
-    // Función para el registro de clientes
     async function handleRegister(event) {
         event.preventDefault();
         const email = document.getElementById('regEmail').value;
@@ -137,7 +121,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Función para el inicio de sesión de clientes
     async function handleClientLogin(event) {
         event.preventDefault();
         const email = document.getElementById('loginEmail').value;
@@ -174,44 +157,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Función para el inicio de sesión de vendedores (NUEVO)
-    async function handleLoginVendedor(event) {
-        event.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-
-        try {
-            const response = await fetch('https://colchonespremium2.onrender.com/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Error al iniciar sesión. Verifique sus credenciales.');
-            }
-
-            localStorage.setItem('authToken', data.token);
-            loginVendedorStatusMessage.textContent = '¡Inicio de sesión exitoso!';
-            loginVendedorStatusMessage.style.color = 'var(--success)';
-
-            setTimeout(() => {
-                modalVendedores.style.display = 'none';
-                checkLoginStatus();
-            }, 1500);
-
-        } catch (error) {
-            loginVendedorStatusMessage.textContent = error.message;
-            loginVendedorStatusMessage.style.color = 'var(--accent)';
-            console.error('Error:', error);
-        }
-    }
-
-    // Función para cerrar sesión universal
     function handleLogout() {
         localStorage.removeItem('authToken');
         checkLoginStatus();
@@ -655,9 +600,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // ======================================
-    // EVENTOS PARA EL MODAL DE CLIENTES (NUEVO)
+    // EVENTOS PARA EL MODAL DE CLIENTES
     // ======================================
-    registroLink.addEventListener('click', e => {
+    btnRegistro.addEventListener('click', e => {
         e.preventDefault();
         modalRegistro.style.display = 'flex';
         switchClientAuthForm('formRegistro');
@@ -679,11 +624,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     formRegistro.addEventListener('submit', handleRegister);
     formLoginCliente.addEventListener('submit', handleClientLogin);
+    logoutBtn.addEventListener('click', handleLogout);
     // ======================================
 
 
     // ======================================
-    // EVENTOS PARA EL MODAL DE VENDEDORES (NUEVO)
+    // EVENTOS PARA EL MODAL DE VENDEDORES
     // ======================================
     btnVendedores.addEventListener('click', e => {
         e.preventDefault();
@@ -694,13 +640,7 @@ document.addEventListener('DOMContentLoaded', function () {
     cerrarVendedores.addEventListener('click', () => {
         modalVendedores.style.display = 'none';
     });
-
-    formLoginVendedor.addEventListener('submit', handleLoginVendedor);
     // ======================================
-
-
-    // EVENTO UNIVERSAL DE CERRAR SESIÓN (NUEVO)
-    logoutBtn.addEventListener('click', handleLogout);
 
     listaProductosVendedor.addEventListener('input', (e) => {
         if (e.target.classList.contains('cantidad-vendedor')) {
@@ -727,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ================= INICIALIZACIÓN FINAL =================
     cargarProductos();
-    checkLoginStatus(); // NUEVO: Llama a esta función al inicio
+    checkLoginStatus();
 });
 
 // ============== FIN SCRIPT CORREGIDO ==============
