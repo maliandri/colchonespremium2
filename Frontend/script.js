@@ -5,8 +5,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   
   // ===== URLs de la API =====
-  // IMPORTANTE: Debes actualizar estas URLs con la dirección de tu
-  // nuevo servidor de backend una vez que lo hayas desplegado en Render.
   const API_URL = 'https://colchonespremium2.onrender.com/api/colchones';
   const CATEGORIAS_URL = 'https://colchonespremium2.onrender.com/api/categorias';
   const AUTH_URL = 'https://colchonespremium2.onrender.com/api/auth';
@@ -60,13 +58,98 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ===== Variables de estado =====
   let productos = [];
-  let categorias = []; // Variable para almacenar las categorías
+  let categorias = [];
   let carrito = {};
   let carritoVendedor = [];
   
-  // ===== VARIABLES Y FUNCIONES DE AUTENTICACIÓN =====
+  // ===== VARIABLES Y FUNCIONES DE AUTENTICACIÓN (CORREGIDAS) =====
   let usuario = null;
   let token = localStorage.getItem('authToken');
+  
+  // ===== CREAR MODAL DE LOGIN/REGISTRO DINÁMICAMENTE =====
+  function crearModalAuth() {
+    // Verificar si ya existe
+    let modalAuth = document.getElementById('modalAuth');
+    if (modalAuth) {
+      modalAuth.remove();
+    }
+    
+    modalAuth = document.createElement('div');
+    modalAuth.id = 'modalAuth';
+    modalAuth.className = 'modal';
+    modalAuth.innerHTML = `
+      <div class="modal-content">
+        <span class="cerrar" onclick="cerrarModalAuth()">&times;</span>
+        
+        <!-- Pestañas de Login y Registro -->
+        <div class="auth-tabs">
+          <button class="tab-btn active" onclick="mostrarTab('login')">Iniciar Sesión</button>
+          <button class="tab-btn" onclick="mostrarTab('registro')">Registrarse</button>
+        </div>
+        
+        <!-- Formulario de Login -->
+        <div id="tab-login" class="tab-content active">
+          <h2>Iniciar Sesión</h2>
+          <form id="formLogin">
+            <div class="form-group">
+              <label for="loginEmail">Email:</label>
+              <input type="email" id="loginEmail" required>
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">Contraseña:</label>
+              <input type="password" id="loginPassword" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+          </form>
+        </div>
+        
+        <!-- Formulario de Registro -->
+        <div id="tab-registro" class="tab-content">
+          <h2>Crear Cuenta</h2>
+          <form id="formRegistroNuevo">
+            <div class="form-group">
+              <label for="regEmail">Email:</label>
+              <input type="email" id="regEmail" required>
+            </div>
+            <div class="form-group">
+              <label for="regPassword">Contraseña:</label>
+              <input type="password" id="regPassword" required>
+            </div>
+            <div class="form-group">
+              <label for="regPasswordConfirm">Confirmar Contraseña:</label>
+              <input type="password" id="regPasswordConfirm" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Registrarse</button>
+          </form>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modalAuth);
+    
+    // Agregar event listeners
+    document.getElementById('formLogin').addEventListener('submit', manejarLogin);
+    document.getElementById('formRegistroNuevo').addEventListener('submit', manejarRegistro);
+  }
+  
+  // Función para mostrar tabs
+  window.mostrarTab = function(tabName) {
+    // Remover clase active de todos los tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Activar tab seleccionado
+    event.target.classList.add('active');
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+  };
+  
+  // Función para cerrar modal de auth
+  window.cerrarModalAuth = function() {
+    const modal = document.getElementById('modalAuth');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  };
   
   // Verificar si hay una sesión activa al cargar
   function verificarSesion() {
@@ -75,7 +158,6 @@ document.addEventListener('DOMContentLoaded', function () {
     
     if (tokenGuardado && emailGuardado) {
       try {
-        // Decodificar el token para verificar si no ha expirado
         const payload = JSON.parse(atob(tokenGuardado.split('.')[1]));
         if (payload.exp * 1000 > Date.now()) {
           token = tokenGuardado;
@@ -94,8 +176,12 @@ document.addEventListener('DOMContentLoaded', function () {
     return false;
   }
 
-  // Función de login
-  async function iniciarSesion(email, password) {
+  // Manejar Login
+  async function manejarLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    
     try {
       const response = await fetch(`${AUTH_URL}/login`, {
         method: 'POST',
@@ -112,21 +198,57 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem('authToken', token);
         localStorage.setItem('userEmail', email);
         
-        // Decodificar token para obtener ID del usuario
         const payload = JSON.parse(atob(token.split('.')[1]));
         usuario = { email, id: payload.id };
         
         actualizarUIAutenticacion();
         cargarCarritoUsuario();
         mostrarNotificacion('Sesión iniciada correctamente', 'success');
+        cerrarModalAuth();
+        document.getElementById('formLogin').reset();
         
-        return true;
       } else {
         throw new Error(data.error || 'Error al iniciar sesión');
       }
     } catch (error) {
       mostrarNotificacion(error.message, 'error');
-      return false;
+    }
+  }
+
+  // Manejar Registro
+  async function manejarRegistro(e) {
+    e.preventDefault();
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+    const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+    
+    // Validar que las contraseñas coincidan
+    if (password !== passwordConfirm) {
+      mostrarNotificacion('Las contraseñas no coinciden', 'error');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${AUTH_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        mostrarNotificacion('¡Registro exitoso! Por favor inicia sesión.', 'success');
+        document.getElementById('formRegistroNuevo').reset();
+        // Cambiar automáticamente al tab de login
+        mostrarTab('login');
+      } else {
+        throw new Error(data.error || 'Error al registrarse');
+      }
+    } catch (error) {
+      mostrarNotificacion(error.message, 'error');
     }
   }
 
@@ -137,7 +259,6 @@ document.addEventListener('DOMContentLoaded', function () {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userEmail');
     
-    // Mantener carrito como invitado
     const carritoActual = carrito;
     localStorage.setItem('carrito', JSON.stringify(carritoActual));
     
@@ -150,96 +271,37 @@ document.addEventListener('DOMContentLoaded', function () {
     const registroLink = document.getElementById('registro-link');
     
     if (usuario && token) {
-      // Usuario logueado - cambiar el texto del enlace
+      // Usuario logueado
       if (registroLink) {
-        registroLink.innerHTML = `<i class="fas fa-user"></i> ${usuario.email} | <span onclick="cerrarSesion()" style="cursor: pointer; color: #e74c3c;">Cerrar Sesión</span>`;
+        registroLink.innerHTML = `
+          <div class="user-menu">
+            <i class="fas fa-user"></i> ${usuario.email.split('@')[0]} 
+            <span class="user-logout" onclick="cerrarSesion()">| Cerrar Sesión</span>
+          </div>
+        `;
         registroLink.onclick = (e) => e.preventDefault();
       }
     } else {
-      // Usuario no logueado - mostrar enlace de registro
+      // Usuario no logueado
       if (registroLink) {
-        registroLink.innerHTML = 'Registro';
+        registroLink.innerHTML = '<i class="fas fa-user"></i> Cuenta';
         registroLink.onclick = (e) => {
           e.preventDefault();
-          mostrarModalLogin();
+          crearModalAuth();
+          document.getElementById('modalAuth').style.display = 'flex';
         };
       }
     }
   }
 
-  // Mostrar modal de login/registro
-  function mostrarModalLogin() {
-    // Crear modal dinámicamente si no existe
-    let modalLogin = document.getElementById('modalLogin');
-    if (!modalLogin) {
-      modalLogin = document.createElement('div');
-      modalLogin.id = 'modalLogin';
-      modalLogin.className = 'modal';
-      modalLogin.innerHTML = `
-        <div class="modal-content">
-          <span class="cerrar" onclick="cerrarModal('modalLogin')">&times;</span>
-          <h2>Iniciar Sesión</h2>
-          <form id="formLogin">
-            <div class="form-group">
-              <label for="loginEmail">Email:</label>
-              <input type="email" id="loginEmail" required>
-            </div>
-            <div class="form-group">
-              <label for="loginPassword">Contraseña:</label>
-              <input type="password" id="loginPassword" required>
-            </div>
-            <button type="submit" class="btn">Iniciar Sesión</button>
-          </form>
-          <hr>
-          <p>¿No tienes cuenta? <a href="#" onclick="mostrarRegistroDesdeLogin()">Regístrate aquí</a></p>
-        </div>
-      `;
-      document.body.appendChild(modalLogin);
-      
-      // Agregar event listener al formulario
-      document.getElementById('formLogin').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        
-        if (await iniciarSesion(email, password)) {
-          cerrarModal('modalLogin');
-          document.getElementById('formLogin').reset();
-        }
-      });
-    }
-    
-    modalLogin.style.display = 'flex';
-  }
-
-  // Función para mostrar registro desde login
-  window.mostrarRegistroDesdeLogin = function() {
-    cerrarModal('modalLogin');
-    if (modalRegistro) {
-      modalRegistro.style.display = 'flex';
-    }
-  };
-
-  // Cerrar modal
-  function cerrarModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.style.display = 'none';
-    }
-  }
-
-  // ===== GESTIÓN DEL CARRITO INTEGRADO CON USUARIO =====
-  
   // Cargar carrito del usuario
   function cargarCarritoUsuario() {
     if (usuario && token) {
-      // Si el usuario está logueado, cargar su carrito específico
       const carritoUsuario = localStorage.getItem(`carrito_${usuario.id}`);
       if (carritoUsuario) {
         carrito = JSON.parse(carritoUsuario);
       }
     } else {
-      // Usuario invitado - cargar carrito general
       const carritoGeneral = localStorage.getItem('carrito');
       if (carritoGeneral) {
         carrito = JSON.parse(carritoGeneral);
@@ -248,13 +310,11 @@ document.addEventListener('DOMContentLoaded', function () {
     actualizarContadorCarrito();
   }
 
-  // Guardar carrito (mantiene tu lógica original más la específica del usuario)
+  // Guardar carrito
   function guardarCarrito() {
     if (usuario && token) {
-      // Guardar carrito específico del usuario
       localStorage.setItem(`carrito_${usuario.id}`, JSON.stringify(carrito));
     } else {
-      // Guardar carrito general para invitados (tu lógica original)
       localStorage.setItem('carrito', JSON.stringify(carrito));
     }
   }
@@ -300,9 +360,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // ===== Funciones Principales =====
+  // ===== RESTO DE FUNCIONES ORIGINALES (SIN CAMBIOS) =====
   
-  // Cargar productos desde la API (MEJORADO PARA DEBUGGING)
+  // Cargar productos desde la API
   async function cargarProductos() {
     try {
       console.log('Cargando productos desde:', API_URL);
@@ -313,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function () {
       console.log(`✅ ${productos.length} productos cargados`);
       
       mostrarProductos(productos);
-      await cargarCategorias(); // Esperar a que se carguen las categorías
+      await cargarCategorias();
       cargarProductosParaVendedor();
       actualizarContadorCarrito();
     } catch (error) {
@@ -334,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Mostrar productos en la cuadrícula (MEJORADO)
+  // Mostrar productos en la cuadrícula
   function mostrarProductos(productosAMostrar) {
     if (!productosGrid) return;
     
@@ -368,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // FUNCIÓN CORREGIDA: Cargar categorías dinámicamente desde el backend
+  // Cargar categorías dinámicamente desde el backend
   async function cargarCategorias() {
     try {
       console.log('Cargando categorías desde:', CATEGORIAS_URL);
@@ -378,24 +438,20 @@ document.addEventListener('DOMContentLoaded', function () {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      categorias = await response.json(); // Guardar las categorías
+      categorias = await response.json();
       console.log(`✅ ${categorias.length} categorías cargadas:`, categorias);
       
-      // Limpiar los selects antes de agregar las nuevas opciones
       categoriaSelect.innerHTML = '<option value="">Todas las categorías</option>';
       if (filtroCategoriaVendedor) {
         filtroCategoriaVendedor.innerHTML = '<option value="">Todas las categorías</option>';
       }
       
-      // Agregar cada categoría a ambos selects
       categorias.forEach(categoria => {
-        // Para el filtro principal
         const option1 = document.createElement('option');
         option1.value = categoria;
         option1.textContent = categoria;
         categoriaSelect.appendChild(option1);
         
-        // Para el filtro del vendedor (solo si existe)
         if (filtroCategoriaVendedor) {
           const option2 = document.createElement('option');
           option2.value = categoria;
@@ -404,7 +460,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
       
-      // ✅ AGREGAR CATEGORÍAS AL FOOTER DINÁMICAMENTE
       cargarCategoriasEnFooter();
       
       console.log('✅ Categorías cargadas correctamente desde el backend');
@@ -412,12 +467,10 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (error) {
       console.error('❌ Error al cargar categorías:', error);
       
-      // Fallback: extraer categorías de los productos si falla la carga desde el backend
       if (productos && productos.length > 0) {
         categorias = [...new Set(productos.map(p => p.categoria))];
         console.log('Usando categorías extraídas de productos:', categorias);
         
-        // Limpiar y recargar con las categorías extraídas
         categoriaSelect.innerHTML = '<option value="">Todas las categorías</option>';
         if (filtroCategoriaVendedor) {
           filtroCategoriaVendedor.innerHTML = '<option value="">Todas las categorías</option>';
@@ -437,7 +490,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         });
         
-        // También cargar en footer con fallback
         cargarCategoriasEnFooter();
       }
       
@@ -445,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // ✅ NUEVA FUNCIÓN: Cargar categorías en el footer dinámicamente
+  // Cargar categorías en el footer dinámicamente
   function cargarCategoriasEnFooter() {
     const footerCategorias = document.getElementById('footer-categorias');
     
@@ -456,10 +508,8 @@ document.addEventListener('DOMContentLoaded', function () {
     
     console.log('🦶 Cargando categorías en el footer...');
     
-    // Limpiar el footer (mantener solo el enlace "Ver todos")
     footerCategorias.innerHTML = '<li><a href="#productos">Ver todos los productos</a></li>';
     
-    // Agregar cada categoría al footer
     categorias.forEach((categoria, index) => {
       const li = document.createElement('li');
       const a = document.createElement('a');
@@ -467,18 +517,15 @@ document.addEventListener('DOMContentLoaded', function () {
       a.href = '#productos';
       a.textContent = categoria;
       
-      // Agregar funcionalidad para filtrar por categoría al hacer clic
       a.addEventListener('click', (e) => {
         e.preventDefault();
         
-        // Ir a la sección de productos
         document.getElementById('productos').scrollIntoView({ behavior: 'smooth' });
         
-        // Seleccionar la categoría en el filtro
         setTimeout(() => {
           if (categoriaSelect) {
             categoriaSelect.value = categoria;
-            aplicarFiltros(); // Aplicar el filtro
+            aplicarFiltros();
           }
         }, 500);
       });
@@ -525,8 +572,6 @@ document.addEventListener('DOMContentLoaded', function () {
     mostrarProductos(productosFiltrados);
   }
 
-  // ===== Funciones del Carrito de Compras (MEJORADAS) =====
-  
   // Agregar producto al carrito
   function agregarAlCarrito(productoId) {
     const producto = productos.find(p => p._id === productoId);
@@ -554,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Mostrar el modal del carrito (MEJORADO CON BOTÓN DE GUARDAR)
+  // Mostrar el modal del carrito
   function mostrarCarrito() {
     if (!modalCarrito) return;
     
@@ -587,7 +632,6 @@ document.addEventListener('DOMContentLoaded', function () {
     
     totalCarritoSpan.textContent = total.toFixed(2);
     
-    // Agregar botón de guardar para usuarios logueados
     const botonesExtra = document.querySelector('.botones-carrito-extra');
     if (botonesExtra) {
       botonesExtra.remove();
@@ -626,7 +670,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mostrarNotificacion('Producto eliminado del carrito.', 'success');
   }
 
-  // Realizar compra (MEJORADO CON LÓGICA DE USUARIO)
+  // Realizar compra
   function realizarCompra() {
     if (Object.keys(carrito).length === 0) {
       mostrarNotificacion('El carrito está vacío. Agregue productos para comprar.', 'warning');
@@ -634,25 +678,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     if (usuario && token) {
-      // Usuario logueado - procesar compra real guardando en el servidor
       guardarCarritoEnServidor().then(() => {
         vaciarCarrito();
         modalCarrito.style.display = 'none';
         mostrarNotificacion('¡Compra realizada con éxito! Se ha guardado en tu cuenta.', 'success');
       });
     } else {
-      // Usuario invitado - mostrar mensaje para registrarse
       mostrarNotificacion('Para procesar la compra, por favor inicia sesión o regístrate.', 'warning');
       setTimeout(() => {
         modalCarrito.style.display = 'none';
-        mostrarModalLogin();
+        crearModalAuth();
+        document.getElementById('modalAuth').style.display = 'flex';
       }, 2000);
     }
   }
 
-  // ===== Funciones del Modal de Vendedores (SIN CAMBIOS - MANTIENE TU LÓGICA ORIGINAL) =====
+  // ===== FUNCIONES DEL MODAL DE VENDEDORES (SIN CAMBIOS) =====
   
-  // Cargar productos en el modal de vendedor
   function cargarProductosParaVendedor() {
     if (!listaProductosVendedor) return;
     
@@ -685,7 +727,6 @@ document.addEventListener('DOMContentLoaded', function () {
     actualizarResumenPedido();
   }
   
-  // Actualizar el resumen del pedido del vendedor
   function actualizarResumenPedido() {
     const cantidades = document.querySelectorAll('.cantidad-vendedor');
     carritoVendedor = [];
@@ -714,7 +755,6 @@ document.addEventListener('DOMContentLoaded', function () {
     actualizarDetallePedido();
   }
 
-  // Actualizar el detalle del pedido en el modal de vendedor
   function actualizarDetallePedido() {
     const detallePedido = document.getElementById('detallePedido');
     if (!detallePedido) return;
@@ -727,7 +767,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Generar PDF del presupuesto
   function generarPDF() {
     if (carritoVendedor.length === 0) {
       mostrarNotificacion('El presupuesto está vacío', 'warning');
@@ -769,7 +808,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mostrarNotificacion('PDF generado con éxito.', 'success');
   }
   
-  // Enviar presupuesto por email (CONECTADO A LA API)
+  // Enviar presupuesto por email
   async function enviarPresupuesto() {
     if (carritoVendedor.length === 0) {
         mostrarNotificacion('El presupuesto está vacío', 'warning');
@@ -781,7 +820,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    // Recopilar todos los datos necesarios
     const datosPresupuesto = {
         cliente: {
             nombre: nombreClienteInput?.value || '',
@@ -854,9 +892,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // ===== Funciones adicionales =====
-  
-  // Mostrar notificación (MEJORADO CON TIPOS)
+  // Mostrar notificación
   function mostrarNotificacion(mensaje, tipo = 'info') {
     if (!modalNotificacion || !notificacionMensaje) return;
     
@@ -875,7 +911,6 @@ document.addEventListener('DOMContentLoaded', function () {
     modalImagen.style.display = 'block';
   }
   
-  // FUNCIÓN PARA DEBUGGING DE CATEGORÍAS
   function debugCategorias() {
     console.log('=== DEBUG CATEGORÍAS ===');
     console.log('Categorías cargadas:', categorias);
@@ -967,47 +1002,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Eventos para el modal de registro
-  if (btnRegistro) {
-      btnRegistro.addEventListener('click', (e) => {
-          e.preventDefault();
-          // La lógica se maneja en actualizarUIAutenticacion()
-      });
-  }
-
-  // Registro de usuario conectado a la API (MEJORADO)
-  if (formRegistro) {
-    formRegistro.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('regEmail')?.value;
-      const password = document.getElementById('regPassword')?.value;
-
-      try {
-        const response = await fetch(`${AUTH_URL}/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          mostrarNotificacion('¡Registro exitoso! Por favor inicia sesión.', 'success');
-          modalRegistro.style.display = 'none';
-          formRegistro.reset();
-          setTimeout(mostrarModalLogin, 1000); // Mostrar login después de registro exitoso
-        } else {
-          throw new Error(data.error || 'Ocurrió un error al registrarse.');
-        }
-      } catch (error) {
-        console.error('Error en el registro:', error);
-        mostrarNotificacion(error.message, 'error');
-      }
-    });
-  }
-
   // Eventos para el modal de vendedor
   if (btnVendedores) {
     btnVendedores.addEventListener('click', e => {
@@ -1058,7 +1052,6 @@ document.addEventListener('DOMContentLoaded', function () {
   // Exponer funciones globales necesarias
   window.cerrarSesion = cerrarSesion;
   window.guardarCarritoEnServidor = guardarCarritoEnServidor;
-  window.cerrarModal = cerrarModal;
   window.debugCategorias = debugCategorias;
   window.cargarCategoriasEnFooter = cargarCategoriasEnFooter;
 

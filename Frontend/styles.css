@@ -791,58 +791,240 @@ header {
     object-fit: cover;
 }
 
-/* Estilos mejorados para el modal de login dinámico */
-.modal .modal-content {
-    max-width: 400px;
-    width: 90%;
+/* ===== ESTILOS PARA EL MODAL DE AUTENTICACIÓN ===== */
+
+/* Pestañas de Login/Registro */
+.auth-tabs {
+  display: flex;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 2rem;
 }
 
-.modal .modal-content h2 {
+.tab-btn {
+  flex: 1;
+  padding: 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--secondary);
+  background-color: #f8f9fa;
+}
+
+.tab-btn:hover {
+  background-color: #f8f9fa;
+  color: var(--primary);
+}
+
+/* Contenido de las pestañas */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Mejoras para el menú de usuario */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.user-logout {
+  color: var(--accent);
+  cursor: pointer;
+  transition: color 0.3s;
+  font-weight: 500;
+}
+
+.user-logout:hover {
+  color: #c0392b;
+  text-decoration: underline;
+}
+
+/* Estilos para botones de formulario */
+.btn-primary {
+  width: 100%;
+  background-color: var(--secondary);
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+  transform: translateY(-1px);
+}
+
+/* Mejorar el modal principal */
+#modalAuth .modal-content {
+  max-width: 450px;
+  width: 90%;
+  padding: 2rem;
+}
+
+#modalAuth h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+
+/* Validación visual para formularios */
+.form-group input:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.form-group input.error {
+  border-color: var(--accent);
+  background-color: #fff5f5;
+}
+
+.form-group input.success {
+  border-color: var(--success);
+  background-color: #f0fff4;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+  .user-menu {
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8rem;
     text-align: center;
-    margin-bottom: 1.5rem;
-    color: var(--primary);
+  }
+  
+  .auth-tabs {
+    flex-direction: column;
+  }
+  
+  .tab-btn {
+    border-bottom: 1px solid #eee;
+    border-right: none;
+  }
+  
+  .tab-btn.active {
+    border-bottom-color: var(--secondary);
+  }
+  
+  #modalAuth .modal-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
 }
 
-.modal .modal-content hr {
-    margin: 1.5rem 0;
-    border: none;
-    border-top: 1px solid #eee;
+/* Estados de carga */
+.btn-primary:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.modal .modal-content p {
-    text-align: center;
-    margin: 0;
+.btn-primary.loading {
+  position: relative;
+  color: transparent;
 }
 
-.modal .modal-content a {
-    color: var(--secondary);
-    text-decoration: none;
-    cursor: pointer;
+.btn-primary.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #fff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-.modal .modal-content a:hover {
-    text-decoration: underline;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* Estilos para debugging */
-.debug-button {
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    z-index: 1000;
-    padding: 0.5rem;
-    background: #333;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    font-size: 0.8em;
-    cursor: pointer;
+/* Notificaciones mejoradas */
+.notificacion.success {
+  background-color: var(--success);
+  border-left: 4px solid #27ae60;
 }
 
-.debug-button:hover {
-    background: #555;
+.notificacion.error {
+  background-color: var(--accent);
+  border-left: 4px solid #c0392b;
 }
 
+.notificacion.warning {
+  background-color: var(--warning);
+  border-left: 4px solid #e67e22;
+  color: #fff;
+}
+
+.notificacion.info {
+  background-color: var(--secondary);
+  border-left: 4px solid #2980b9;
+}
+
+/* Enlaces en las pestañas */
+.tab-content a {
+  color: var(--secondary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.tab-content a:hover {
+  text-decoration: underline;
+  color: var(--primary);
+}
+
+/* Espaciado en formularios */
+.tab-content .form-group:last-of-type {
+  margin-bottom: 2rem;
+}
+
+/* Mejoras para accesibilidad */
+.tab-btn:focus {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+.form-group input:focus {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+/* Animación para cambio de pestañas */
+.tab-content {
+  transition: opacity 0.3s ease;
+}
+
+.tab-content:not(.active) {
+  opacity: 0;
+}
+
+.tab-content.active {
+  opacity: 1;
+}
 /* Mejoras para productos en vista mobile */
 @media (max-width: 768px) {
     .user-menu {

@@ -22,7 +22,9 @@
                     <li><a href="#" aria-current="page">Inicio</a></li>
                     <li><a href="#productos">Productos</a></li>
                     <li><a href="#contacto">Contacto</a></li>
-                    <li><a href="#" class="nav-link" id="registro-link">Registro</a></li>
+                    <li><a href="#" class="nav-link" id="registro-link">
+                        <i class="fas fa-user"></i> Cuenta
+                    </a></li>
                     <li><a href="#" class="vendedores-link" id="accesoVendedores">
                         <i class="fas fa-user-tie"></i> Acceso Vendedores
                     </a></li>
@@ -69,7 +71,7 @@
         </section>
 
         <section id="contacto" class="contacto-container">
-            </section>
+        </section>
     </main>
 
     <footer class="footer">
@@ -77,7 +79,6 @@
             <div class="footer-section">
                 <h3>Productos</h3>
                 <ul id="footer-categorias">
-                    <!-- Las categorías se cargarán dinámicamente aquí -->
                     <li><a href="#productos">Ver todos los productos</a></li>
                 </ul>
             </div>
@@ -110,6 +111,7 @@
         </div>
     </footer>
     
+    <!-- Modal de Vendedores -->
     <div id="modalVendedores" class="modal">
         <div class="modal-contenido">
             <span class="cerrar">&times;</span>
@@ -186,6 +188,7 @@
         </div>
     </div>
 
+    <!-- Modal de Imagen -->
     <div id="modalImagen" class="modal-imagen">
         <div class="modal-imagen-contenido">
             <span class="cerrar-modal">&times;</span>
@@ -193,6 +196,7 @@
         </div>
     </div>
     
+    <!-- Modal de Carrito -->
     <div id="modalCarrito" class="modal">
         <div class="modal-contenido">
             <button class="cerrar" aria-label="Cerrar modal">&times;</button>
@@ -218,31 +222,10 @@
         </div>
     </div>
 
+    <!-- Modal de Notificación -->
     <div id="modalNotificacion" class="notificacion">
         <i class="fas fa-info-circle"></i>
         <span id="notificacionMensaje"></span>
-    </div>
-
-    <div id="modalRegistro" class="modal">
-        <div class="modal-content">
-            <span class="cerrar" aria-label="Cerrar modal">&times;</span>
-            <h2 class="modal-title">Registro de Cliente</h2>
-            <form id="formRegistro">
-                <div class="form-group">
-                    <label for="regNombre">Nombre:</label>
-                    <input type="text" id="regNombre" name="nombre" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="regEmail">Email:</label>
-                    <input type="email" id="regEmail" name="email" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="regPassword">Contraseña:</label>
-                    <input type="password" id="regPassword" name="password" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
-            </form>
-        </div>
     </div>
 
     <!-- Botón de debugging temporal -->
