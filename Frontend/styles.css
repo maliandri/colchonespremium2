@@ -688,3 +688,19 @@ header {
     max-width: none;
   }
 }
+
+/* Añade este estilo si no existe */
+.auth-form.hidden {
+    display: none;
+}
+
+/* También puedes añadir estilos para el enlace de cambio de formulario */
+.switch-form-link {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.switch-form-link a {
+    color: var(--primary);
+    font-weight: 500;
+}
