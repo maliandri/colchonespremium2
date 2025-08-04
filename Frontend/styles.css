@@ -1,10 +1,10 @@
 /* ===== ESTILOS GENERALES ===== */
 :root {
   --primary: #2c3e50;
-  --secondary: #3498db;
+  --secondary: #ff0000;
   --accent: #e74c3c;
   --light: #ecf0f1;
-  --dark: #2c3e50;
+  --dark: #000000;
   --gray: #95a5a6;
   --success: #2ecc71;
   --warning: #f39c12;
