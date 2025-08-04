@@ -75,8 +75,8 @@ document.addEventListener('DOMContentLoaded', function() {
             form.classList.add('hidden');
         });
         document.getElementById(formId).classList.remove('hidden');
-        registroStatusMessage.textContent = '';
-        loginStatusMessage.textContent = '';
+        if (registroStatusMessage) registroStatusMessage.textContent = '';
+        if (loginStatusMessage) loginStatusMessage.textContent = '';
     }
 
     function checkLoginStatus() {
@@ -548,12 +548,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= EVENT LISTENERS =================
     // Eventos para filtros y búsqueda
-    categoriaSelect.addEventListener('change', aplicarFiltros);
-    ordenSelect.addEventListener('change', aplicarFiltros);
-    searchInput.addEventListener('input', aplicarFiltros);
+    if(categoriaSelect) categoriaSelect.addEventListener('change', aplicarFiltros);
+    if(ordenSelect) ordenSelect.addEventListener('change', aplicarFiltros);
+    if(searchInput) searchInput.addEventListener('input', aplicarFiltros);
 
     // Evento para abrir el modal de imagen
-    productosGrid.addEventListener('click', e => {
+    if(productosGrid) productosGrid.addEventListener('click', e => {
         const imagen = e.target.closest('.producto-imagen-container img');
         if (imagen) {
             mostrarImagenAmpliada(imagen.dataset.imagenFull);
@@ -561,7 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Evento para cerrar el modal de imagen
-    cerrarModalImagen.addEventListener('click', () => {
+    if(cerrarModalImagen) cerrarModalImagen.addEventListener('click', () => {
         modalImagen.style.display = 'none';
     });
 
@@ -572,7 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Eventos para el carrito de compras
-    productosGrid.addEventListener('click', e => {
+    if(productosGrid) productosGrid.addEventListener('click', e => {
         const btnAgregar = e.target.closest('.agregar-carrito');
         if (btnAgregar) {
             agregarAlCarrito(btnAgregar.dataset.id);
@@ -584,14 +584,14 @@ document.addEventListener('DOMContentLoaded', function() {
         mostrarCarrito();
     });
 
-    listaCarrito.addEventListener('click', e => {
+    if(listaCarrito) listaCarrito.addEventListener('click', e => {
         if (e.target.classList.contains('eliminar-item')) {
             eliminarDelCarrito(e.target.dataset.id);
         }
     });
 
-    btnVaciarCarrito.addEventListener('click', vaciarCarrito);
-    btnComprarAhora.addEventListener('click', realizarCompra);
+    if(btnVaciarCarrito) btnVaciarCarrito.addEventListener('click', vaciarCarrito);
+    if(btnComprarAhora) btnComprarAhora.addEventListener('click', realizarCompra);
 
     // Eventos para los modales
     const botonesCerrar = document.querySelectorAll('.cerrar');
@@ -608,54 +608,54 @@ document.addEventListener('DOMContentLoaded', function() {
     // ======================================
     // EVENTOS PARA EL MODAL DE CLIENTES
     // ======================================
-    btnRegistro.addEventListener('click', e => {
+    if(btnRegistro) btnRegistro.addEventListener('click', e => {
         e.preventDefault();
         modalRegistro.style.display = 'flex';
         switchClientAuthForm('formRegistro');
     });
 
-    cerrarRegistro.addEventListener('click', () => {
+    if(cerrarRegistro) cerrarRegistro.addEventListener('click', () => {
         modalRegistro.style.display = 'none';
     });
     
-    showClientLoginLink.addEventListener('click', (e) => {
+    if(showClientLoginLink) showClientLoginLink.addEventListener('click', (e) => {
         e.preventDefault();
         switchClientAuthForm('formLoginCliente');
     });
 
-    showClientRegisterLink.addEventListener('click', (e) => {
+    if(showClientRegisterLink) showClientRegisterLink.addEventListener('click', (e) => {
         e.preventDefault();
         switchClientAuthForm('formRegistro');
     });
 
-    formRegistro.addEventListener('submit', handleRegister);
-    formLoginCliente.addEventListener('submit', handleClientLogin);
-    logoutBtn.addEventListener('click', handleLogout);
+    if(formRegistro) formRegistro.addEventListener('submit', handleRegister);
+    if(formLoginCliente) formLoginCliente.addEventListener('submit', handleClientLogin);
+    if(logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     // ======================================
 
     // ======================================
     // EVENTOS PARA EL MODAL DE VENDEDORES
     // ======================================
-    btnVendedores.addEventListener('click', e => {
+    if(btnVendedores) btnVendedores.addEventListener('click', e => {
         e.preventDefault();
         modalVendedores.style.display = 'flex';
         cargarProductosParaVendedor();
     });
     
-    cerrarVendedores.addEventListener('click', () => {
+    if(cerrarVendedores) cerrarVendedores.addEventListener('click', () => {
         modalVendedores.style.display = 'none';
     });
 
-    listaProductosVendedor.addEventListener('input', (e) => {
+    if(listaProductosVendedor) listaProductosVendedor.addEventListener('input', (e) => {
         if (e.target.classList.contains('cantidad-vendedor')) {
             actualizarResumenPedido();
         }
     });
 
-    filtroCategoriaVendedor.addEventListener('change', cargarProductosParaVendedor);
-    btnDescargarPresupuesto.addEventListener('click', generarPDF);
-    btnEnviarPresupuesto.addEventListener('click', enviarPresupuesto);
-    btnResetearPresupuesto.addEventListener('click', function () {
+    if(filtroCategoriaVendedor) filtroCategoriaVendedor.addEventListener('change', cargarProductosParaVendedor);
+    if(btnDescargarPresupuesto) btnDescargarPresupuesto.addEventListener('click', generarPDF);
+    if(btnEnviarPresupuesto) btnEnviarPresupuesto.addEventListener('click', enviarPresupuesto);
+    if(btnResetearPresupuesto) btnResetearPresupuesto.addEventListener('click', function () {
         carritoVendedor = [];
         nombreClienteInput.value = '';
         emailClienteInput.value = '';
@@ -667,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
         mostrarNotificacion('Presupuesto reseteado');
     });
 
-    provinciaClienteSelect.addEventListener('change', cargarLocalidades);
+    if(provinciaClienteSelect) provinciaClienteSelect.addEventListener('change', cargarLocalidades);
     // ======================================
 
     // ================= INICIALIZACIÓN FINAL =================
