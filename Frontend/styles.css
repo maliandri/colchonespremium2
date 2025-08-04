@@ -258,7 +258,7 @@ header {
 }
 
 .producto-imagen-container {
-  height: 250px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
