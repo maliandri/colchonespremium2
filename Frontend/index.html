@@ -222,50 +222,47 @@
             <img id="imagenAmpliada" src="" alt="Imagen ampliada">
         </div>
     </div>
+    <div id="modalRegistro" class="modal">
+        <div class="modal-contenido">
+         <span class="cerrar" id="cerrarRegistro">&times;</span>
+            <div id="client-auth-forms-container">
+                <form id="formLoginCliente" class="auth-form hidden">
+                 <h2>Acceso de Clientes</h2>
+                    <div class="form-group">
+                    <label for="loginEmail">Email:</label>
+                    <input type="email" id="loginEmail" name="email" class="form-control" required>
+                </div>
+            <div class="form-group">
+                    <label for="loginPassword">Contraseña:</label>
+                    <input type="password" id="loginPassword" name="password" class="form-control" required>
+            </div>
+                <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
+                <div id="login-status-message" class="auth-status-message"></div>
+                <p class="form-switch-text">¿No tienes cuenta? <a href="#" id="showClientRegister">Regístrate</a></p>
+            </form>
 
-        <div id="modalRegistro" class="modal">
-        <div class="modal-contenido">
-            <span class="cerrar" id="cerrarRegistro">&times;</span>
-            <div id="client-auth-forms-container">
-                                <form id="formLoginCliente" class="auth-form hidden">
-                    <h2>Acceso de Clientes</h2>
-                    <div class="form-group">
-                        <label for="loginEmail">Email:</label>
-                        <input type="email" id="loginEmail" name="email" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">Contraseña:</label>
-                        <input type="password" id="loginPassword" name="password" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
-                    <div id="login-status-message" class="auth-status-message"></div>
-                    <p class="form-switch-text">¿No tienes cuenta? <a href="#" id="showClientRegister">Regístrate</a></p>
-                </form>
-
-                                <form id="formRegistro" class="auth-form">
-                    <h2>Registro de Cliente</h2>
-                    <div class="form-group">
-                        <label for="regEmail">Email:</label>
-                        <input type="email" id="regEmail" name="email" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="regPassword">Contraseña:</label>
-                        <input type="password" id="regPassword" name="password" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
-                    <div id="registro-status-message" class="auth-status-message"></div>
-                    <p class="form-switch-text">¿Ya tienes cuenta? <a href="#" id="showClientLogin">Inicia sesión</a></p>
-                </form>
-            </div>
-        </div>
-    </div>
-
-        <div id="modalNotificacion" class="notificacion">
-        <i class="fas fa-info-circle"></i>
-        <span id="notificacionMensaje"></span>
-    </div>
-
-    <script>
+            <form id="formRegistro" class="auth-form">
+                <h2>Registro de Cliente</h2>
+                <div class="form-group">
+                    <label for="regEmail">Email:</label>
+                    <input type="email" id="regEmail" name="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Contraseña:</label>
+                    <input type="password" id="regPassword" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
+                <div id="registro-status-message" class="auth-status-message"></div>
+                <p class="form-switch-text">¿Ya tienes cuenta? <a href="#" id="showClientLogin">Inicia sesión</a></p>
+            </form>
+        </div>
+    </div>
+</div>
+    <div id="modalNotificacion" class="notificacion">
+        <i class="fas fa-info-circle"></i>
+    <span id="notificacionMensaje"></span>
+</div>
+<script>
         document.getElementById('current-year').textContent = new Date().getFullYear();
     </script>
 </body>

@@ -1,11 +1,11 @@
 // ============== SCRIPT COMPLETO CORREGIDO ==============
-document.addEventListener('DOMContentLoaded', function () {
-
+document.addEventListener('DOMContentLoaded', function() {
+    
     // ===== URLs de la API =====
     const API_URL = 'https://colchonespremium2.onrender.com/api/colchones';
     const CATEGORIAS_URL = 'https://colchonespremium2.onrender.com/api/categorias';
 
-    // ===== Elementos del DOM =====
+    // ===== Elementos del DOM (Actualizados para el nuevo HTML) =====
     const productosGrid = document.getElementById('productos-grid');
     const categoriaSelect = document.getElementById('categoria');
     const ordenSelect = document.getElementById('orden');
@@ -17,12 +17,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalVendedores = document.getElementById('modalVendedores');
     const modalCarrito = document.getElementById('modalCarrito');
     const modalImagen = document.getElementById('modalImagen');
-    const modalRegistro = document.getElementById('modalRegistro');
     
     // ======================================
     // ELEMENTOS PARA AUTENTICACIÓN DE CLIENTES
     // ======================================
     const btnRegistro = document.getElementById('registro-link');
+    const modalRegistro = document.getElementById('modalRegistro');
     const formRegistro = document.getElementById('formRegistro');
     const formLoginCliente = document.getElementById('formLoginCliente');
     const showClientLoginLink = document.getElementById('showClientLogin');
@@ -33,9 +33,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const logoutBtn = document.getElementById('logout-btn');
     const authButtonsContainer = document.getElementById('auth-buttons-container');
     // ======================================
-
+    
     // Elementos del modal de vendedores
-    const cerrarVendedores = document.getElementById('cerrarVendedores');
+    const cerrarVendedores = modalVendedores.querySelector('.cerrar');
     const filtroCategoriaVendedor = document.getElementById('filtroCategoriaVendedor');
     const btnDescargarPresupuesto = document.getElementById('descargarPresupuesto');
     const btnEnviarPresupuesto = document.getElementById('enviarPresupuesto');
@@ -83,9 +83,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const token = localStorage.getItem('authToken');
         const isLoggedIn = !!token;
 
-        btnRegistro.style.display = isLoggedIn ? 'none' : 'block';
-        btnVendedores.style.display = isLoggedIn ? 'none' : 'block';
-        logoutBtn.style.display = isLoggedIn ? 'block' : 'none';
+        const registroLink = document.getElementById('registro-link');
+        const logoutButton = document.getElementById('logout-btn');
+
+        if (isLoggedIn) {
+            registroLink.style.display = 'none';
+            logoutButton.style.display = 'block';
+        } else {
+            registroLink.style.display = 'block';
+            logoutButton.style.display = 'none';
+        }
     }
 
     async function handleRegister(event) {
@@ -109,14 +116,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             registroStatusMessage.textContent = '¡Registro exitoso! Ahora puedes iniciar sesión.';
-            registroStatusMessage.style.color = 'var(--success)';
+            registroStatusMessage.style.color = '#28a745';
             document.getElementById('regEmail').value = '';
             document.getElementById('regPassword').value = '';
             setTimeout(() => switchClientAuthForm('formLoginCliente'), 1500);
 
         } catch (error) {
             registroStatusMessage.textContent = error.message;
-            registroStatusMessage.style.color = 'var(--accent)';
+            registroStatusMessage.style.color = '#dc3545';
             console.error('Error en el registro:', error);
         }
     }
@@ -143,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             localStorage.setItem('authToken', data.token);
             loginStatusMessage.textContent = '¡Inicio de sesión exitoso!';
-            loginStatusMessage.style.color = 'var(--success)';
+            loginStatusMessage.style.color = '#28a745';
 
             setTimeout(() => {
                 modalRegistro.style.display = 'none';
@@ -152,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } catch (error) {
             loginStatusMessage.textContent = error.message;
-            loginStatusMessage.style.color = 'var(--accent)';
+            loginStatusMessage.style.color = '#dc3545';
             console.error('Error:', error);
         }
     }
@@ -536,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function mostrarImagenAmpliada(src) {
         imagenAmpliada.src = src;
-        modalImagen.style.display = 'block';
+        modalImagen.style.display = 'flex';
     }
 
     // ================= EVENT LISTENERS =================
@@ -571,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function () {
             agregarAlCarrito(btnAgregar.dataset.id);
         }
     });
-
+    
     document.querySelector('.cart-icon').closest('a').addEventListener('click', e => {
         e.preventDefault();
         mostrarCarrito();
@@ -597,8 +604,7 @@ document.addEventListener('DOMContentLoaded', function () {
             e.target.style.display = 'none';
         }
     });
-
-
+    
     // ======================================
     // EVENTOS PARA EL MODAL DE CLIENTES
     // ======================================
@@ -627,7 +633,6 @@ document.addEventListener('DOMContentLoaded', function () {
     logoutBtn.addEventListener('click', handleLogout);
     // ======================================
 
-
     // ======================================
     // EVENTOS PARA EL MODAL DE VENDEDORES
     // ======================================
@@ -640,7 +645,6 @@ document.addEventListener('DOMContentLoaded', function () {
     cerrarVendedores.addEventListener('click', () => {
         modalVendedores.style.display = 'none';
     });
-    // ======================================
 
     listaProductosVendedor.addEventListener('input', (e) => {
         if (e.target.classList.contains('cantidad-vendedor')) {
@@ -664,6 +668,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     provinciaClienteSelect.addEventListener('change', cargarLocalidades);
+    // ======================================
 
     // ================= INICIALIZACIÓN FINAL =================
     cargarProductos();
