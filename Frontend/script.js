@@ -357,19 +357,59 @@ document.addEventListener('DOMContentLoaded', function () {
     mostrarNotificacion('PDF generado con éxito.');
   }
   
-  // Enviar presupuesto por email (simulado)
-  function enviarPresupuesto() {
-    if (carritoVendedor.length === 0) {
-      mostrarNotificacion('El presupuesto está vacío', 'warning');
-      return;
-    }
-    if (!emailClienteInput.value) {
-      mostrarNotificacion('Por favor, ingrese un email de cliente.', 'warning');
-      return;
-    }
-    // Aquí iría la lógica de backend para enviar el email
-    mostrarNotificacion('Presupuesto enviado por email (simulado).', 'success');
-  }
+// Enviar presupuesto por email (CONECTADO A LA API)
+async function enviarPresupuesto() {
+    if (carritoVendedor.length === 0) {
+        mostrarNotificacion('El presupuesto está vacío', 'warning');
+        return;
+    }
+    const emailCliente = emailClienteInput.value;
+    if (!emailCliente) {
+        mostrarNotificacion('Por favor, ingrese un email de cliente.', 'warning');
+        return;
+    }
+
+    // Recopilar todos los datos necesarios
+    const datosPresupuesto = {
+        cliente: {
+            nombre: nombreClienteInput.value,
+            email: emailCliente,
+            telefono: telefonoClienteInput.value,
+            provincia: provinciaClienteSelect.value,
+            localidad: localidadClienteSelect.value,
+            direccion: direccionClienteInput.value
+        },
+        vendedor: {
+            nombre: nombreVendedorInput.value
+        },
+        productos: carritoVendedor,
+        total: parseFloat(totalPedidoSpan.textContent)
+    };
+
+    const url = 'https://colchonespremium2.onrender.com/api/presupuesto/enviar';
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(datosPresupuesto)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            mostrarNotificacion('Presupuesto enviado por email con éxito.', 'success');
+        } else {
+            throw new Error(data.error || 'Error al enviar el presupuesto.');
+        }
+
+    } catch (error) {
+        console.error('Error al enviar presupuesto:', error);
+        mostrarNotificacion(error.message, 'warning');
+    }
+}
 
   // Cargar localidades según la provincia seleccionada
   const LOCALIDADES_POR_PROVINCIA = {
@@ -486,18 +526,40 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   }
 
-  formRegistro.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const nombre = document.getElementById('regNombre').value;
-    const email = document.getElementById('regEmail').value;
-    const password = document.getElementById('regPassword').value;
+// CÓDIGO NUEVO (Conectado a la API)
+formRegistro.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nombre = document.getElementById('regNombre').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
 
-    // Aquí iría la lógica para enviar los datos al backend (simulado)
-    console.log('Datos de registro:', { nombre, email, password });
-    mostrarNotificacion('¡Registro exitoso! (Simulado)', 'success');
-    modalRegistro.style.display = 'none';
-    formRegistro.reset();
-  });
+    // URL completa de tu endpoint de registro en Render
+    const registroUrl = 'https://colchonespremium2.onrender.com/api/auth/register';
+
+    try {
+        const response = await fetch(registroUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }) // Enviamos solo email y password que es lo que espera el backend
+        });
+
+        const data = await response.json();
+
+        if (response.ok) { // Si el registro fue exitoso (código 201)
+            mostrarNotificacion('¡Registro exitoso!', 'success');
+            modalRegistro.style.display = 'none';
+            formRegistro.reset();
+        } else { // Si hubo un error (ej: email ya existe)
+            throw new Error(data.error || 'Ocurrió un error al registrarse.');
+        }
+
+    } catch (error) {
+        console.error('Error en el registro:', error);
+        mostrarNotificacion(error.message, 'warning'); // Muestra el error específico de la API
+    }
+});
 
   // Eventos para el modal de vendedor
   btnVendedores.addEventListener('click', e => {

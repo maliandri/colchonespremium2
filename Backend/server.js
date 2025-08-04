@@ -260,21 +260,17 @@ app.post('/api/presupuesto/enviar', async (req, res) => {
     `;
 
     try {
-        // --- AQUÍ ES DONDE ESTÁ EL CAMBIO ---
-        const destinatarios = `${cliente.email}, ${process.env.EMAIL_DESTINO_VENDEDOR}`;
-
         await enviarEmail({
-            destinatario: destinatarios,
+            destinatario: cliente.email,
             asunto: 'Tu Presupuesto de Colchones Premium',
             cuerpoHtml: cuerpoHtml
         });
-        // ------------------------------------
-        
         res.status(200).json({ message: 'Presupuesto enviado exitosamente por email.' });
     } catch (error) {
         res.status(500).json({ error: 'Hubo un problema al enviar el email.' });
     }
 });
+
 // =================== INICIAR SERVIDOR ===================
 app.listen(PORT, () => {
     console.log(`🚀 Servidor en http://localhost:${PORT}`);
