@@ -6,7 +6,10 @@
     <meta name="description" content="Tienda especializada en colchones y almohadas premium en Neuquén">
     <title>Colchones Premium Neuquén - Calidad en Descanso</title>
     <link rel="stylesheet" href="styles.css">
-   </head>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
 <body>
     <header>
         <div class="header-container container">
@@ -19,10 +22,7 @@
                     <li><a href="#" aria-current="page">Inicio</a></li>
                     <li><a href="#productos">Productos</a></li>
                     <li><a href="#contacto">Contacto</a></li>
-                    <li id="auth-buttons-container">
-                        <a href="#" id="registro-link" class="nav-link">Registro/Login</a>
-                        <a href="#" id="logout-btn" class="nav-link" style="display: none;">Cerrar Sesión</a>
-                    </li>
+                    <li><a href="#" class="nav-link" id="registro-link">Registro</a></li>
                     <li><a href="#" class="vendedores-link" id="accesoVendedores">
                         <i class="fas fa-user-tie"></i> Acceso Vendedores
                     </a></li>
@@ -69,7 +69,7 @@
         </section>
 
         <section id="contacto" class="contacto-container">
-        </section>
+            </section>
     </main>
 
     <footer class="footer">
@@ -113,20 +113,24 @@
     
     <div id="modalVendedores" class="modal">
         <div class="modal-contenido">
-            <span class="cerrar" id="cerrarVendedores">&times;</span>
+            <span class="cerrar">&times;</span>
             <h2>Sistema de Vendedores</h2>
+            
             <div class="form-group">
                 <label for="nombreVendedor">Nombre del Vendedor:</label>
                 <input type="text" id="nombreVendedor" required>
             </div>
+            
             <div class="form-group">
                 <label for="nombreCliente">Nombre del Cliente:</label>
                 <input type="text" id="nombreCliente" required>
             </div>
+            
             <div class="form-group">
                 <label for="telefonoCliente">Teléfono del Cliente:</label>
                 <input type="tel" id="telefonoCliente" required>
             </div>
+            
             <div class="form-group">
                 <label for="provinciaCliente">Provincia:</label>
                 <select id="provinciaCliente" required>
@@ -135,25 +139,31 @@
                     <option value="Neuquén">Neuquén</option>
                 </select>
             </div>
+            
             <div class="form-group">
                 <label for="localidadCliente">Localidad:</label>
                 <select id="localidadCliente" required disabled>
                     <option value="">Primero seleccione una provincia</option>
                 </select>
             </div>
+            
             <div class="form-group">
                 <label for="direccionCliente">Dirección (opcional):</label>
                 <input type="text" id="direccionCliente">
             </div>
+            
             <div class="form-group">
                 <label for="emailCliente">Email (opcional):</label>
                 <input type="email" id="emailCliente">
             </div>
+            
             <div class="filtro-container">
                 <label for="filtroCategoriaVendedor">Filtrar por categoría:</label>
                 <select id="filtroCategoriaVendedor"></select>
             </div>
+            
             <div id="listaProductosVendedor" class="lista-productos-vendedor"></div>
+            
             <div class="resumen-pedido">
                 <h3>Resumen del Pedido</h3>
                 <div id="detallePedido"></div>
@@ -162,6 +172,7 @@
                     <span id="totalPedido">0.00</span>
                 </div>
             </div>
+            
             <div class="acciones-vendedor">
                 <button id="enviarPresupuesto" class="btn-accion">
                     <i class="fas fa-paper-plane"></i> Enviar por Email
@@ -176,17 +187,27 @@
         </div>
     </div>
 
+    <div id="modalImagen" class="modal-imagen">
+        <div class="modal-imagen-contenido">
+            <span class="cerrar-modal">&times;</span>
+            <img id="imagenAmpliada" src="" alt="Imagen ampliada">
+        </div>
+    </div>
+    
     <div id="modalCarrito" class="modal">
         <div class="modal-contenido">
             <button class="cerrar" aria-label="Cerrar modal">&times;</button>
             <h2>Tu Carrito de Compras</h2>
+            
             <div id="listaCarrito" class="lista-productos"></div>
+            
             <div class="resumen-pedido">
                 <div id="detalleCarrito" class="detalle-pedido"></div>
                 <div class="total-pedido">
                     <strong>Total: $<span id="totalCarrito">0.00</span></strong>
                 </div>
             </div>
+            
             <div class="seccion-botones">
                 <button id="vaciarCarrito" class="btn btn-resetear">
                     <i class="fas fa-trash-alt"></i> Vaciar Carrito
@@ -197,56 +218,37 @@
             </div>
         </div>
     </div>
-    
-    <div id="modalImagen" class="modal-imagen">
-        <div class="modal-imagen-contenido">
-            <span class="cerrar-modal">&times;</span>
-            <img id="imagenAmpliada" src="" alt="Imagen ampliada">
-        </div>
-    </div>
-
-    <div id="modalRegistro" class="modal">
-        <div class="modal-contenido">
-            <span class="cerrar" id="cerrarRegistro">&times;</span>
-            <div id="client-auth-forms-container">
-                <form id="formLoginCliente" class="auth-form hidden">
-                    <h2>Acceso de Clientes</h2>
-                    <div class="form-group">
-                        <label for="loginEmail">Email:</label>
-                        <input type="email" id="loginEmail" name="email" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">Contraseña:</label>
-                        <input type="password" id="loginPassword" name="password" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
-                    <div id="login-status-message" class="auth-status-message"></div>
-                    <p class="form-switch-text">¿No tienes cuenta? <a href="#" id="showClientRegister">Regístrate</a></p>
-                </form>
-                <form id="formRegistro" class="auth-form">
-                    <h2>Registro de Cliente</h2>
-                    <div class="form-group">
-                        <label for="regEmail">Email:</label>
-                        <input type="email" id="regEmail" name="email" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="regPassword">Contraseña:</label>
-                        <input type="password" id="regPassword" name="password" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
-                    <div id="registro-status-message" class="auth-status-message"></div>
-                    <p class="form-switch-text">¿Ya tienes cuenta? <a href="#" id="showClientLogin">Inicia sesión</a></p>
-                </form>
-            </div>
-        </div>
-    </div>
 
     <div id="modalNotificacion" class="notificacion">
         <i class="fas fa-info-circle"></i>
         <span id="notificacionMensaje"></span>
     </div>
+
+    <div id="modalRegistro" class="modal">
+        <div class="modal-content">
+            <span class="cerrar" aria-label="Cerrar modal">&times;</span>
+            <h2 class="modal-title">Registro de Cliente</h2>
+            <form id="formRegistro">
+                <div class="form-group">
+                    <label for="regNombre">Nombre:</label>
+                    <input type="text" id="regNombre" name="nombre" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email:</label>
+                    <input type="email" id="regEmail" name="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Contraseña:</label>
+                    <input type="password" id="regPassword" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
     <script>
-        src="script.js"    
+        document.getElementById('current-year').textContent = new Date().getFullYear();
     </script>
 </body>
 </html>
