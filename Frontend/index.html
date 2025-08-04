@@ -1,281 +1,272 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Tienda especializada en colchones y almohadas premium en Neuquén">
-    <title>Colchones Premium Neuquén - Calidad en Descanso</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tienda especializada en colchones y almohadas premium en Neuquén">
+    <title>Colchones Premium Neuquén - Calidad en Descanso</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js" defer></script>
 </head>
 <body>
-    <header>
-        <div class="header-container container">
-            <a href="#" class="logo" aria-label="Inicio - Tu Descanso Premium en Neuquén">
-                <img src="assets/logo.png" alt="Logo Colchones Premium" class="logo-img">
-                <span class="logo-text">Colchones<span>Premium</span></span>
-            </a>
-            <nav class="main-nav" aria-label="Navegación principal">
-                <ul>
-                    <li><a href="#" aria-current="page">Inicio</a></li>
-                    <li><a href="#productos">Productos</a></li>
-                    <li><a href="#contacto">Contacto</a></li>
-                    <li><a href="#" class="nav-link" id="registro-link">Registro</a></li>
-                    <li><a href="#" class="vendedores-link" id="accesoVendedores">
-                        <i class="fas fa-user-tie"></i> Acceso Vendedores
-                    </a></li>
-                    <li>
-                        <a href="#" aria-label="Carrito de compras">
-                            <i class="fas fa-shopping-cart cart-icon"></i>
-                            <span class="cart-count">0</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+    <header>
+        <div class="header-container container">
+            <a href="#" class="logo" aria-label="Inicio - Tu Descanso Premium en Neuquén">
+                <img src="assets/logo.png" alt="Logo Colchones Premium" class="logo-img">
+                <span class="logo-text">Colchones<span>Premium</span></span>
+            </a>
+            <nav class="main-nav" aria-label="Navegación principal">
+                <ul>
+                    <li><a href="#" aria-current="page">Inicio</a></li>
+                    <li><a href="#productos">Productos</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                    <li id="auth-buttons-container">
+                        <a href="#" id="registro-link" class="nav-link">Registro/Login</a>
+                        <a href="#" id="logout-btn" class="nav-link" style="display: none;">Cerrar Sesión</a>
+                    </li>
+                    <li><a href="#" class="vendedores-link" id="accesoVendedores">
+                        <i class="fas fa-user-tie"></i> Acceso Vendedores
+                    </a></li>
+                    <li>
+                        <a href="#" aria-label="Carrito de compras">
+                            <i class="fas fa-shopping-cart cart-icon"></i>
+                            <span class="cart-count">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
-    <main>
-        <section class="hero">
-            <div class="container">
-                <h1>Descanso de Calidad para tu Hogar</h1>
-                <p>Encuentra los mejores colchones y almohadas para tu descanso</p>
-                <a href="#productos" class="btn">Ver Productos</a>
-            </div>
-        </section>
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Descanso de Calidad para tu Hogar</h1>
+                <p>Encuentra los mejores colchones y almohadas para tu descanso</p>
+                <a href="#productos" class="btn">Ver Productos</a>
+            </div>
+        </section>
 
-        <section id="productos" class="productos-container">
-            <div class="container">
-                <h2 class="section-title">Nuestros Productos</h2>
-                <div class="filtros">
-                    <div class="search-box">
-                        <input type="text" placeholder="Buscar productos..." id="searchInput" aria-label="Buscar productos">
-                    </div>
-                    <div class="filtros-row">
-                        <select id="categoria" aria-label="Filtrar por categoría">
-                            <option value="">Todas las categorías</option>
-                        </select>
-                        <select id="orden" aria-label="Ordenar productos">
-                            <option value="">Ordenar por</option>
-                            <option value="asc">Precio: Menor a Mayor</option>
-                            <option value="desc">Precio: Mayor a Menor</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="productos" id="productos-grid" role="region" aria-live="polite"></div>
-            </div>
-        </section>
+        <section id="productos" class="productos-container">
+            <div class="container">
+                <h2 class="section-title">Nuestros Productos</h2>
+                <div class="filtros">
+                    <div class="search-box">
+                        <input type="text" placeholder="Buscar productos..." id="searchInput" aria-label="Buscar productos">
+                    </div>
+                    <div class="filtros-row">
+                        <select id="categoria" aria-label="Filtrar por categoría">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                        <select id="orden" aria-label="Ordenar productos">
+                            <option value="">Ordenar por</option>
+                            <option value="asc">Precio: Menor a Mayor</option>
+                            <option value="desc">Precio: Mayor a Menor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="productos" id="productos-grid" role="region" aria-live="polite"></div>
+            </div>
+        </section>
 
-        <section id="contacto" class="contacto-container">
-            </section>
-    </main>
+        <section id="contacto" class="contacto-container">
+            </section>
+    </main>
 
-    <footer class="footer">
-        <div class="footer-container container">
-            <div class="footer-section">
-                <h3>Productos</h3>
-                <ul>
-                    <li><a href="#productos">Colchones</a></li>
-                    <li><a href="#productos">Almohadas</a></li>
-                    <li><a href="#productos">Sommiers</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Contacto</h3>
-                <ul>
-                    <li><i class="fas fa-phone"></i> 299 123-4567</li>
-                    <li><i class="fas fa-map-marker-alt"></i> Neuquén Capital</li>
-                    <li><i class="fas fa-envelope"></i> info@colchonespremium.com</li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Horarios</h3>
-                <ul>
-                    <li>Lunes a Viernes: 9-18hs</li>
-                    <li>Sábados: 9-13hs</li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Redes Sociales</h3>
-                <div class="social-icons">
-                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                </div>
-            </div>
-        </div>
-        <div class="copyright">
-            <p>&copy; <span id="current-year">2023</span> Colchones Premium Neuquén. Todos los derechos reservados.</p>
-        </div>
-    </footer>
-    
-    <div id="modalVendedores" class="modal">
-        <div class="modal-contenido">
-            <span class="cerrar">&times;</span>
-            <h2>Sistema de Vendedores</h2>
-            
-            <div class="form-group">
-                <label for="nombreVendedor">Nombre del Vendedor:</label>
-                <input type="text" id="nombreVendedor" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="nombreCliente">Nombre del Cliente:</label>
-                <input type="text" id="nombreCliente" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="telefonoCliente">Teléfono del Cliente:</label>
-                <input type="tel" id="telefonoCliente" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="provinciaCliente">Provincia:</label>
-                <select id="provinciaCliente" required>
-                    <option value="">Seleccione una provincia</option>
-                    <option value="Río Negro">Río Negro</option>
-                    <option value="Neuquén">Neuquén</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="localidadCliente">Localidad:</label>
-                <select id="localidadCliente" required disabled>
-                    <option value="">Primero seleccione una provincia</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="direccionCliente">Dirección (opcional):</label>
-                <input type="text" id="direccionCliente">
-            </div>
-            
-            <div class="form-group">
-                <label for="emailCliente">Email (opcional):</label>
-                <input type="email" id="emailCliente">
-            </div>
-            
-            <div class="filtro-container">
-                <label for="filtroCategoriaVendedor">Filtrar por categoría:</label>
-                <select id="filtroCategoriaVendedor"></select>
-            </div>
-            
-            <div id="listaProductosVendedor" class="lista-productos-vendedor"></div>
-            
-            <div class="resumen-pedido">
-                <h3>Resumen del Pedido</h3>
-                <div id="detallePedido"></div>
-                <div class="total-pedido">
-                    <span>Total:</span>
-                    <span id="totalPedido">0.00</span>
-                </div>
-            </div>
-            
-            <div class="acciones-vendedor">
-                <button id="enviarPresupuesto" class="btn-accion">
-                    <i class="fas fa-paper-plane"></i> Enviar por Email
-                </button>
-                <button id="descargarPresupuesto" class="btn-accion">
-                    <i class="fas fa-file-pdf"></i> Descargar PDF
-                </button>
-                <button id="resetearPresupuesto" class="btn-accion">
-                    <i class="fas fa-trash"></i> Resetear
-                </button>
-            </div>
-        </div>
-    </div>
+    <footer class="footer">
+        <div class="footer-container container">
+            <div class="footer-section">
+                <h3>Productos</h3>
+                <ul>
+                    <li><a href="#productos">Colchones</a></li>
+                    <li><a href="#productos">Almohadas</a></li>
+                    <li><a href="#productos">Sommiers</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contacto</h3>
+                <ul>
+                    <li><i class="fas fa-phone"></i> 299 123-4567</li>
+                    <li><i class="fas fa-map-marker-alt"></i> Neuquén Capital</li>
+                    <li><i class="fas fa-envelope"></i> info@colchonespremium.com</li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Horarios</h3>
+                <ul>
+                    <li>Lunes a Viernes: 9-18hs</li>
+                    <li>Sábados: 9-13hs</li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Redes Sociales</h3>
+                <div class="social-icons">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; <span id="current-year">2023</span> Colchones Premium Neuquén. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    
+            <div id="modalVendedores" class="modal">
+        <div class="modal-contenido">
+            <span class="cerrar" id="cerrarVendedores">&times;</span>
+            <h2>Sistema de Vendedores</h2>
+            
+            <div class="form-group">
+                <label for="nombreVendedor">Nombre del Vendedor:</label>
+                <input type="text" id="nombreVendedor" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="nombreCliente">Nombre del Cliente:</label>
+                <input type="text" id="nombreCliente" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="telefonoCliente">Teléfono del Cliente:</label>
+                <input type="tel" id="telefonoCliente" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="provinciaCliente">Provincia:</label>
+                <select id="provinciaCliente" required>
+                    <option value="">Seleccione una provincia</option>
+                    <option value="Río Negro">Río Negro</option>
+                    <option value="Neuquén">Neuquén</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="localidadCliente">Localidad:</label>
+                <select id="localidadCliente" required disabled>
+                    <option value="">Primero seleccione una provincia</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="direccionCliente">Dirección (opcional):</label>
+                <input type="text" id="direccionCliente">
+            </div>
+            
+            <div class="form-group">
+                <label for="emailCliente">Email (opcional):</label>
+                <input type="email" id="emailCliente">
+            </div>
+            
+            <div class="filtro-container">
+                <label for="filtroCategoriaVendedor">Filtrar por categoría:</label>
+                <select id="filtroCategoriaVendedor"></select>
+            </div>
+            
+            <div id="listaProductosVendedor" class="lista-productos-vendedor"></div>
+            
+            <div class="resumen-pedido">
+                <h3>Resumen del Pedido</h3>
+                <div id="detallePedido"></div>
+                <div class="total-pedido">
+                    <span>Total:</span>
+                    <span id="totalPedido">0.00</span>
+                </div>
+            </div>
+            
+            <div class="acciones-vendedor">
+                <button id="enviarPresupuesto" class="btn-accion">
+                    <i class="fas fa-paper-plane"></i> Enviar por Email
+                </button>
+                <button id="descargarPresupuesto" class="btn-accion">
+                    <i class="fas fa-file-pdf"></i> Descargar PDF
+                </button>
+                <button id="resetearPresupuesto" class="btn-accion">
+                    <i class="fas fa-trash"></i> Resetear
+                </button>
+            </div>
+        </div>
+    </div>
 
-    <div id="modalImagen" class="modal-imagen">
-        <div class="modal-imagen-contenido">
-            <span class="cerrar-modal">&times;</span>
-            <img id="imagenAmpliada" src="" alt="Imagen ampliada">
-        </div>
-    </div>
-    
-    <div id="modalCarrito" class="modal">
-        <div class="modal-contenido">
-            <button class="cerrar" aria-label="Cerrar modal">&times;</button>
-            <h2>Tu Carrito de Compras</h2>
-            
-            <div id="listaCarrito" class="lista-productos"></div>
-            
-            <div class="resumen-pedido">
-                <div id="detalleCarrito" class="detalle-pedido"></div>
-                <div class="total-pedido">
-                    <strong>Total: $<span id="totalCarrito">0.00</span></strong>
-                </div>
-            </div>
-            
-            <div class="seccion-botones">
-                <button id="vaciarCarrito" class="btn btn-resetear">
-                    <i class="fas fa-trash-alt"></i> Vaciar Carrito
-                </button>
-                <button id="comprarAhora" class="btn btn-enviar">
-                    <i class="fas fa-credit-card"></i> Comprar Ahora
-                </button>
-            </div>
-        </div>
-    </div>
+        <div id="modalCarrito" class="modal">
+        <div class="modal-contenido">
+            <button class="cerrar" aria-label="Cerrar modal">&times;</button>
+            <h2>Tu Carrito de Compras</h2>
+            
+            <div id="listaCarrito" class="lista-productos"></div>
+            
+            <div class="resumen-pedido">
+                <div id="detalleCarrito" class="detalle-pedido"></div>
+                <div class="total-pedido">
+                    <strong>Total: $<span id="totalCarrito">0.00</span></strong>
+                </div>
+            </div>
+            
+            <div class="seccion-botones">
+                <button id="vaciarCarrito" class="btn btn-resetear">
+                    <i class="fas fa-trash-alt"></i> Vaciar Carrito
+                </button>
+                <button id="comprarAhora" class="btn btn-enviar">
+                    <i class="fas fa-credit-card"></i> Comprar Ahora
+                </button>
+            </div>
+        </div>
+    </div>
+    
+        <div id="modalImagen" class="modal-imagen">
+        <div class="modal-imagen-contenido">
+            <span class="cerrar-modal">&times;</span>
+            <img id="imagenAmpliada" src="" alt="Imagen ampliada">
+        </div>
+    </div>
 
-    <div id="modalNotificacion" class="notificacion">
-        <i class="fas fa-info-circle"></i>
-        <span id="notificacionMensaje"></span>
-    </div>
+        <div id="modalRegistro" class="modal">
+        <div class="modal-contenido">
+            <span class="cerrar" id="cerrarRegistro">&times;</span>
+            <div id="client-auth-forms-container">
+                                <form id="formLoginCliente" class="auth-form hidden">
+                    <h2>Acceso de Clientes</h2>
+                    <div class="form-group">
+                        <label for="loginEmail">Email:</label>
+                        <input type="email" id="loginEmail" name="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Contraseña:</label>
+                        <input type="password" id="loginPassword" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
+                    <div id="login-status-message" class="auth-status-message"></div>
+                    <p class="form-switch-text">¿No tienes cuenta? <a href="#" id="showClientRegister">Regístrate</a></p>
+                </form>
 
-<div id="modalVendedores" class="modal">
-    <div class="modal-content">
-        <span class="cerrar" id="cerrarVendedores">&times;</span>
-        <h2>Panel de Vendedores</h2>
-        <div class="vendedor-panel">
-            <h3>Crear Presupuesto</h3>
-            <div class="vendedor-inputs">
-                <input type="text" id="nombreVendedor" placeholder="Tu Nombre">
-                <input type="text" id="nombreCliente" placeholder="Nombre del Cliente">
-                <input type="tel" id="telefonoCliente" placeholder="Teléfono del Cliente">
-                <input type="email" id="emailCliente" placeholder="Email del Cliente">
-                <select id="provinciaCliente">
-                    <option value="">Seleccione una provincia</option>
-                    <option value="Río Negro">Río Negro</option>
-                    <option value="Neuquén">Neuquén</option>
-                </select>
-                <select id="localidadCliente" disabled>
-                    <option value="">Seleccione una localidad</option>
-                </select>
-                <input type="text" id="direccionCliente" placeholder="Dirección del Cliente">
-            </div>
+                                <form id="formRegistro" class="auth-form">
+                    <h2>Registro de Cliente</h2>
+                    <div class="form-group">
+                        <label for="regEmail">Email:</label>
+                        <input type="email" id="regEmail" name="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Contraseña:</label>
+                        <input type="password" id="regPassword" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
+                    <div id="registro-status-message" class="auth-status-message"></div>
+                    <p class="form-switch-text">¿Ya tienes cuenta? <a href="#" id="showClientLogin">Inicia sesión</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
 
-            <div class="vendedor-filters">
-                <label for="filtroCategoriaVendedor">Filtrar por categoría:</label>
-                <select id="filtroCategoriaVendedor">
-                    <option value="">Todas</option>
-                </select>
-            </div>
+        <div id="modalNotificacion" class="notificacion">
+        <i class="fas fa-info-circle"></i>
+        <span id="notificacionMensaje"></span>
+    </div>
 
-            <div id="listaProductosVendedor" class="productos-vendedor-grid">
-                </div>
-
-            <div class="resumen-pedido">
-                <h3>Resumen del Pedido</h3>
-                <div id="detallePedido"></div>
-                <p>Total: $<span id="totalPedido">0.00</span></p>
-                <button id="btnDescargarPresupuesto" class="btn">Descargar PDF</button>
-                <button id="btnEnviarPresupuesto" class="btn">Enviar por Email</button>
-                <button id="btnResetearPresupuesto" class="btn btn-secondary">Resetear</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<li id="auth-buttons-container">
-    <a href="#" id="registro-link" class="btn-primary">Registro</a>
-    <a href="#" id="logout-btn" class="btn-secondary" style="display: none;">Cerrar Sesión</a>
-</li>
-
-    <script src="script.js"></script>
-    <script>
-        document.getElementById('current-year').textContent = new Date().getFullYear();
-    </script>
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>
