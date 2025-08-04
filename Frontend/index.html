@@ -76,10 +76,9 @@
         <div class="footer-container container">
             <div class="footer-section">
                 <h3>Productos</h3>
-                <ul>
-                    <li><a href="#productos">Colchones</a></li>
-                    <li><a href="#productos">Almohadas</a></li>
-                    <li><a href="#productos">Sommiers</a></li>
+                <ul id="footer-categorias">
+                    <!-- Las categorías se cargarán dinámicamente aquí -->
+                    <li><a href="#productos">Ver todos los productos</a></li>
                 </ul>
             </div>
             <div class="footer-section">
@@ -246,9 +245,50 @@
         </div>
     </div>
 
+    <!-- Botón de debugging temporal -->
+    <div style="position: fixed; bottom: 10px; left: 10px; z-index: 1000;">
+        <button onclick="debugCategorias()" style="padding: 0.5rem; background: #333; color: white; border: none; border-radius: 3px; font-size: 0.8em; cursor: pointer;">
+            Debug Categorías
+        </button>
+    </div>
+
     <script src="script.js"></script>
     <script>
         document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+
+    <!-- Script para placeholder de imágenes -->
+    <script>
+        function createPlaceholderImage() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300;
+            canvas.height = 200;
+            
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, 300, 200);
+            
+            ctx.strokeStyle = '#dee2e6';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(1, 1, 298, 198);
+            
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Imagen no disponible', 150, 100);
+            
+            return canvas.toDataURL();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const placeholderUrl = createPlaceholderImage();
+            
+            document.addEventListener('error', function(e) {
+                if (e.target.tagName === 'IMG' && !e.target.src.includes('data:image')) {
+                    e.target.src = placeholderUrl;
+                }
+            }, true);
+        });
     </script>
 </body>
 </html>

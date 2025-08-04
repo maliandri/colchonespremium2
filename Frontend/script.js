@@ -9,8 +9,9 @@ document.addEventListener('DOMContentLoaded', function () {
   // nuevo servidor de backend una vez que lo hayas desplegado en Render.
   const API_URL = 'https://colchonespremium2.onrender.com/api/colchones';
   const CATEGORIAS_URL = 'https://colchonespremium2.onrender.com/api/categorias';
-  const VENDEDORES_URL = 'https://colchonespremium2.onrender.com/api/vendedores';
-  const CLIENTES_URL = 'https://colchonespremium2.onrender.com/api/clientes';
+  const AUTH_URL = 'https://colchonespremium2.onrender.com/api/auth';
+  const VENTAS_URL = 'https://colchonespremium2.onrender.com/api/ventas';
+  const EMAIL_URL = 'https://colchonespremium2.onrender.com/api/presupuesto/enviar';
   
   // ===== Elementos del DOM =====
   const productosGrid = document.getElementById('productos-grid');
@@ -59,29 +60,284 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ===== Variables de estado =====
   let productos = [];
-  let categorias = []; // Nueva variable para almacenar las categorías
-  let carrito = JSON.parse(localStorage.getItem('carrito')) || {};
+  let categorias = []; // Variable para almacenar las categorías
+  let carrito = {};
   let carritoVendedor = [];
   
+  // ===== VARIABLES Y FUNCIONES DE AUTENTICACIÓN =====
+  let usuario = null;
+  let token = localStorage.getItem('authToken');
+  
+  // Verificar si hay una sesión activa al cargar
+  function verificarSesion() {
+    const tokenGuardado = localStorage.getItem('authToken');
+    const emailGuardado = localStorage.getItem('userEmail');
+    
+    if (tokenGuardado && emailGuardado) {
+      try {
+        // Decodificar el token para verificar si no ha expirado
+        const payload = JSON.parse(atob(tokenGuardado.split('.')[1]));
+        if (payload.exp * 1000 > Date.now()) {
+          token = tokenGuardado;
+          usuario = { email: emailGuardado, id: payload.id };
+          actualizarUIAutenticacion();
+          cargarCarritoUsuario();
+          return true;
+        } else {
+          cerrarSesion();
+        }
+      } catch (error) {
+        console.error('Token inválido:', error);
+        cerrarSesion();
+      }
+    }
+    return false;
+  }
+
+  // Función de login
+  async function iniciarSesion(email, password) {
+    try {
+      const response = await fetch(`${AUTH_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        token = data.token;
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('userEmail', email);
+        
+        // Decodificar token para obtener ID del usuario
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        usuario = { email, id: payload.id };
+        
+        actualizarUIAutenticacion();
+        cargarCarritoUsuario();
+        mostrarNotificacion('Sesión iniciada correctamente', 'success');
+        
+        return true;
+      } else {
+        throw new Error(data.error || 'Error al iniciar sesión');
+      }
+    } catch (error) {
+      mostrarNotificacion(error.message, 'error');
+      return false;
+    }
+  }
+
+  // Cerrar sesión
+  function cerrarSesion() {
+    token = null;
+    usuario = null;
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userEmail');
+    
+    // Mantener carrito como invitado
+    const carritoActual = carrito;
+    localStorage.setItem('carrito', JSON.stringify(carritoActual));
+    
+    actualizarUIAutenticacion();
+    mostrarNotificacion('Sesión cerrada correctamente', 'success');
+  }
+
+  // Actualizar UI según estado de autenticación
+  function actualizarUIAutenticacion() {
+    const registroLink = document.getElementById('registro-link');
+    
+    if (usuario && token) {
+      // Usuario logueado - cambiar el texto del enlace
+      if (registroLink) {
+        registroLink.innerHTML = `<i class="fas fa-user"></i> ${usuario.email} | <span onclick="cerrarSesion()" style="cursor: pointer; color: #e74c3c;">Cerrar Sesión</span>`;
+        registroLink.onclick = (e) => e.preventDefault();
+      }
+    } else {
+      // Usuario no logueado - mostrar enlace de registro
+      if (registroLink) {
+        registroLink.innerHTML = 'Registro';
+        registroLink.onclick = (e) => {
+          e.preventDefault();
+          mostrarModalLogin();
+        };
+      }
+    }
+  }
+
+  // Mostrar modal de login/registro
+  function mostrarModalLogin() {
+    // Crear modal dinámicamente si no existe
+    let modalLogin = document.getElementById('modalLogin');
+    if (!modalLogin) {
+      modalLogin = document.createElement('div');
+      modalLogin.id = 'modalLogin';
+      modalLogin.className = 'modal';
+      modalLogin.innerHTML = `
+        <div class="modal-content">
+          <span class="cerrar" onclick="cerrarModal('modalLogin')">&times;</span>
+          <h2>Iniciar Sesión</h2>
+          <form id="formLogin">
+            <div class="form-group">
+              <label for="loginEmail">Email:</label>
+              <input type="email" id="loginEmail" required>
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">Contraseña:</label>
+              <input type="password" id="loginPassword" required>
+            </div>
+            <button type="submit" class="btn">Iniciar Sesión</button>
+          </form>
+          <hr>
+          <p>¿No tienes cuenta? <a href="#" onclick="mostrarRegistroDesdeLogin()">Regístrate aquí</a></p>
+        </div>
+      `;
+      document.body.appendChild(modalLogin);
+      
+      // Agregar event listener al formulario
+      document.getElementById('formLogin').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        if (await iniciarSesion(email, password)) {
+          cerrarModal('modalLogin');
+          document.getElementById('formLogin').reset();
+        }
+      });
+    }
+    
+    modalLogin.style.display = 'flex';
+  }
+
+  // Función para mostrar registro desde login
+  window.mostrarRegistroDesdeLogin = function() {
+    cerrarModal('modalLogin');
+    if (modalRegistro) {
+      modalRegistro.style.display = 'flex';
+    }
+  };
+
+  // Cerrar modal
+  function cerrarModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  // ===== GESTIÓN DEL CARRITO INTEGRADO CON USUARIO =====
+  
+  // Cargar carrito del usuario
+  function cargarCarritoUsuario() {
+    if (usuario && token) {
+      // Si el usuario está logueado, cargar su carrito específico
+      const carritoUsuario = localStorage.getItem(`carrito_${usuario.id}`);
+      if (carritoUsuario) {
+        carrito = JSON.parse(carritoUsuario);
+      }
+    } else {
+      // Usuario invitado - cargar carrito general
+      const carritoGeneral = localStorage.getItem('carrito');
+      if (carritoGeneral) {
+        carrito = JSON.parse(carritoGeneral);
+      }
+    }
+    actualizarContadorCarrito();
+  }
+
+  // Guardar carrito (mantiene tu lógica original más la específica del usuario)
+  function guardarCarrito() {
+    if (usuario && token) {
+      // Guardar carrito específico del usuario
+      localStorage.setItem(`carrito_${usuario.id}`, JSON.stringify(carrito));
+    } else {
+      // Guardar carrito general para invitados (tu lógica original)
+      localStorage.setItem('carrito', JSON.stringify(carrito));
+    }
+  }
+
+  // Guardar carrito en el servidor (para usuarios logueados)
+  async function guardarCarritoEnServidor() {
+    if (!usuario || !token) {
+      mostrarNotificacion('Debes iniciar sesión para guardar el carrito', 'warning');
+      return;
+    }
+
+    try {
+      const productos = Object.values(carrito).map(item => ({
+        nombre: item.nombre,
+        cantidad: item.cantidad,
+        precioUnitario: item.precio
+      }));
+
+      const total = Object.values(carrito).reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+
+      const response = await fetch(VENTAS_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'auth-token': token
+        },
+        body: JSON.stringify({
+          productos,
+          total,
+          estado: 'presupuesto'
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        mostrarNotificacion('Carrito guardado en tu cuenta', 'success');
+      } else {
+        throw new Error(data.error || 'Error al guardar el carrito');
+      }
+    } catch (error) {
+      mostrarNotificacion(error.message, 'error');
+    }
+  }
+
   // ===== Funciones Principales =====
-  // Cargar productos desde la API
+  
+  // Cargar productos desde la API (MEJORADO PARA DEBUGGING)
   async function cargarProductos() {
     try {
+      console.log('Cargando productos desde:', API_URL);
       const response = await fetch(API_URL);
-      if (!response.ok) throw new Error('Error al cargar los productos');
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      
       productos = await response.json();
+      console.log(`✅ ${productos.length} productos cargados`);
+      
       mostrarProductos(productos);
       await cargarCategorias(); // Esperar a que se carguen las categorías
       cargarProductosParaVendedor();
       actualizarContadorCarrito();
     } catch (error) {
       console.error('Error:', error);
-      mostrarNotificacion('Error al cargar los productos. Intente más tarde.');
+      mostrarNotificacion('Error al cargar los productos: ' + error.message, 'error');
+      
+      if (productosGrid) {
+        productosGrid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+            <h3>Error al cargar productos</h3>
+            <p>No se pudieron cargar los productos desde el servidor.</p>
+            <button class="btn" onclick="cargarProductos()" style="margin-top: 1rem;">
+              <i class="fas fa-refresh"></i> Reintentar
+            </button>
+          </div>
+        `;
+      }
     }
   }
 
-  // Mostrar productos en la cuadrícula
+  // Mostrar productos en la cuadrícula (MEJORADO)
   function mostrarProductos(productosAMostrar) {
+    if (!productosGrid) return;
+    
     productosGrid.innerHTML = '';
     if (productosAMostrar.length === 0) {
       productosGrid.innerHTML = '<p>No se encontraron productos con esos criterios.</p>';
@@ -92,12 +348,17 @@ document.addEventListener('DOMContentLoaded', function () {
       card.className = 'producto-card';
       card.innerHTML = `
         <div class="producto-imagen-container">
-          <img src="${producto.imagen}" alt="${producto.nombre}" data-imagen-full="${producto.imagen}">
+          <img src="${producto.imagen}" alt="${producto.nombre}" 
+               data-imagen-full="${producto.imagen}"
+               onerror="this.src='assets/placeholder.jpg'">
         </div>
         <div class="producto-info">
           <h3>${producto.nombre}</h3>
           <p>${producto.descripcion}</p>
-          <p class="precio">$${producto.precio.toFixed(2)}</p>
+          <p class="categoria-tag" style="color: #666; font-size: 0.85em; margin: 0.5rem 0;">
+            <i class="fas fa-tag"></i> ${producto.categoria}
+          </p>
+          <p class="precio">$${parseFloat(producto.precio).toFixed(2)}</p>
           <button class="agregar-carrito" data-id="${producto._id}">
             <i class="fas fa-shopping-cart"></i> Agregar al Carrito
           </button>
@@ -107,17 +368,24 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // FUNCIÓN CORREGIDA: Cargar categorías desde el backend
+  // FUNCIÓN CORREGIDA: Cargar categorías dinámicamente desde el backend
   async function cargarCategorias() {
     try {
+      console.log('Cargando categorías desde:', CATEGORIAS_URL);
       const response = await fetch(CATEGORIAS_URL);
-      if (!response.ok) throw new Error('Error al cargar categorías');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       
       categorias = await response.json(); // Guardar las categorías
+      console.log(`✅ ${categorias.length} categorías cargadas:`, categorias);
       
       // Limpiar los selects antes de agregar las nuevas opciones
       categoriaSelect.innerHTML = '<option value="">Todas las categorías</option>';
-      filtroCategoriaVendedor.innerHTML = '<option value="">Todas las categorías</option>';
+      if (filtroCategoriaVendedor) {
+        filtroCategoriaVendedor.innerHTML = '<option value="">Todas las categorías</option>';
+      }
       
       // Agregar cada categoría a ambos selects
       categorias.forEach(categoria => {
@@ -127,19 +395,101 @@ document.addEventListener('DOMContentLoaded', function () {
         option1.textContent = categoria;
         categoriaSelect.appendChild(option1);
         
-        // Para el filtro del vendedor
-        const option2 = document.createElement('option');
-        option2.value = categoria;
-        option2.textContent = categoria;
-        filtroCategoriaVendedor.appendChild(option2);
+        // Para el filtro del vendedor (solo si existe)
+        if (filtroCategoriaVendedor) {
+          const option2 = document.createElement('option');
+          option2.value = categoria;
+          option2.textContent = categoria;
+          filtroCategoriaVendedor.appendChild(option2);
+        }
       });
       
-      console.log('Categorías cargadas desde el backend:', categorias);
+      // ✅ AGREGAR CATEGORÍAS AL FOOTER DINÁMICAMENTE
+      cargarCategoriasEnFooter();
+      
+      console.log('✅ Categorías cargadas correctamente desde el backend');
       
     } catch (error) {
-      console.error('Error al cargar categorías:', error);
-      mostrarNotificacion('Error al cargar las categorías.');
+      console.error('❌ Error al cargar categorías:', error);
+      
+      // Fallback: extraer categorías de los productos si falla la carga desde el backend
+      if (productos && productos.length > 0) {
+        categorias = [...new Set(productos.map(p => p.categoria))];
+        console.log('Usando categorías extraídas de productos:', categorias);
+        
+        // Limpiar y recargar con las categorías extraídas
+        categoriaSelect.innerHTML = '<option value="">Todas las categorías</option>';
+        if (filtroCategoriaVendedor) {
+          filtroCategoriaVendedor.innerHTML = '<option value="">Todas las categorías</option>';
+        }
+        
+        categorias.forEach(categoria => {
+          const option1 = document.createElement('option');
+          option1.value = categoria;
+          option1.textContent = categoria;
+          categoriaSelect.appendChild(option1);
+          
+          if (filtroCategoriaVendedor) {
+            const option2 = document.createElement('option');
+            option2.value = categoria;
+            option2.textContent = categoria;
+            filtroCategoriaVendedor.appendChild(option2);
+          }
+        });
+        
+        // También cargar en footer con fallback
+        cargarCategoriasEnFooter();
+      }
+      
+      mostrarNotificacion('Error al cargar categorías, usando categorías de productos.', 'warning');
     }
+  }
+
+  // ✅ NUEVA FUNCIÓN: Cargar categorías en el footer dinámicamente
+  function cargarCategoriasEnFooter() {
+    const footerCategorias = document.getElementById('footer-categorias');
+    
+    if (!footerCategorias || !categorias || categorias.length === 0) {
+      console.log('No se puede cargar footer: elemento no encontrado o categorías vacías');
+      return;
+    }
+    
+    console.log('🦶 Cargando categorías en el footer...');
+    
+    // Limpiar el footer (mantener solo el enlace "Ver todos")
+    footerCategorias.innerHTML = '<li><a href="#productos">Ver todos los productos</a></li>';
+    
+    // Agregar cada categoría al footer
+    categorias.forEach((categoria, index) => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      
+      a.href = '#productos';
+      a.textContent = categoria;
+      
+      // Agregar funcionalidad para filtrar por categoría al hacer clic
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Ir a la sección de productos
+        document.getElementById('productos').scrollIntoView({ behavior: 'smooth' });
+        
+        // Seleccionar la categoría en el filtro
+        setTimeout(() => {
+          if (categoriaSelect) {
+            categoriaSelect.value = categoria;
+            aplicarFiltros(); // Aplicar el filtro
+          }
+        }, 500);
+      });
+      
+      li.appendChild(a);
+      footerCategorias.appendChild(li);
+      
+      console.log(`🦶 Categoría "${categoria}" agregada al footer`);
+    });
+    
+    console.log('✅ Footer cargado con categorías dinámicas');
   }
 
   // Aplicar filtros de búsqueda, categoría y orden
@@ -152,7 +502,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (busqueda) {
       productosFiltrados = productosFiltrados.filter(p =>
         p.nombre.toLowerCase().includes(busqueda) ||
-        p.descripcion.toLowerCase().includes(busqueda)
+        p.descripcion.toLowerCase().includes(busqueda) ||
+        p.categoria.toLowerCase().includes(busqueda)
       );
     }
     
@@ -174,7 +525,8 @@ document.addEventListener('DOMContentLoaded', function () {
     mostrarProductos(productosFiltrados);
   }
 
-  // ===== Funciones del Carrito de Compras =====
+  // ===== Funciones del Carrito de Compras (MEJORADAS) =====
+  
   // Agregar producto al carrito
   function agregarAlCarrito(productoId) {
     const producto = productos.find(p => p._id === productoId);
@@ -191,22 +543,21 @@ document.addEventListener('DOMContentLoaded', function () {
     
     guardarCarrito();
     actualizarContadorCarrito();
-    mostrarNotificacion(`"${producto.nombre}" agregado al carrito.`);
-  }
-
-  // Guardar carrito en el almacenamiento local
-  function guardarCarrito() {
-    localStorage.setItem('carrito', JSON.stringify(carrito));
+    mostrarNotificacion(`"${producto.nombre}" agregado al carrito.`, 'success');
   }
 
   // Actualizar el contador del carrito en el header
   function actualizarContadorCarrito() {
     const totalItems = Object.values(carrito).reduce((sum, item) => sum + item.cantidad, 0);
-    cartCount.textContent = totalItems;
+    if (cartCount) {
+      cartCount.textContent = totalItems;
+    }
   }
 
-  // Mostrar el modal del carrito
+  // Mostrar el modal del carrito (MEJORADO CON BOTÓN DE GUARDAR)
   function mostrarCarrito() {
+    if (!modalCarrito) return;
+    
     modalCarrito.style.display = 'flex';
     listaCarrito.innerHTML = '';
     let total = 0;
@@ -222,10 +573,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const divItem = document.createElement('div');
       divItem.className = 'item-carrito';
       divItem.innerHTML = `
-        <img src="${item.imagen}" alt="${item.nombre}">
+        <img src="${item.imagen}" alt="${item.nombre}" onerror="this.src='assets/placeholder.jpg'">
         <div class="info-carrito">
           <h4>${item.nombre}</h4>
           <p>$${item.precio.toFixed(2)} x ${item.cantidad}</p>
+          <p><strong>Subtotal: $${(item.precio * item.cantidad).toFixed(2)}</strong></p>
         </div>
         <span class="eliminar-item" data-id="${id}">&times;</span>
       `;
@@ -234,6 +586,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     totalCarritoSpan.textContent = total.toFixed(2);
+    
+    // Agregar botón de guardar para usuarios logueados
+    const botonesExtra = document.querySelector('.botones-carrito-extra');
+    if (botonesExtra) {
+      botonesExtra.remove();
+    }
+    
+    if (usuario && token) {
+      const divBotones = document.createElement('div');
+      divBotones.className = 'botones-carrito-extra';
+      divBotones.style.marginTop = '1rem';
+      divBotones.style.paddingTop = '1rem';
+      divBotones.style.borderTop = '1px solid #eee';
+      divBotones.innerHTML = `
+        <button class="btn" onclick="guardarCarritoEnServidor()" style="background-color: #27ae60; width: 100%;">
+          <i class="fas fa-save"></i> Guardar en mi cuenta
+        </button>
+      `;
+      document.querySelector('.seccion-botones').appendChild(divBotones);
+    }
   }
 
   // Vaciar el carrito
@@ -242,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function () {
     guardarCarrito();
     actualizarContadorCarrito();
     mostrarCarrito();
-    mostrarNotificacion('Carrito vaciado con éxito.');
+    mostrarNotificacion('Carrito vaciado con éxito.', 'success');
   }
 
   // Eliminar un item del carrito
@@ -251,26 +623,41 @@ document.addEventListener('DOMContentLoaded', function () {
     guardarCarrito();
     actualizarContadorCarrito();
     mostrarCarrito();
-    mostrarNotificacion('Producto eliminado del carrito.');
+    mostrarNotificacion('Producto eliminado del carrito.', 'success');
   }
 
-  // Realizar compra
+  // Realizar compra (MEJORADO CON LÓGICA DE USUARIO)
   function realizarCompra() {
     if (Object.keys(carrito).length === 0) {
       mostrarNotificacion('El carrito está vacío. Agregue productos para comprar.', 'warning');
       return;
     }
-    // Lógica para procesar la compra (simulado)
-    vaciarCarrito();
-    modalCarrito.style.display = 'none';
-    mostrarNotificacion('¡Compra realizada con éxito!', 'success');
+    
+    if (usuario && token) {
+      // Usuario logueado - procesar compra real guardando en el servidor
+      guardarCarritoEnServidor().then(() => {
+        vaciarCarrito();
+        modalCarrito.style.display = 'none';
+        mostrarNotificacion('¡Compra realizada con éxito! Se ha guardado en tu cuenta.', 'success');
+      });
+    } else {
+      // Usuario invitado - mostrar mensaje para registrarse
+      mostrarNotificacion('Para procesar la compra, por favor inicia sesión o regístrate.', 'warning');
+      setTimeout(() => {
+        modalCarrito.style.display = 'none';
+        mostrarModalLogin();
+      }, 2000);
+    }
   }
 
-  // ===== Funciones del Modal de Vendedores =====
+  // ===== Funciones del Modal de Vendedores (SIN CAMBIOS - MANTIENE TU LÓGICA ORIGINAL) =====
+  
   // Cargar productos en el modal de vendedor
   function cargarProductosParaVendedor() {
+    if (!listaProductosVendedor) return;
+    
     listaProductosVendedor.innerHTML = '';
-    const categoriaSeleccionada = filtroCategoriaVendedor.value;
+    const categoriaSeleccionada = filtroCategoriaVendedor ? filtroCategoriaVendedor.value : '';
     const productosFiltrados = categoriaSeleccionada
       ? productos.filter(p => p.categoria === categoriaSeleccionada)
       : productos;
@@ -284,10 +671,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const divProducto = document.createElement('div');
       divProducto.className = 'producto-vendedor';
       divProducto.innerHTML = `
-        <img src="${producto.imagen}" alt="${producto.nombre}">
+        <img src="${producto.imagen}" alt="${producto.nombre}" onerror="this.src='assets/placeholder.jpg'">
         <div class="info-vendedor">
           <h4>${producto.nombre}</h4>
           <p class="precio-vendedor" data-precio="${producto.precio}">$${producto.precio.toFixed(2)}</p>
+          <p style="font-size: 0.8em; color: #666;">${producto.categoria}</p>
         </div>
         <input type="number" class="cantidad-vendedor" value="0" min="0" data-id="${producto._id}" data-precio="${producto.precio}">
       `;
@@ -320,13 +708,17 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
     
-    totalPedidoSpan.textContent = total.toFixed(2);
+    if (totalPedidoSpan) {
+      totalPedidoSpan.textContent = total.toFixed(2);
+    }
     actualizarDetallePedido();
   }
 
   // Actualizar el detalle del pedido en el modal de vendedor
   function actualizarDetallePedido() {
     const detallePedido = document.getElementById('detallePedido');
+    if (!detallePedido) return;
+    
     detallePedido.innerHTML = '';
     carritoVendedor.forEach(item => {
       const p = document.createElement('p');
@@ -349,13 +741,13 @@ document.addEventListener('DOMContentLoaded', function () {
     doc.text('Presupuesto - Colchones Premium', 10, 20);
     
     doc.setFontSize(12);
-    doc.text(`Vendedor: ${nombreVendedorInput.value || 'N/A'}`, 10, 30);
-    doc.text(`Cliente: ${nombreClienteInput.value || 'N/A'}`, 10, 37);
-    doc.text(`Teléfono: ${telefonoClienteInput.value || 'N/A'}`, 10, 44);
-    doc.text(`Provincia: ${provinciaClienteSelect.value || 'N/A'}`, 10, 51);
-    doc.text(`Localidad: ${localidadClienteSelect.value || 'N/A'}`, 10, 58);
-    doc.text(`Dirección: ${direccionClienteInput.value || 'N/A'}`, 10, 65);
-    doc.text(`Email: ${emailClienteInput.value || 'N/A'}`, 10, 72);
+    doc.text(`Vendedor: ${nombreVendedorInput?.value || 'N/A'}`, 10, 30);
+    doc.text(`Cliente: ${nombreClienteInput?.value || 'N/A'}`, 10, 37);
+    doc.text(`Teléfono: ${telefonoClienteInput?.value || 'N/A'}`, 10, 44);
+    doc.text(`Provincia: ${provinciaClienteSelect?.value || 'N/A'}`, 10, 51);
+    doc.text(`Localidad: ${localidadClienteSelect?.value || 'N/A'}`, 10, 58);
+    doc.text(`Dirección: ${direccionClienteInput?.value || 'N/A'}`, 10, 65);
+    doc.text(`Email: ${emailClienteInput?.value || 'N/A'}`, 10, 72);
     
     let y = 85;
     doc.setFontSize(16);
@@ -364,17 +756,17 @@ document.addEventListener('DOMContentLoaded', function () {
     
     doc.setFontSize(12);
     carritoVendedor.forEach(item => {
-      doc.text(`- ${item.cantidad} x ${item.nombre} ($${item.precio.toFixed(2)} c/u)`, 15, y);
-      doc.text(`Subtotal: $${item.subtotal.toFixed(2)}`, 150, y);
+      doc.text(`- ${item.cantidad} x ${item.nombre} (${item.precio.toFixed(2)} c/u)`, 15, y);
+      doc.text(`Subtotal: ${item.subtotal.toFixed(2)}`, 150, y);
       y += 7;
     });
     
     y += 10;
     doc.setFontSize(16);
-    doc.text(`Total: $${totalPedidoSpan.textContent}`, 10, y);
+    doc.text(`Total: ${totalPedidoSpan?.textContent || '0.00'}`, 10, y);
     
-    doc.save(`presupuesto-${nombreClienteInput.value || 'cliente'}.pdf`);
-    mostrarNotificacion('PDF generado con éxito.');
+    doc.save(`presupuesto-${nombreClienteInput?.value || 'cliente'}.pdf`);
+    mostrarNotificacion('PDF generado con éxito.', 'success');
   }
   
   // Enviar presupuesto por email (CONECTADO A LA API)
@@ -383,7 +775,7 @@ document.addEventListener('DOMContentLoaded', function () {
         mostrarNotificacion('El presupuesto está vacío', 'warning');
         return;
     }
-    const emailCliente = emailClienteInput.value;
+    const emailCliente = emailClienteInput?.value;
     if (!emailCliente) {
         mostrarNotificacion('Por favor, ingrese un email de cliente.', 'warning');
         return;
@@ -392,24 +784,22 @@ document.addEventListener('DOMContentLoaded', function () {
     // Recopilar todos los datos necesarios
     const datosPresupuesto = {
         cliente: {
-            nombre: nombreClienteInput.value,
+            nombre: nombreClienteInput?.value || '',
             email: emailCliente,
-            telefono: telefonoClienteInput.value,
-            provincia: provinciaClienteSelect.value,
-            localidad: localidadClienteSelect.value,
-            direccion: direccionClienteInput.value
+            telefono: telefonoClienteInput?.value || '',
+            provincia: provinciaClienteSelect?.value || '',
+            localidad: localidadClienteSelect?.value || '',
+            direccion: direccionClienteInput?.value || ''
         },
         vendedor: {
-            nombre: nombreVendedorInput.value
+            nombre: nombreVendedorInput?.value || ''
         },
         productos: carritoVendedor,
-        total: parseFloat(totalPedidoSpan.textContent)
+        total: parseFloat(totalPedidoSpan?.textContent || '0')
     };
 
-    const url = 'https://colchonespremium2.onrender.com/api/presupuesto/enviar';
-
     try {
-        const response = await fetch(url, {
+        const response = await fetch(EMAIL_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -427,7 +817,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     } catch (error) {
         console.error('Error al enviar presupuesto:', error);
-        mostrarNotificacion(error.message, 'warning');
+        mostrarNotificacion(error.message, 'error');
     }
   }
 
@@ -448,6 +838,8 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   function cargarLocalidades() {
+    if (!provinciaClienteSelect || !localidadClienteSelect) return;
+    
     const provincia = provinciaClienteSelect.value;
     localidadClienteSelect.innerHTML = '<option value="">Seleccione una localidad</option>';
     localidadClienteSelect.disabled = !provincia;
@@ -463,8 +855,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ===== Funciones adicionales =====
-  // Mostrar notificación
+  
+  // Mostrar notificación (MEJORADO CON TIPOS)
   function mostrarNotificacion(mensaje, tipo = 'info') {
+    if (!modalNotificacion || !notificacionMensaje) return;
+    
     notificacionMensaje.textContent = mensaje;
     modalNotificacion.className = `notificacion show ${tipo}`;
     setTimeout(() => {
@@ -474,28 +869,55 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Mostrar imagen ampliada
   function mostrarImagenAmpliada(src) {
+    if (!modalImagen || !imagenAmpliada) return;
+    
     imagenAmpliada.src = src;
     modalImagen.style.display = 'block';
   }
   
+  // FUNCIÓN PARA DEBUGGING DE CATEGORÍAS
+  function debugCategorias() {
+    console.log('=== DEBUG CATEGORÍAS ===');
+    console.log('Categorías cargadas:', categorias);
+    console.log('Productos únicos por categoría:');
+    
+    if (productos && productos.length > 0) {
+      const categoriaCount = {};
+      productos.forEach(p => {
+        categoriaCount[p.categoria] = (categoriaCount[p.categoria] || 0) + 1;
+      });
+      console.table(categoriaCount);
+    }
+    
+    console.log('Select de categorías:', categoriaSelect ? 'Encontrado' : 'NO ENCONTRADO');
+    console.log('Opciones en select:', categoriaSelect ? categoriaSelect.options.length : 'N/A');
+    console.log('Footer categorías:', document.getElementById('footer-categorias') ? 'Encontrado' : 'NO ENCONTRADO');
+    console.log('======================');
+  }
+
   // ================= EVENT LISTENERS =================
+  
   // Eventos para filtros y búsqueda
-  categoriaSelect.addEventListener('change', aplicarFiltros);
-  ordenSelect.addEventListener('change', aplicarFiltros);
-  searchInput.addEventListener('input', aplicarFiltros);
+  if (categoriaSelect) categoriaSelect.addEventListener('change', aplicarFiltros);
+  if (ordenSelect) ordenSelect.addEventListener('change', aplicarFiltros);
+  if (searchInput) searchInput.addEventListener('input', aplicarFiltros);
 
   // Evento para abrir el modal de imagen
-  productosGrid.addEventListener('click', e => {
-    const imagen = e.target.closest('.producto-imagen-container img');
-    if (imagen) {
-      mostrarImagenAmpliada(imagen.dataset.imagenFull);
-    }
-  });
+  if (productosGrid) {
+    productosGrid.addEventListener('click', e => {
+      const imagen = e.target.closest('.producto-imagen-container img');
+      if (imagen) {
+        mostrarImagenAmpliada(imagen.dataset.imagenFull);
+      }
+    });
+  }
 
   // Evento para cerrar el modal de imagen
-  cerrarModalImagen.addEventListener('click', () => {
-    modalImagen.style.display = 'none';
-  });
+  if (cerrarModalImagen) {
+    cerrarModalImagen.addEventListener('click', () => {
+      modalImagen.style.display = 'none';
+    });
+  }
   
   // Cerrar el modal de imagen haciendo clic fuera
   window.addEventListener('click', (e) => {
@@ -505,26 +927,33 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Eventos para el carrito de compras
-  productosGrid.addEventListener('click', e => {
-    const btnAgregar = e.target.closest('.agregar-carrito');
-    if (btnAgregar) {
-      agregarAlCarrito(btnAgregar.dataset.id);
-    }
-  });
+  if (productosGrid) {
+    productosGrid.addEventListener('click', e => {
+      const btnAgregar = e.target.closest('.agregar-carrito');
+      if (btnAgregar) {
+        agregarAlCarrito(btnAgregar.dataset.id);
+      }
+    });
+  }
 
-  document.querySelector('.cart-icon').closest('a').addEventListener('click', e => {
-    e.preventDefault();
-    mostrarCarrito();
-  });
+  const cartIcon = document.querySelector('.cart-icon');
+  if (cartIcon) {
+    cartIcon.closest('a').addEventListener('click', e => {
+      e.preventDefault();
+      mostrarCarrito();
+    });
+  }
   
-  listaCarrito.addEventListener('click', e => {
-    if (e.target.classList.contains('eliminar-item')) {
-      eliminarDelCarrito(e.target.dataset.id);
-    }
-  });
+  if (listaCarrito) {
+    listaCarrito.addEventListener('click', e => {
+      if (e.target.classList.contains('eliminar-item')) {
+        eliminarDelCarrito(e.target.dataset.id);
+      }
+    });
+  }
   
-  btnVaciarCarrito.addEventListener('click', vaciarCarrito);
-  btnComprarAhora.addEventListener('click', realizarCompra);
+  if (btnVaciarCarrito) btnVaciarCarrito.addEventListener('click', vaciarCarrito);
+  if (btnComprarAhora) btnComprarAhora.addEventListener('click', realizarCompra);
 
   // Eventos para los modales
   const botonesCerrar = document.querySelectorAll('.cerrar');
@@ -542,76 +971,111 @@ document.addEventListener('DOMContentLoaded', function () {
   if (btnRegistro) {
       btnRegistro.addEventListener('click', (e) => {
           e.preventDefault();
-          modalRegistro.style.display = 'flex';
+          // La lógica se maneja en actualizarUIAutenticacion()
       });
   }
 
-  // Registro de usuario conectado a la API
-  formRegistro.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const nombre = document.getElementById('regNombre').value;
-    const email = document.getElementById('regEmail').value;
-    const password = document.getElementById('regPassword').value;
+  // Registro de usuario conectado a la API (MEJORADO)
+  if (formRegistro) {
+    formRegistro.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('regEmail')?.value;
+      const password = document.getElementById('regPassword')?.value;
 
-    const registroUrl = 'https://colchonespremium2.onrender.com/api/auth/register';
-
-    try {
-        const response = await fetch(registroUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password })
+      try {
+        const response = await fetch(`${AUTH_URL}/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            mostrarNotificacion('¡Registro exitoso!', 'success');
-            modalRegistro.style.display = 'none';
-            formRegistro.reset();
+          mostrarNotificacion('¡Registro exitoso! Por favor inicia sesión.', 'success');
+          modalRegistro.style.display = 'none';
+          formRegistro.reset();
+          setTimeout(mostrarModalLogin, 1000); // Mostrar login después de registro exitoso
         } else {
-            throw new Error(data.error || 'Ocurrió un error al registrarse.');
+          throw new Error(data.error || 'Ocurrió un error al registrarse.');
         }
-
-    } catch (error) {
+      } catch (error) {
         console.error('Error en el registro:', error);
-        mostrarNotificacion(error.message, 'warning');
-    }
-  });
+        mostrarNotificacion(error.message, 'error');
+      }
+    });
+  }
 
   // Eventos para el modal de vendedor
-  btnVendedores.addEventListener('click', e => {
-    e.preventDefault();
-    cargarProductosParaVendedor();
-    modalVendedores.style.display = 'flex';
-  });
+  if (btnVendedores) {
+    btnVendedores.addEventListener('click', e => {
+      e.preventDefault();
+      cargarProductosParaVendedor();
+      modalVendedores.style.display = 'flex';
+    });
+  }
 
-  listaProductosVendedor.addEventListener('input', (e) => {
-    if (e.target.classList.contains('cantidad-vendedor')) {
-      actualizarResumenPedido();
-    }
-  });
+  if (listaProductosVendedor) {
+    listaProductosVendedor.addEventListener('input', (e) => {
+      if (e.target.classList.contains('cantidad-vendedor')) {
+        actualizarResumenPedido();
+      }
+    });
+  }
   
-  filtroCategoriaVendedor.addEventListener('change', cargarProductosParaVendedor);
-  btnDescargarPresupuesto.addEventListener('click', generarPDF);
-  btnEnviarPresupuesto.addEventListener('click', enviarPresupuesto);
-  btnResetearPresupuesto.addEventListener('click', function() {
-    carritoVendedor = [];
-    nombreClienteInput.value = '';
-    emailClienteInput.value = '';
-    localidadClienteSelect.value = '';
-    provinciaClienteSelect.value = '';
-    localidadClienteSelect.disabled = true;
-    document.querySelectorAll('.cantidad-vendedor').forEach(i => i.value = 0);
-    actualizarResumenPedido();
-    mostrarNotificacion('Presupuesto reseteado');
-  });
+  if (filtroCategoriaVendedor) {
+    filtroCategoriaVendedor.addEventListener('change', cargarProductosParaVendedor);
+  }
+  
+  if (btnDescargarPresupuesto) {
+    btnDescargarPresupuesto.addEventListener('click', generarPDF);
+  }
+  
+  if (btnEnviarPresupuesto) {
+    btnEnviarPresupuesto.addEventListener('click', enviarPresupuesto);
+  }
+  
+  if (btnResetearPresupuesto) {
+    btnResetearPresupuesto.addEventListener('click', function() {
+      carritoVendedor = [];
+      if (nombreClienteInput) nombreClienteInput.value = '';
+      if (emailClienteInput) emailClienteInput.value = '';
+      if (localidadClienteSelect) localidadClienteSelect.value = '';
+      if (provinciaClienteSelect) provinciaClienteSelect.value = '';
+      if (localidadClienteSelect) localidadClienteSelect.disabled = true;
+      document.querySelectorAll('.cantidad-vendedor').forEach(i => i.value = 0);
+      actualizarResumenPedido();
+      mostrarNotificacion('Presupuesto reseteado', 'success');
+    });
+  }
 
-  provinciaClienteSelect.addEventListener('change', cargarLocalidades);
+  if (provinciaClienteSelect) {
+    provinciaClienteSelect.addEventListener('change', cargarLocalidades);
+  }
+
+  // Exponer funciones globales necesarias
+  window.cerrarSesion = cerrarSesion;
+  window.guardarCarritoEnServidor = guardarCarritoEnServidor;
+  window.cerrarModal = cerrarModal;
+  window.debugCategorias = debugCategorias;
+  window.cargarCategoriasEnFooter = cargarCategoriasEnFooter;
 
   // ================= INICIALIZACIÓN FINAL =================
+  
+  console.log('🚀 Iniciando aplicación...');
+  
+  // Verificar sesión existente
+  verificarSesion();
+  
+  // Cargar carrito del usuario o invitado
+  cargarCarritoUsuario();
+  
+  // Cargar productos y categorías
   cargarProductos();
+  
+  console.log('✅ Aplicación inicializada correctamente');
 });
 
 // ============== FIN SCRIPT ==============

@@ -130,54 +130,119 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// =================== LÓGICA DE MIGRACIÓN (EJECUCIÓN ÚNICA AL INICIAR) ===================
+// =================== LÓGICA DE MIGRACIÓN (MEJORADA) ===================
 
 // Función para generar IDs únicos
 const generarIdUnico = (categoria, contador) => {
-    const prefijo = categoria ? categoria.slice(0, 3).toUpperCase() : 'GEN';
-    return `${prefijo}-${contador.toString().padStart(3, '0')}`;
+    const prefijo = categoria 
+        ? categoria
+            .replace(/[^a-zA-Z0-9]/g, '') // Remover caracteres especiales
+            .slice(0, 3)
+            .toUpperCase()
+        : 'GEN';
+    
+    return `${prefijo}-${contador.toString().padStart(4, '0')}`;
 };
 
+// FUNCIÓN MEJORADA DE MIGRACIÓN
 const migrateExcelDataToMongoDB = async () => {
     try {
+        console.log('🔄 Iniciando migración de datos del Excel...');
+        
         const productCount = await Product.countDocuments();
-        if (productCount === 0) { // Solo migrar si la colección de productos está vacía
-            const workbook = xlsx.readFile(path.join(__dirname, 'precios_colchones.xlsx'));
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const data = xlsx.utils.sheet_to_json(sheet);
-
-            const productsToInsert = [];
-            const contadores = {};
-
-            data.forEach(item => {
-                if (item.Mostrar?.toLowerCase() === "si" && item.Imagen?.trim() !== "") {
-                    const categoria = item.Categoria || 'General';
-                    contadores[categoria] = (contadores[categoria] || 0) + 1;
-                    productsToInsert.push({
-                        _id: generarIdUnico(categoria, contadores[categoria]),
-                        nombre: item.Nombre || '',
-                        descripcion: item.Descripcion || '',
-                        precio: item.Precio || 0,
-                        categoria: categoria,
-                        imagen: item.Imagen || '',
-                        mostrar: item.Mostrar || 'no'
-                    });
-                }
-            });
-
-            if (productsToInsert.length > 0) {
-                await Product.insertMany(productsToInsert);
-                console.log(`✅ Migración exitosa: ${productsToInsert.length} productos guardados en la base de datos.`);
-            }
-        } else {
-            console.log(`ℹ️ La colección de productos ya contiene ${productCount} documentos. No se realizó la migración.`);
+        console.log(`📊 Productos existentes en BD: ${productCount}`);
+        
+        const excelPath = path.join(__dirname, 'precios_colchones.xlsx');
+        console.log(`📁 Buscando archivo Excel en: ${excelPath}`);
+        
+        // Verificar si el archivo existe
+        if (!require('fs').existsSync(excelPath)) {
+            console.error('❌ Archivo Excel no encontrado:', excelPath);
+            return;
         }
+        
+        const workbook = xlsx.readFile(excelPath);
+        const sheetName = workbook.SheetNames[0];
+        console.log(`📋 Procesando hoja: ${sheetName}`);
+        
+        const sheet = workbook.Sheets[sheetName];
+        const data = xlsx.utils.sheet_to_json(sheet);
+        
+        console.log(`📝 Registros encontrados en Excel: ${data.length}`);
+        console.log('📋 Columnas disponibles:', Object.keys(data[0] || {}));
+        
+        const productsToProcess = [];
+        const contadores = {};
+        let procesados = 0;
+        let omitidos = 0;
+        
+        data.forEach((item, index) => {
+            const mostrar = item.Mostrar?.toString().toLowerCase().trim();
+            
+            // Condiciones más flexibles para incluir productos
+            if (mostrar === "si" || mostrar === "sí") {
+                const categoria = item.Categoria?.toString().trim() || 'General';
+                contadores[categoria] = (contadores[categoria] || 0) + 1;
+                
+                productsToProcess.push({
+                    _id: generarIdUnico(categoria, contadores[categoria]),
+                    nombre: item.Nombre?.toString().trim() || `Producto ${index + 1}`,
+                    descripcion: item.Descripcion?.toString().trim() || '',
+                    precio: parseFloat(item.Precio) || 0,
+                    categoria: categoria,
+                    imagen: item.Imagen?.toString().trim() || '',
+                    mostrar: 'si'
+                });
+                procesados++;
+            } else {
+                omitidos++;
+            }
+        });
+        
+        console.log(`✅ Productos a procesar: ${procesados}`);
+        console.log(`⏭️ Productos omitidos: ${omitidos}`);
+        console.log('📊 Productos por categoría:', contadores);
+        
+        if (productsToProcess.length > 0) {
+            // Usar upsert para actualizar productos existentes o crear nuevos
+            const bulkOps = productsToProcess.map(product => ({
+                updateOne: {
+                    filter: { _id: product._id },
+                    update: { $set: product },
+                    upsert: true
+                }
+            }));
+            
+            const result = await Product.bulkWrite(bulkOps);
+            
+            console.log('📈 Resultado de la migración:');
+            console.log(`  ✅ Insertados: ${result.insertedCount || 0}`);
+            console.log(`  🔄 Actualizados: ${result.modifiedCount || 0}`);
+            console.log(`  📋 Sin cambios: ${(result.matchedCount || 0) - (result.modifiedCount || 0)}`);
+            
+            // Verificar categorías únicas después de la migración
+            const categorias = await Product.distinct('categoria', { mostrar: 'si' });
+            console.log('🏷️ Categorías disponibles después de la migración:', categorias);
+            
+            console.log(`✅ Migración completada exitosamente`);
+            
+        } else {
+            console.log('⚠️ No se encontraron productos válidos para migrar');
+        }
+        
+        // Estadísticas finales
+        const finalCount = await Product.countDocuments();
+        const categoriasCount = await Product.distinct('categoria');
+        console.log(`📊 Total de productos en BD: ${finalCount}`);
+        console.log(`🏷️ Total de categorías: ${categoriasCount.length}`);
+        
     } catch (err) {
         console.error('❌ Error durante la migración del archivo Excel:', err);
+        console.error('Stack trace:', err.stack);
     }
 };
 
-// =================== RUTAS PARA PRODUCTOS Y CATEGORÍAS (AHORA USANDO MONGO) ===================
+// =================== RUTAS PARA PRODUCTOS Y CATEGORÍAS (MEJORADAS) ===================
 
 // Ruta raíz
 app.get('/', (req, res) => {
@@ -195,24 +260,35 @@ app.get('/', (req, res) => {
     });
 });
 
-// Endpoint para productos
+// Endpoint para productos MEJORADO
 app.get('/api/colchones', async (req, res) => {
     try {
-        const productos = await Product.find({ mostrar: 'si' });
+        console.log('📋 Solicitud de productos recibida');
+        
+        const productos = await Product.find({ mostrar: 'si' }).sort({ categoria: 1, nombre: 1 });
+        
+        console.log(`✅ Enviando ${productos.length} productos`);
+        console.log('🏷️ Categorías encontradas:', [...new Set(productos.map(p => p.categoria))]);
+        
         res.json(productos);
     } catch (err) {
-        console.error('Error al obtener productos:', err);
+        console.error('❌ Error al obtener productos:', err);
         res.status(500).json({ error: 'Error al cargar productos' });
     }
 });
 
-// Endpoint para categorías
+// Endpoint para categorías MEJORADO
 app.get('/api/categorias', async (req, res) => {
     try {
+        console.log('🏷️ Solicitud de categorías recibida');
+        
         const categorias = await Product.distinct('categoria', { mostrar: 'si' });
+        
+        console.log(`✅ Enviando ${categorias.length} categorías:`, categorias);
+        
         res.json(categorias);
     } catch (err) {
-        console.error('Error al obtener categorías:', err);
+        console.error('❌ Error al obtener categorías:', err);
         res.status(500).json({ error: 'Error al cargar categorías' });
     }
 });
@@ -234,6 +310,7 @@ app.post('/api/ventas', verifyToken, async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
+
 // Endpoint para enviar el presupuesto por email
 app.post('/api/presupuesto/enviar', async (req, res) => {
     const { cliente, vendedor, productos, total } = req.body;
@@ -271,6 +348,58 @@ app.post('/api/presupuesto/enviar', async (req, res) => {
     }
 });
 
+// =================== ENDPOINTS ADICIONALES PARA DEBUGGING ===================
+
+// Endpoint para forzar re-migración (PARA DEBUGGING)
+app.get('/api/admin/migrate', async (req, res) => {
+    try {
+        console.log('🔄 Migración forzada solicitada...');
+        await migrateExcelDataToMongoDB();
+        
+        const stats = {
+            totalProductos: await Product.countDocuments(),
+            productosVisibles: await Product.countDocuments({ mostrar: 'si' }),
+            categorias: await Product.distinct('categoria', { mostrar: 'si' })
+        };
+        
+        res.json({
+            message: 'Migración completada',
+            stats: stats
+        });
+    } catch (error) {
+        console.error('Error en migración forzada:', error);
+        res.status(500).json({ error: 'Error en la migración' });
+    }
+});
+
+// Endpoint para ver todos los productos (PARA DEBUGGING)
+app.get('/api/admin/productos/todos', async (req, res) => {
+    try {
+        const productos = await Product.find({}).sort({ categoria: 1, nombre: 1 });
+        
+        const stats = {
+            total: productos.length,
+            visibles: productos.filter(p => p.mostrar === 'si').length,
+            ocultos: productos.filter(p => p.mostrar !== 'si').length,
+            categorias: [...new Set(productos.map(p => p.categoria))],
+            porCategoria: {}
+        };
+        
+        // Contar productos por categoría
+        productos.forEach(p => {
+            stats.porCategoria[p.categoria] = (stats.porCategoria[p.categoria] || 0) + 1;
+        });
+        
+        res.json({
+            productos: productos,
+            estadisticas: stats
+        });
+    } catch (err) {
+        console.error('Error al obtener todos los productos:', err);
+        res.status(500).json({ error: 'Error al cargar productos' });
+    }
+});
+
 // =================== INICIAR SERVIDOR ===================
 app.listen(PORT, () => {
     console.log(`🚀 Servidor en http://localhost:${PORT}`);
@@ -280,4 +409,6 @@ app.listen(PORT, () => {
     console.log(`- POST /api/auth/register`);
     console.log(`- POST /api/auth/login`);
     console.log(`- POST /api/ventas (protegido)`);
+    console.log(`- GET /api/admin/migrate (debugging)`);
+    console.log(`- GET /api/admin/productos/todos (debugging)`);
 });

@@ -681,3 +681,187 @@ header {
     max-width: none;
   }
 }
+
+/* ===== AGREGAR ESTOS ESTILOS AL FINAL DE TU styles.css ===== */
+
+/* Estilos para autenticación de usuarios */
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-logout {
+    color: var(--accent);
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.user-logout:hover {
+    color: #c0392b;
+}
+
+/* Estilos para notificaciones con tipos */
+.notificacion.success {
+    background-color: var(--success);
+}
+
+.notificacion.error {
+    background-color: var(--accent);
+}
+
+.notificacion.warning {
+    background-color: var(--warning);
+}
+
+/* Estilos para categorías en productos */
+.categoria-tag {
+    display: inline-block;
+    background-color: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.8em;
+    margin: 0.5rem 0;
+    color: #666;
+}
+
+/* Botones adicionales del carrito */
+.botones-carrito-extra {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.botones-carrito-extra .btn {
+    width: 100%;
+    background-color: #27ae60;
+    color: white;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+.botones-carrito-extra .btn:hover {
+    background-color: #229954;
+}
+
+/* Estilos para manejo de errores */
+.error-container {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    background-color: #fff;
+    border-radius: 10px;
+    margin: 2rem 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.error-container h3 {
+    color: var(--accent);
+    margin-bottom: 1rem;
+}
+
+.error-container p {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.error-container .btn {
+    background-color: var(--secondary);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+.error-container .btn:hover {
+    background-color: #2980b9;
+}
+
+/* Placeholder para imágenes que no cargan */
+.producto-imagen-container img[src*="placeholder"] {
+    background-color: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    object-fit: cover;
+}
+
+/* Estilos mejorados para el modal de login dinámico */
+.modal .modal-content {
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal .modal-content h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+}
+
+.modal .modal-content hr {
+    margin: 1.5rem 0;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+.modal .modal-content p {
+    text-align: center;
+    margin: 0;
+}
+
+.modal .modal-content a {
+    color: var(--secondary);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal .modal-content a:hover {
+    text-decoration: underline;
+}
+
+/* Estilos para debugging */
+.debug-button {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    z-index: 1000;
+    padding: 0.5rem;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.8em;
+    cursor: pointer;
+}
+
+.debug-button:hover {
+    background: #555;
+}
+
+/* Mejoras para productos en vista mobile */
+@media (max-width: 768px) {
+    .user-menu {
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.9em;
+    }
+    
+    .categoria-tag {
+        font-size: 0.75em;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .botones-carrito-extra {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+    
+    .error-container {
+        padding: 2rem 1rem;
+    }
+}
