@@ -1,4 +1,4 @@
-// ============== SCRIPT COMPLETO MODIFICADO ==============
+// ============== SCRIPT COMPLETO CORREGIDO ==============
 // Este script gestiona todas las funcionalidades del frontend,
 // incluyendo la conexión a la API para obtener los datos de los productos
 // y la lógica de autenticación para clientes y vendedores.
@@ -24,10 +24,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalCarrito = document.getElementById('modalCarrito');
     const modalImagen = document.getElementById('modalImagen');
     const modalRegistro = document.getElementById('modalRegistro');
-
+    
     // ======================================
-    // NUEVOS ELEMENTOS PARA AUTENTICACIÓN
+    // ELEMENTOS PARA AUTENTICACIÓN
     // ======================================
+    // Elementos de registro/login de clientes
     const btnRegistro = document.getElementById('registro-link');
     const formRegistro = document.getElementById('formRegistro');
     const formLoginCliente = document.getElementById('formLoginCliente');
@@ -35,14 +36,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const showClientRegisterLink = document.getElementById('showClientRegister');
     const registroStatusMessage = document.getElementById('registro-status-message');
     const loginStatusMessage = document.getElementById('login-status-message');
-    const logoutBtn = document.getElementById('logout-btn');
-    const authButtonsContainer = document.getElementById('auth-buttons-container');
+    const cerrarRegistro = document.getElementById('cerrarRegistro');
 
+    // Elementos de login de vendedores
     const formLoginVendedor = document.getElementById('formLoginVendedor');
     const loginVendedorStatusMessage = document.getElementById('login-vendedor-status-message');
-    
-    const cerrarRegistro = document.getElementById('cerrarRegistro');
     const cerrarVendedores = document.getElementById('cerrarVendedores');
+    
+    // Botón de cerrar sesión universal
+    const logoutBtn = document.getElementById('logout-btn');
+    const authButtonsContainer = document.getElementById('auth-buttons-container');
     // ======================================
 
     // Elementos del modal de vendedores
@@ -95,8 +98,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const token = localStorage.getItem('authToken');
         const isLoggedIn = !!token; // Convierte a booleano
 
-        // Oculta/muestra los botones de acceso según el estado
         btnRegistro.style.display = isLoggedIn ? 'none' : 'block';
+        btnVendedores.style.display = isLoggedIn ? 'none' : 'block';
         logoutBtn.style.display = isLoggedIn ? 'block' : 'none';
     }
 
@@ -727,4 +730,4 @@ document.addEventListener('DOMContentLoaded', function () {
     checkLoginStatus(); // NUEVO: Llama a esta función al inicio
 });
 
-// ============== FIN SCRIPT MODIFICADO ==============
+// ============== FIN SCRIPT CORREGIDO ==============
