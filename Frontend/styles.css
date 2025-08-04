@@ -1,7 +1,7 @@
 /* ===== ESTILOS GENERALES ===== */
 :root {
   --primary: #2c3e50;
-  --secondary: #ff2600;
+  --secondary: #3498db;
   --accent: #e74c3c;
   --light: #ecf0f1;
   --dark: #2c3e50;
@@ -62,7 +62,7 @@ header {
 }
 
 .logo-img {
-  width: 150px;
+  width: 40px;
   height: auto;
   margin-right: 10px;
 }
@@ -238,12 +238,11 @@ header {
 
 .productos {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
 }
 
 .producto-card {
-  height: 380px;
   background-color: white;
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -259,7 +258,7 @@ header {
 }
 
 .producto-imagen-container {
-  padding: 10px;
+  height: 250px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -268,7 +267,6 @@ header {
 }
 
 .producto-imagen-container img {
-  max-width: 250px;
   max-height: 250px;
   object-fit: contain;
   padding: 15px;
