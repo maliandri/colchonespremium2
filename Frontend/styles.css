@@ -65,6 +65,10 @@ header {
   object-fit: contain;
 }
 
+.logo:hover {
+  transform: scale(1.03);
+}
+
 .logo-text span {
   color: var(--secondary);
 }
