@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import xlsx from 'xlsx';
 import path from 'path';
+import fs from 'fs'; // ✅ AGREGADO: Import de fs
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
@@ -130,7 +131,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// =================== LÓGICA DE MIGRACIÓN (MEJORADA) ===================
+// =================== LÓGICA DE MIGRACIÓN (CORREGIDA) ===================
 
 // Función para generar IDs únicos
 const generarIdUnico = (categoria, contador) => {
@@ -144,7 +145,7 @@ const generarIdUnico = (categoria, contador) => {
     return `${prefijo}-${contador.toString().padStart(4, '0')}`;
 };
 
-// FUNCIÓN MEJORADA DE MIGRACIÓN
+// ✅ FUNCIÓN CORREGIDA DE MIGRACIÓN
 const migrateExcelDataToMongoDB = async () => {
     try {
         console.log('🔄 Iniciando migración de datos del Excel...');
@@ -155,11 +156,28 @@ const migrateExcelDataToMongoDB = async () => {
         const excelPath = path.join(__dirname, 'precios_colchones.xlsx');
         console.log(`📁 Buscando archivo Excel en: ${excelPath}`);
         
-        // Verificar si el archivo existe
-        if (!require('fs').existsSync(excelPath)) {
+        // ✅ CORREGIDO: Usar fs en lugar de require('fs')
+        if (!fs.existsSync(excelPath)) {
             console.error('❌ Archivo Excel no encontrado:', excelPath);
+            console.log('📂 Listando archivos en el directorio:');
+            try {
+                const files = fs.readdirSync(__dirname);
+                console.log('📁 Archivos encontrados:', files);
+                
+                // Buscar archivos .xlsx
+                const xlsxFiles = files.filter(file => file.endsWith('.xlsx'));
+                console.log('📊 Archivos Excel encontrados:', xlsxFiles);
+                
+                if (xlsxFiles.length > 0) {
+                    console.log('💡 Sugerencia: Verifica el nombre del archivo Excel');
+                }
+            } catch (err) {
+                console.log('⚠️ No se pudo listar el directorio:', err.message);
+            }
             return;
         }
+        
+        console.log('✅ Archivo Excel encontrado, procediendo con la lectura...');
         
         const workbook = xlsx.readFile(excelPath);
         const sheetName = workbook.SheetNames[0];
@@ -171,6 +189,20 @@ const migrateExcelDataToMongoDB = async () => {
         console.log(`📝 Registros encontrados en Excel: ${data.length}`);
         console.log('📋 Columnas disponibles:', Object.keys(data[0] || {}));
         
+        // Mostrar muestra de datos para debugging
+        if (data.length > 0) {
+            console.log('📄 Muestra de los primeros 3 registros:');
+            data.slice(0, 3).forEach((item, index) => {
+                console.log(`  ${index + 1}:`, {
+                    Nombre: item.Nombre,
+                    Categoria: item.Categoria,
+                    Precio: item.Precio,
+                    Mostrar: item.Mostrar,
+                    TieneImagen: item.Imagen ? 'Sí' : 'No'
+                });
+            });
+        }
+        
         const productsToProcess = [];
         const contadores = {};
         let procesados = 0;
@@ -178,6 +210,13 @@ const migrateExcelDataToMongoDB = async () => {
         
         data.forEach((item, index) => {
             const mostrar = item.Mostrar?.toString().toLowerCase().trim();
+            
+            console.log(`🔍 Procesando fila ${index + 1}:`, {
+                nombre: item.Nombre,
+                categoria: item.Categoria,
+                mostrar: mostrar,
+                seIncluye: mostrar === "si" || mostrar === "sí"
+            });
             
             // Condiciones más flexibles para incluir productos
             if (mostrar === "si" || mostrar === "sí") {
@@ -228,6 +267,11 @@ const migrateExcelDataToMongoDB = async () => {
             
         } else {
             console.log('⚠️ No se encontraron productos válidos para migrar');
+            console.log('💡 Verifica que el Excel tenga:');
+            console.log('   - Columna "Mostrar" con valores "si" o "sí"');
+            console.log('   - Columna "Categoria" con nombres de categorías');
+            console.log('   - Columna "Nombre" con nombres de productos');
+            console.log('   - Columna "Precio" con precios numéricos');
         }
         
         // Estadísticas finales
@@ -238,7 +282,7 @@ const migrateExcelDataToMongoDB = async () => {
         
     } catch (err) {
         console.error('❌ Error durante la migración del archivo Excel:', err);
-        console.error('Stack trace:', err.stack);
+        console.error('📋 Stack trace:', err.stack);
     }
 };
 
@@ -255,7 +299,11 @@ app.get('/', (req, res) => {
                 register: "/api/auth/register (POST)",
                 login: "/api/auth/login (POST)"
             },
-            ventas: "/api/ventas (POST, protegido)"
+            ventas: "/api/ventas (POST, protegido)",
+            admin: {
+                migrate: "/api/admin/migrate (GET, debugging)",
+                productos: "/api/admin/productos/todos (GET, debugging)"
+            }
         }
     });
 });
