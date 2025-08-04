@@ -357,19 +357,59 @@ document.addEventListener('DOMContentLoaded', function () {
     mostrarNotificacion('PDF generado con éxito.');
   }
   
-  // Enviar presupuesto por email (simulado)
-  function enviarPresupuesto() {
-    if (carritoVendedor.length === 0) {
-      mostrarNotificacion('El presupuesto está vacío', 'warning');
-      return;
-    }
-    if (!emailClienteInput.value) {
-      mostrarNotificacion('Por favor, ingrese un email de cliente.', 'warning');
-      return;
-    }
-    // Aquí iría la lógica de backend para enviar el email
-    mostrarNotificacion('Presupuesto enviado por email (simulado).', 'success');
-  }
+// Enviar presupuesto por email (CONECTADO A LA API)
+async function enviarPresupuesto() {
+    if (carritoVendedor.length === 0) {
+        mostrarNotificacion('El presupuesto está vacío', 'warning');
+        return;
+    }
+    const emailCliente = emailClienteInput.value;
+    if (!emailCliente) {
+        mostrarNotificacion('Por favor, ingrese un email de cliente.', 'warning');
+        return;
+    }
+
+    // Recopilar todos los datos necesarios
+    const datosPresupuesto = {
+        cliente: {
+            nombre: nombreClienteInput.value,
+            email: emailCliente,
+            telefono: telefonoClienteInput.value,
+            provincia: provinciaClienteSelect.value,
+            localidad: localidadClienteSelect.value,
+            direccion: direccionClienteInput.value
+        },
+        vendedor: {
+            nombre: nombreVendedorInput.value
+        },
+        productos: carritoVendedor,
+        total: parseFloat(totalPedidoSpan.textContent)
+    };
+
+    const url = 'https://colchonespremium2.onrender.com/api/presupuesto/enviar';
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(datosPresupuesto)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            mostrarNotificacion('Presupuesto enviado por email con éxito.', 'success');
+        } else {
+            throw new Error(data.error || 'Error al enviar el presupuesto.');
+        }
+
+    } catch (error) {
+        console.error('Error al enviar presupuesto:', error);
+        mostrarNotificacion(error.message, 'warning');
+    }
+}
 
   // Cargar localidades según la provincia seleccionada
   const LOCALIDADES_POR_PROVINCIA = {

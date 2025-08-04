@@ -7,6 +7,8 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { enviarEmail } from './emailService.js';
+
 
 // =================== CONFIGURACIÓN INICIAL ===================
 const __filename = fileURLToPath(import.meta.url);
@@ -230,6 +232,42 @@ app.post('/api/ventas', verifyToken, async (req, res) => {
     } catch (err) {
         console.error('Error al guardar la venta:', err);
         res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+// Endpoint para enviar el presupuesto por email
+app.post('/api/presupuesto/enviar', async (req, res) => {
+    const { cliente, vendedor, productos, total } = req.body;
+
+    if (!cliente || !cliente.email) {
+        return res.status(400).json({ error: 'Falta el email del cliente.' });
+    }
+
+    // Generar el cuerpo del correo en formato HTML
+    const cuerpoHtml = `
+        <h1>Presupuesto - Colchones Premium</h1>
+        <p>Hola ${cliente.nombre || ''},</p>
+        <p>Gracias por tu interés. A continuación, te enviamos el presupuesto solicitado por nuestro vendedor <strong>${vendedor.nombre || 'N/A'}</strong>.</p>
+
+        <h3>Detalle del Pedido:</h3>
+        <ul>
+            ${productos.map(p => `<li>${p.cantidad} x ${p.nombre} - $${p.subtotal.toFixed(2)}</li>`).join('')}
+        </ul>
+        <hr>
+        <h3><strong>Total: $${total.toFixed(2)}</strong></h3>
+
+        <p>Si tenés alguna consulta, no dudes en contactarnos.</p>
+        <p>Saludos,<br>El equipo de Colchones Premium</p>
+    `;
+
+    try {
+        await enviarEmail({
+            destinatario: cliente.email,
+            asunto: 'Tu Presupuesto de Colchones Premium',
+            cuerpoHtml: cuerpoHtml
+        });
+        res.status(200).json({ message: 'Presupuesto enviado exitosamente por email.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Hubo un problema al enviar el email.' });
     }
 });
 
