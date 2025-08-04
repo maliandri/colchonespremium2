@@ -170,24 +170,28 @@ header {
 
 /* ===== PRODUCTOS SECTION ===== */
 .productos-container {
-  padding: 4rem 0;
-  text-align: center;
+  padding: 2rem 0;
 }
 
+
 .section-title {
-  font-size: 2.5rem;
+  text-align: center;
   margin-bottom: 2rem;
+  font-size: 2rem;
   color: var(--primary);
   position: relative;
+  padding-bottom: 0.5rem;
 }
 
 .section-title::after {
   content: '';
-  display: block;
-  width: 60px;
-  height: 4px;
-  background-color: var(--accent);
-  margin: 10px auto 0;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background-color: var(--secondary);
 }
 
 .filtros {
@@ -242,14 +246,18 @@ header {
   gap: 2rem;
 }
 
+
 .producto-card {
   background-color: white;
   border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
   overflow: hidden;
-  transition: transform 0.3s ease;
-  display: flex;
+  transition: all 0.3s ease;
   flex-direction: column;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeIn 0.5s forwards;
+
 }
 
 .producto-card:hover {
