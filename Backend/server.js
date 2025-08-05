@@ -2,14 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import xlsx from 'xlsx';
 import path from 'path';
-import fs from 'fs'; // ✅ AGREGADO: Import de fs
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { enviarEmail } from './emailService.js';
+import { enviarEmail } from './emailService.js'; // Asegúrate de que esta importación esté presente
 
+// ... (resto de tus importaciones y configuraciones iniciales)
 
 // =================== CONFIGURACIÓN INICIAL ===================
 const __filename = fileURLToPath(import.meta.url);
@@ -25,7 +26,7 @@ mongoose.connect(dbUri)
     .then(() => {
         console.log('✅ Conectado a la base de datos MongoDB');
         // Llamar a la función de migración aquí para asegurar que se ejecute después de la conexión
-        migrateExcelDataToMongoDB();
+        // migrateExcelDataToMongoDB(); // Comentado si no necesitas que se ejecute en cada inicio
     })
     .catch(err => console.error('❌ Error de conexión a la base de datos:', err));
 
@@ -53,7 +54,7 @@ UserSchema.pre('save', async function(next) {
 
 const User = mongoose.model('User', UserSchema);
 
-// Esquema para el modelo de productos
+// Esquema para el modelo de productos (mantener si lo usas)
 const ProductSchema = new mongoose.Schema({
     _id: { type: String, required: true },
     nombre: { type: String, required: true },
@@ -65,7 +66,7 @@ const ProductSchema = new mongoose.Schema({
 });
 const Product = mongoose.model('Product', ProductSchema);
 
-// Esquema para el modelo de ventas/presupuestos
+// Esquema para el modelo de ventas/presupuestos (mantener si lo usas)
 const VentaSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     fecha: { type: Date, default: Date.now },
@@ -97,18 +98,70 @@ const verifyToken = (req, res, next) => {
 
 // =================== RUTAS DE AUTENTICACIÓN ===================
 app.post('/api/auth/register', async (req, res) => {
+    const { email, password } = req.body; // Desestructuramos email y password
     try {
-        const newUser = new User({
-            email: req.body.email,
-            password: req.body.password
+        const newUser = new User({ email, password });
+        await newUser.save();
+
+        // Generar el token JWT para el nuevo usuario
+        const token = jwt.sign({ id: newUser._id }, process.env.TOKEN_SECRET || 'mi_clave_secreta_por_defecto', { expiresIn: '1h' });
+
+        // ✅ AGREGADO: Enviar el correo de bienvenida
+        const asunto = '¡Bienvenido/a a Colchones Premium!';
+        const cuerpoHtml = `
+            <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+                        .header { background-color: #4CAF50; color: white; padding: 15px 0; text-align: center; border-radius: 8px 8px 0 0; }
+                        .content { padding: 20px; text-align: center; }
+                        .button { display: inline-block; padding: 12px 25px; margin-top: 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+                        .footer { margin-top: 30px; font-size: 0.9em; color: #777; text-align: center; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h2>¡Gracias por unirte a Colchones Premium!</h2>
+                        </div>
+                        <div class="content">
+                            <p>Hola <strong>${email}</strong>,</p>
+                            <p>Estamos encantados de tenerte con nosotros. Ahora eres parte de nuestra comunidad y tienes acceso a la mejor selección de colchones.</p>
+                            <p>Explora nuestro catálogo y encuentra el colchón perfecto para tu descanso.</p>
+                            <a href="https://colchonqn2.netlify.app" class="button">Ir a la Tienda</a>
+                            <p class="footer">Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.</p>
+                            <p class="footer">Saludos,<br>El equipo de Colchones Premium</p>
+                        </div>
+                    </div>
+                </body>
+            </html>
+        `;
+
+        try {
+            await enviarEmail({
+                destinatario: email, // Usamos el email del nuevo usuario
+                asunto: asunto,
+                cuerpoHtml: cuerpoHtml
+            });
+            console.log(`Correo de bienvenida enviado a ${email}`);
+        } catch (emailError) {
+            console.error('Error al enviar el correo de bienvenida:', emailError);
+            // Si el correo no se envía, el registro del usuario no se interrumpe.
+            // Solo se registra el error.
+        }
+
+        res.status(201).json({
+            message: 'Usuario registrado exitosamente. Se ha enviado un correo de bienvenida.',
+            token: token,
+            user: { id: newUser._id, email: newUser.email }
         });
 
-        await newUser.save();
-        res.status(201).json({ message: 'Usuario registrado exitosamente.' });
     } catch (err) {
         if (err.code === 11000) {
             return res.status(400).json({ error: 'El email ya está registrado.' });
         }
+        console.error('Error al registrar el usuario:', err);
         res.status(500).json({ error: 'Error al registrar el usuario.' });
     }
 });
