@@ -243,7 +243,7 @@ header {
 }
 .productos {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 280px); /* Tamaño fijo en lugar de minmax */
+  grid-template-columns: repeat(5, 280px);
   gap: 2rem;
   justify-content: center; /* Centrar las tarjetas cuando no llenan toda la fila */
 }
