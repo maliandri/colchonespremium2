@@ -245,29 +245,28 @@ document.addEventListener('DOMContentLoaded', function () {
         return false;
     }
 
-    function actualizarUIAutenticacion() {
-        if (usuario && token) {
-            if (btnRegistro) {
-                btnRegistro.innerHTML = `
-                    <div class="user-menu">
-                        <i class="fas fa-user"></i> ${usuario.email.split('@')[0]}
-                        <span class="user-logout" onclick="cerrarSesion()">| Cerrar Sesión</span>
-                    </div>
-                `;
-                btnRegistro.onclick = (e) => e.preventDefault();
-            }
-        } else {
-            if (btnRegistro) {
-                btnRegistro.innerHTML = '<i class="fas fa-user"></i> Cuenta';
-                btnRegistro.onclick = (e) => {
-                    e.preventDefault();
-                    crearModalAuth();
-                    document.getElementById('modalAuth').style.display = 'flex';
-                };
-            }
+function actualizarUIAutenticacion() {
+    // Si el usuario está logueado...
+    if (usuario && token) {
+        if (btnRegistro) {
+            // Simplemente muestra el email y el botón para cerrar sesión.
+            // No se necesita el 'onclick' aquí.
+            btnRegistro.innerHTML = `
+                <div class="user-menu">
+                    <i class="fas fa-user"></i> ${usuario.email.split('@')[0]}
+                    <span class="user-logout" onclick="cerrarSesion()">| Cerrar Sesión</span>
+                </div>
+            `;
+        }
+    // Si el usuario NO está logueado...
+    } else {
+        if (btnRegistro) {
+            // Solamente cambia el texto del botón a "Cuenta".
+            // La lógica para abrir el modal ya no va aquí.
+            btnRegistro.innerHTML = '<i class="fas fa-user"></i> Cuenta';
         }
     }
-
+}
     // Funciones de gestión del carrito
     function cargarCarritoUsuario() {
         if (usuario && token) {
@@ -867,6 +866,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===== GESTIÓN DE EVENTOS GENERALES =====
+    // Evento delegado para el enlace de cuenta
+    document.querySelector('.main-nav').addEventListener('click', (e) => {
+    // Busca el enlace '#registro-link' más cercano al elemento clickeado
+    const linkCuenta = e.target.closest('#registro-link');
+    // Si se encontró el enlace de la cuenta
+    if (linkCuenta) {
+       e.preventDefault(); // Previene la navegación por defecto del enlace  
+    // Solo abre el modal si no hay un usuario logueado
+          if (!usuario) {
+            const modal = crearModalAuth();
+            modal.style.display = 'flex';
+        }
+    }
+   });
 
     // Eventos para filtros y búsqueda
     if (searchInput) searchInput.addEventListener('input', aplicarFiltros);
