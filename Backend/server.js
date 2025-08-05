@@ -98,12 +98,9 @@ const verifyToken = (req, res, next) => {
 // =================== RUTAS DE AUTENTICACIÓN ===================
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(req.body.password, salt);
-
         const newUser = new User({
             email: req.body.email,
-            password: hashedPassword
+            password: req.body.password
         });
 
         await newUser.save();
