@@ -26,7 +26,7 @@ mongoose.connect(dbUri)
     .then(() => {
         console.log('✅ Conectado a la base de datos MongoDB');
         // Llamar a la función de migración aquí para asegurar que se ejecute después de la conexión
-        // migrateExcelDataToMongoDB(); // Comentado si no necesitas que se ejecute en cada inicio
+        migrateExcelDataToMongoDB(); 
     })
     .catch(err => console.error('❌ Error de conexión a la base de datos:', err));
 
