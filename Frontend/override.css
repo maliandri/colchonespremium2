@@ -1,0 +1,42 @@
+/* ====== FIX VISIBILIDAD DE TITULO/CATEGORIA/PRECIO ====== */
+.producto-info{
+  display: block !important;
+  height: auto !important;
+  overflow: visible !important;
+  -webkit-box-orient: initial !important;
+  -webkit-line-clamp: initial !important;
+}
+
+/* El recorte (clamp) se aplica SOLO a la descripción */
+.producto-info p.descripcion{
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;   /* 2 líneas */
+  overflow: hidden;
+  margin: .25rem 0 .5rem;
+}
+
+/* Aseguramos que el nombre se lea perfecto */
+.producto-info h3{
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: .35rem 0 .25rem;
+  color: #222;
+}
+
+/* Detalle visual opcional para el precio y la categoría */
+.producto-info .precio{
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin:.25rem 0 .5rem;
+}
+
+.producto-info .categoria-tag{
+  color:#666;
+  font-size:.85rem;
+  margin:.25rem 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}

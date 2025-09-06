@@ -383,11 +383,11 @@ function actualizarUIAutenticacion() {
                 </div>
                 <div class="producto-info">
                     <h3>${producto.nombre}</h3>
-                    <p>${producto.descripcion}</p>
+                    <p class="descripcion">${producto.descripcion}</p>
                     <p class="categoria-tag" style="color: #666; font-size: 0.85em; margin: 0.5rem 0;">
                         <i class="fas fa-tag"></i> ${producto.categoria}
                     </p>
-                    <p class="precio">$${parseFloat(producto.precio).toFixed(2)}</p>
+                    <p class="precio">$ ${parseFloat(producto.precio).toFixed(2)}</p>
                     <button class="agregar-carrito" data-id="${producto._id}">
                         <i class="fas fa-shopping-cart"></i> Agregar al Carrito
                     </button>
