@@ -498,6 +498,16 @@ app.get('/api/admin/productos/todos', async (req, res) => {
     }
 });
 
+// =================== RUTA DE CHEQUEO (HEALTHCHECK) ===================
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),      // tiempo activo del server
+    timestamp: Date.now()          // marca de tiempo
+  });
+});
+
+
 // =================== INICIAR SERVIDOR ===================
 app.listen(PORT, () => {
     console.log(`🚀 Servidor en http://localhost:${PORT}`);
