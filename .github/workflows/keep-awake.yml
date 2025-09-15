@@ -12,4 +12,4 @@ jobs:
       - name: Ping health endpoint
         run: |
           echo "🔁 Ping a https://colchonespremium2.onrender.com/api/health"
-          curl -sS --max-time 20 --retry 2 --retry-delay 3 https://colchonespremium2.onrender.com/api/health -o /dev/null -w "HTTP %{http_code}\n" || true
+          curl -sS --max-time 50 --retry 2 --retry-delay 3 https://colchonespremium2.onrender.com/api/health -o /dev/null -w "HTTP %{http_code}\n" || true
