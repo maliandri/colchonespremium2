@@ -1,11 +1,5 @@
 /* ====== FIX VISIBILIDAD DE TITULO/CATEGORIA/PRECIO ====== */
-.producto-info{
-  display: block !important;
-  height: auto !important;
-  overflow: visible !important;
-  -webkit-box-orient: initial !important;
-  -webkit-line-clamp: initial !important;
-}
+
 
 /* El recorte (clamp) se aplica SOLO a la descripción */
 .producto-info p.descripcion{
