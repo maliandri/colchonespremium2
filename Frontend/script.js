@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalVendedores = document.getElementById('modalVendedores');
     const modalCarrito = document.getElementById('modalCarrito');
     const modalImagen = document.getElementById('modalImagen');
+    const modalMisCompras = document.getElementById('modalMisCompras');
+
 
     // Botones y enlaces
     const btnVendedores = document.getElementById('accesoVendedores');
@@ -52,6 +54,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Elementos del modal de imagen
     const imagenAmpliada = document.getElementById('imagenAmpliada');
     const cerrarModalImagen = document.querySelector('.cerrar-modal');
+
+    // ✅ Elementos del modal de Mis Compras
+    const listaHistorial = document.getElementById('listaHistorial');
 
     // Elementos de notificación
     const modalNotificacion = document.getElementById('modalNotificacion');
@@ -137,7 +142,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     window.cerrarModalAuth = function() {
-        document.getElementById('modalAuth').style.display = 'none';
+        const modalAuth = document.getElementById('modalAuth');
+        if (modalAuth) {
+            modalAuth.style.display = 'none';
+        }
     };
 
     // Funciones de autenticación
@@ -214,10 +222,11 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.removeItem('authToken');
         localStorage.removeItem('userEmail');
         
-        const carritoActual = carrito;
-        localStorage.setItem('carrito', JSON.stringify(carritoActual));
+        // Al cerrar sesión, el carrito local se mantiene
+        carrito = JSON.parse(localStorage.getItem('carrito')) || {};
         
         actualizarUIAutenticacion();
+        actualizarContadorCarrito();
         mostrarNotificacion('Sesión cerrada correctamente', 'success');
     }
     
@@ -245,28 +254,22 @@ document.addEventListener('DOMContentLoaded', function () {
         return false;
     }
 
-function actualizarUIAutenticacion() {
-    // Si el usuario está logueado...
-    if (usuario && token) {
-        if (btnRegistro) {
-            // Simplemente muestra el email y el botón para cerrar sesión.
-            // No se necesita el 'onclick' aquí.
+    function actualizarUIAutenticacion() {
+        if (!btnRegistro) return;
+        
+        if (usuario && token) {
             btnRegistro.innerHTML = `
                 <div class="user-menu">
-                    <i class="fas fa-user"></i> ${usuario.email.split('@')[0]}
-                    <span class="user-logout" onclick="cerrarSesion()">| Cerrar Sesión</span>
-                </div>
-            `;
-        }
-    // Si el usuario NO está logueado...
-    } else {
-        if (btnRegistro) {
-            // Solamente cambia el texto del botón a "Cuenta".
-            // La lógica para abrir el modal ya no va aquí.
+                    <span><i class="fas fa-user"></i> ${usuario.email.split('@')[0]}</span>
+                    <span class="user-action" id="verMisCompras">| Mis Compras</span>
+                    <span class="user-logout">| Cerrar Sesión</span>
+                </div>`;
+            btnRegistro.querySelector('.user-logout').addEventListener('click', cerrarSesion);
+            btnRegistro.querySelector('#verMisCompras').addEventListener('click', cargarHistorialCompras);
+        } else {
             btnRegistro.innerHTML = '<i class="fas fa-user"></i> Cuenta';
         }
     }
-}
     // Funciones de gestión del carrito
     function cargarCarritoUsuario() {
         if (usuario && token) {
@@ -383,7 +386,7 @@ function actualizarUIAutenticacion() {
                 </div>
                 <div class="producto-info">
                     <h3>${producto.nombre}</h3>
-                    <p class="descripcion">${producto.descripcion}</p>
+                    <p class="descripcion">${producto.descripcion || ''}</p>
                     <p class="categoria-tag" style="color: #666; font-size: 0.85em; margin: 0.5rem 0;">
                         <i class="fas fa-tag"></i> ${producto.categoria}
                     </p>
@@ -515,7 +518,7 @@ function actualizarUIAutenticacion() {
         if (busqueda) {
             productosFiltrados = productosFiltrados.filter(p =>
                 p.nombre.toLowerCase().includes(busqueda) ||
-                p.descripcion.toLowerCase().includes(busqueda) ||
+                (p.descripcion && p.descripcion.toLowerCase().includes(busqueda)) ||
                 p.categoria.toLowerCase().includes(busqueda)
             );
         }
@@ -573,6 +576,12 @@ function actualizarUIAutenticacion() {
         if (Object.keys(carrito).length === 0) {
             listaCarrito.innerHTML = '<p>El carrito está vacío.</p>';
             totalCarritoSpan.textContent = '0.00';
+
+            // Ocultar la sección de pago si el carrito está vacío
+            const seccionPagoExistente = modalCarrito.querySelector('.seccion-pago');
+            if (seccionPagoExistente) {
+                seccionPagoExistente.style.display = 'none';
+            }
             return;
         }
         
@@ -607,12 +616,50 @@ function actualizarUIAutenticacion() {
             divBotones.style.paddingTop = '1rem';
             divBotones.style.borderTop = '1px solid #eee';
             divBotones.innerHTML = `
-                <button class="btn" onclick="guardarCarritoEnServidor()" style="background-color: #27ae60; width: 100%;">
+                <button class="btn guardar-carrito-btn" style="background-color: #27ae60; width: 100%;">
                     <i class="fas fa-save"></i> Guardar en mi cuenta
                 </button>
             `;
-            document.querySelector('.seccion-botones').appendChild(divBotones);
+             // Usamos querySelector en el contexto del modal para evitar conflictos
+            modalCarrito.querySelector('.seccion-botones').appendChild(divBotones);
+            divBotones.querySelector('.guardar-carrito-btn').addEventListener('click', guardarCarritoEnServidor);
         }
+
+        // ✅ INICIO: AÑADIR SECCIÓN DE PAGO
+        let seccionPago = modalCarrito.querySelector('.seccion-pago');
+        if (!seccionPago) {
+            seccionPago = document.createElement('div');
+            seccionPago.className = 'seccion-pago';
+            modalCarrito.querySelector('.resumen-pedido').after(seccionPago);
+        }
+        seccionPago.style.display = 'block'; // Asegurarse que sea visible
+        seccionPago.innerHTML = `
+            <h4>Datos para Transferencia</h4>
+            <p>Una vez realizada, envía el comprobante a nuestro WhatsApp para coordinar la entrega.</p>
+            <div class="datos-pago">
+                <p><strong>Alias:</strong> alumine.hogar.mp</p>
+                <div class="dato-copiable">
+                    <p><strong>CVU:</strong> <span id="cvu-text">0000003100002240486002</span></p>
+                    <button class="btn-copiar" id="btnCopiarCvu"><i class="fas fa-copy"></i> Copiar</button>
+                </div>
+                <p><strong>Nombre:</strong> SANTA TERESA S R L</p>
+            </div>
+        `;
+        document.getElementById('btnCopiarCvu').addEventListener('click', () => {
+            const cvuText = document.getElementById('cvu-text').textContent;
+            const textArea = document.createElement("textarea");
+            textArea.value = cvuText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                mostrarNotificacion('CVU copiado al portapapeles', 'success');
+            } catch (err) {
+                mostrarNotificacion('No se pudo copiar el CVU', 'error');
+            }
+            document.body.removeChild(textArea);
+        });
+        // ✅ FIN: AÑADIR SECCIÓN DE PAGO
     }
 
     function vaciarCarrito() {
@@ -641,17 +688,70 @@ function actualizarUIAutenticacion() {
             guardarCarritoEnServidor().then(() => {
                 vaciarCarrito();
                 modalCarrito.style.display = 'none';
-                mostrarNotificacion('¡Compra realizada con éxito! Se ha guardado en tu cuenta.', 'success');
+                mostrarNotificacion('¡Gracias por tu compra! Tu pedido se ha guardado.', 'success');
             });
         } else {
             mostrarNotificacion('Para procesar la compra, por favor inicia sesión o regístrate.', 'warning');
             setTimeout(() => {
                 modalCarrito.style.display = 'none';
-                crearModalAuth();
-                document.getElementById('modalAuth').style.display = 'flex';
+                const authModal = crearModalAuth();
+                authModal.style.display = 'flex';
             }, 2000);
         }
     }
+    
+    // ✅ INICIO: FUNCIONES PARA "MIS COMPRAS"
+    async function cargarHistorialCompras() {
+        if (!usuario || !token) {
+            mostrarNotificacion('Debes iniciar sesión para ver tu historial.', 'warning');
+            return;
+        }
+        try {
+            const response = await fetch(`${VENTAS_URL}/historial`, {
+                headers: { 'auth-token': token }
+            });
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'No se pudo cargar el historial.');
+            }
+            const historial = await response.json();
+            mostrarHistorialCompras(historial);
+        } catch (error) {
+            mostrarNotificacion(error.message, 'error');
+        }
+    }
+
+    function mostrarHistorialCompras(historial) {
+        if (!modalMisCompras || !listaHistorial) return;
+
+        listaHistorial.innerHTML = '';
+        if (!historial || historial.length === 0) {
+            listaHistorial.innerHTML = '<p>No tienes compras ni presupuestos guardados.</p>';
+        } else {
+            historial.forEach(compra => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item-historial';
+                const fecha = new Date(compra.fecha).toLocaleDateString('es-AR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                const productosHtml = compra.productos.map(p => `<li><span>${p.cantidad} x ${p.nombre}</span><span>$${(p.cantidad * p.precioUnitario).toFixed(2)}</span></li>`).join('');
+
+                itemDiv.innerHTML = `
+                    <div class="item-historial-header">
+                        <h3>${fecha}</h3>
+                        <span class="estado ${compra.estado}">${compra.estado}</span>
+                    </div>
+                    <div class="item-historial-productos"><ul>${productosHtml}</ul></div>
+                    <div class="item-historial-total">Total: $${compra.total.toFixed(2)}</div>
+                `;
+                listaHistorial.appendChild(itemDiv);
+            });
+        }
+        modalMisCompras.style.display = 'flex';
+    }
+    // ✅ FIN: FUNCIONES PARA "MIS COMPRAS"
 
     function cargarProductosParaVendedor() {
         if (!listaProductosVendedor) return;
@@ -760,7 +860,7 @@ function actualizarUIAutenticacion() {
         
         y += 10;
         doc.setFontSize(16);
-        doc.text(`Total: ${totalPedidoSpan?.textContent || '0.00'}`, 10, y);
+        doc.text(`Total: $${totalPedidoSpan?.textContent || '0.00'}`, 10, y);
         
         doc.save(`presupuesto-${nombreClienteInput?.value || 'cliente'}.pdf`);
         mostrarNotificacion('PDF generado con éxito.', 'success');
@@ -868,17 +968,14 @@ function actualizarUIAutenticacion() {
     // ===== GESTIÓN DE EVENTOS GENERALES =====
     // Evento delegado para el enlace de cuenta
     document.querySelector('.main-nav').addEventListener('click', (e) => {
-    // Busca el enlace '#registro-link' más cercano al elemento clickeado
-    const linkCuenta = e.target.closest('#registro-link');
-    // Si se encontró el enlace de la cuenta
-    if (linkCuenta) {
-       e.preventDefault(); // Previene la navegación por defecto del enlace  
-    // Solo abre el modal si no hay un usuario logueado
-          if (!usuario) {
-            const modal = crearModalAuth();
-            modal.style.display = 'flex';
+        const linkCuenta = e.target.closest('#registro-link');
+        if (linkCuenta) {
+            e.preventDefault();
+            if (!usuario) {
+                const modal = crearModalAuth();
+                modal.style.display = 'flex';
+            }
         }
-    }
    });
 
     // Eventos para filtros y búsqueda
@@ -919,26 +1016,14 @@ function actualizarUIAutenticacion() {
         if (modalImagen) modalImagen.style.display = 'none';
     });
     
-    if (modalVendedores) {
-        modalVendedores.addEventListener('click', (e) => {
-            if (e.target === modalVendedores) modalVendedores.style.display = 'none';
-        });
-        const cerrarVendedores = modalVendedores.querySelector('.cerrar');
-        if (cerrarVendedores) cerrarVendedores.addEventListener('click', () => {
-            modalVendedores.style.display = 'none';
-        });
-    }
+    // Cierre de modales
+    [modalVendedores, modalCarrito, modalImagen, modalMisCompras].forEach(modal => {
+        if (modal) {
+            modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+            modal.querySelector('.cerrar, .cerrar-modal')?.addEventListener('click', () => modal.style.display = 'none');
+        }
+    });
 
-    if (modalCarrito) {
-        modalCarrito.addEventListener('click', (e) => {
-            if (e.target === modalCarrito) modalCarrito.style.display = 'none';
-        });
-        const cerrarCarrito = modalCarrito.querySelector('.cerrar');
-        if (cerrarCarrito) cerrarCarrito.addEventListener('click', () => {
-            modalCarrito.style.display = 'none';
-        });
-    }
-    
     window.addEventListener('click', (e) => {
         const modalAuth = document.getElementById('modalAuth');
         if (modalAuth && e.target === modalAuth) {

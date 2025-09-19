@@ -715,35 +715,6 @@ header {
   to { opacity: 1; transform: scale(1); }
 }
 
-/* Estilos responsivos */
-@media (max-width: 768px) {
-  .header-container {
-    flex-direction: column;
-  }
-  .main-nav {
-    margin-top: 1rem;
-  }
-  .main-nav ul {
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .hero h1 {
-    font-size: 2.5rem;
-  }
-  .productos-container, .footer {
-    padding: 2rem 0;
-  }
-  .filtros {
-    flex-direction: column;
-  }
-  .filtros-row {
-    flex-direction: column;
-    width: 100%;
-    max-width: none;
-  }
-}
-
 /* Estilos para autenticación de usuarios */
 .user-menu {
     display: flex;
@@ -1107,3 +1078,91 @@ header {
         padding: 2rem 1rem;
     }
 }
+
+/* ✅ INICIO: ESTILOS PARA "MIS COMPRAS" */
+.lista-historial {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+.item-historial {
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 1rem;
+}
+.item-historial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ddd;
+}
+.item-historial-header h3 {
+    font-size: 1.1rem;
+    color: var(--primary);
+}
+.item-historial-header .estado {
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 0.25rem 0.6rem;
+    border-radius: 15px;
+    text-transform: capitalize;
+}
+.item-historial-header .estado.presupuesto { background-color: #fff3cd; color: #f39c12; }
+.item-historial-header .estado.venta { background-color: #e8f6f3; color: #2ecc71; }
+.item-historial-productos ul { list-style: none; }
+.item-historial-productos li { display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.9rem; }
+.item-historial-total { text-align: right; margin-top: 1rem; font-size: 1.1rem; font-weight: bold; color: var(--accent); }
+/* ✅ FIN: ESTILOS PARA "MIS COMPRAS" */
+
+
+/* ✅ INICIO: SECCIÓN DE PAGO EN CARRITO */
+.seccion-pago {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 8px;
+    text-align: left;
+}
+.seccion-pago h4 {
+    color: var(--primary);
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+.seccion-pago > p {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+.datos-pago p {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+.dato-copiable {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+.btn-copiar {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    background-color: var(--secondary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.btn-copiar:hover {
+    background-color: #e62200;
+}
+.btn-copiar i {
+    margin-right: 0.3rem;
+}
+/* ✅ FIN: SECCIÓN DE PAGO EN CARRITO */

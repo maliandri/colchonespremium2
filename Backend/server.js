@@ -32,7 +32,7 @@ mongoose.connect(dbUri)
 
 // =================== MIDDLEWARES ===================
 app.use(cors({
-    origin: ['https://colchonqn2.netlify.app', 'http://localhost:5500']
+    origin: ['https://colchonqn2.netlify.app', 'http://localhost:5500', 'http://127.0.0.1:5500']
 }));
 app.use(express.json());
 
@@ -106,7 +106,7 @@ app.post('/api/auth/register', async (req, res) => {
         // Generar el token JWT para el nuevo usuario
         const token = jwt.sign({ id: newUser._id }, process.env.TOKEN_SECRET || 'mi_clave_secreta_por_defecto', { expiresIn: '1h' });
 
-        // ✅ AGREGADO: Enviar el correo de bienvenida
+        // ✅ CORREO DE BIENVENIDA MEJORADO
         const asunto = '¡Bienvenido/a a Colchones Premium!';
         const cuerpoHtml = `
             <html>
@@ -114,24 +114,28 @@ app.post('/api/auth/register', async (req, res) => {
                     <style>
                         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                         .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-                        .header { background-color: #4CAF50; color: white; padding: 15px 0; text-align: center; border-radius: 8px 8px 0 0; }
+                        .header { text-align: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
+                        .header img { max-width: 250px; }
                         .content { padding: 20px; text-align: center; }
-                        .button { display: inline-block; padding: 12px 25px; margin-top: 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+                        .button { display: inline-block; padding: 12px 25px; margin-top: 20px; background-color: #ff2600; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
                         .footer { margin-top: 30px; font-size: 0.9em; color: #777; text-align: center; }
                     </style>
                 </head>
                 <body>
                     <div class="container">
                         <div class="header">
-                            <h2>¡Gracias por unirte a Colchones Premium!</h2>
+                            <img src="https://colchonqn2.netlify.app/assets/logo.png" alt="Colchones Premium Logo">
                         </div>
                         <div class="content">
+                            <h2>¡Gracias por unirte a Colchones Premium!</h2>
                             <p>Hola <strong>${email}</strong>,</p>
                             <p>Estamos encantados de tenerte con nosotros. Ahora eres parte de nuestra comunidad y tienes acceso a la mejor selección de colchones.</p>
                             <p>Explora nuestro catálogo y encuentra el colchón perfecto para tu descanso.</p>
                             <a href="https://colchonqn2.netlify.app" class="button">Ir a la Tienda</a>
-                            <p class="footer">Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.</p>
-                            <p class="footer">Saludos,<br>El equipo de Colchones Premium</p>
+                        </div>
+                        <div class="footer">
+                            <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.</p>
+                            <p>Saludos,<br>El equipo de Colchones Premium</p>
                         </div>
                     </div>
                 </body>
@@ -296,7 +300,7 @@ const migrateExcelDataToMongoDB = async () => {
             // Usar upsert para actualizar productos existentes o crear nuevos
             const bulkOps = productsToProcess.map(product => ({
                 updateOne: {
-                    filter: { _id: product._id },
+                    filter: { nombre: product.nombre },
                     update: { $set: product },
                     upsert: true
                 }
@@ -305,9 +309,8 @@ const migrateExcelDataToMongoDB = async () => {
             const result = await Product.bulkWrite(bulkOps);
             
             console.log('📈 Resultado de la migración:');
-            console.log(`  ✅ Insertados: ${result.insertedCount || 0}`);
+            console.log(`  ✅ Insertados: ${result.upsertedCount || 0}`);
             console.log(`  🔄 Actualizados: ${result.modifiedCount || 0}`);
-            console.log(`  📋 Sin cambios: ${(result.matchedCount || 0) - (result.modifiedCount || 0)}`);
             
             // Verificar categorías únicas después de la migración
             const categorias = await Product.distinct('categoria', { mostrar: 'si' });
@@ -317,11 +320,6 @@ const migrateExcelDataToMongoDB = async () => {
             
         } else {
             console.log('⚠️ No se encontraron productos válidos para migrar');
-            console.log('💡 Verifica que el Excel tenga:');
-            console.log('   - Columna "Mostrar" con valores "si" o "sí"');
-            console.log('   - Columna "Categoria" con nombres de categorías');
-            console.log('   - Columna "Nombre" con nombres de productos');
-            console.log('   - Columna "Precio" con precios numéricos');
         }
         
         // Estadísticas finales
@@ -366,7 +364,6 @@ app.get('/api/colchones', async (req, res) => {
         const productos = await Product.find({ mostrar: 'si' }).sort({ categoria: 1, nombre: 1 });
         
         console.log(`✅ Enviando ${productos.length} productos`);
-        console.log('🏷️ Categorías encontradas:', [...new Set(productos.map(p => p.categoria))]);
         
         res.json(productos);
     } catch (err) {
@@ -405,6 +402,17 @@ app.post('/api/ventas', verifyToken, async (req, res) => {
         res.status(201).json({ message: 'Venta registrada exitosamente.', venta: newVenta });
     } catch (err) {
         console.error('Error al guardar la venta:', err);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// ✅ NUEVO ENDPOINT PARA OBTENER HISTORIAL DE VENTAS
+app.get('/api/ventas/historial', verifyToken, async (req, res) => {
+    try {
+        const historial = await Venta.find({ userId: req.user.id }).sort({ fecha: -1 });
+        res.status(200).json(historial);
+    } catch (err) {
+        console.error('Error al obtener el historial de ventas:', err);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
