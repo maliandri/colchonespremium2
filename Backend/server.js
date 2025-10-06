@@ -298,14 +298,22 @@ const migrateExcelDataToMongoDB = async () => {
         
         if (productsToProcess.length > 0) {
             // Usar upsert para actualizar productos existentes o crear nuevos
-            const bulkOps = productsToProcess.map(product => ({
-                updateOne: {
-                    filter: { nombre: product.nombre },
-                    update: { $set: product },
-                    upsert: true
-                }
-            }));
-            
+const bulkOps = productsToProcess.map(product => {
+    // Crear copia del producto sin _id para actualizaciones
+    const productWithoutId = { ...product };
+    delete productWithoutId._id;
+    
+    return {
+        updateOne: {
+            filter: { nombre: product.nombre },
+            update: { 
+                $set: productWithoutId,  // Solo actualiza campos excepto _id
+                $setOnInsert: { _id: product._id }  // Solo establece _id en inserciones nuevas
+            },
+            upsert: true
+        }
+    };
+});
             const result = await Product.bulkWrite(bulkOps);
             
             console.log('📈 Resultado de la migración:');
