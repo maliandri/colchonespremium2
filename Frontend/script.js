@@ -336,6 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===== RESTO DE FUNCIONES ORIGINALES =====
 
+    // ✅ EXPONER cargarProductos globalmente para el botón de reintentar
     async function cargarProductos() {
         try {
             console.log('Cargando productos desde:', API_URL);
@@ -358,14 +359,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
                         <h3>Error al cargar productos</h3>
                         <p>No se pudieron cargar los productos desde el servidor.</p>
-                        <button class="btn" onclick="cargarProductos()" style="margin-top: 1rem;">
+                        <button class="btn" id="btnReintentarCarga" style="margin-top: 1rem;">
                             <i class="fas fa-refresh"></i> Reintentar
                         </button>
                     </div>
                 `;
+                // ✅ Agregar evento al botón dinámico
+                document.getElementById('btnReintentarCarga')?.addEventListener('click', cargarProductos);
             }
         }
     }
+
+    // ✅ Exponer globalmente solo si es necesario
+    window.cargarProductos = cargarProductos;
 
     function mostrarProductos(productosAMostrar) {
         if (!productosGrid) return;
@@ -736,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     month: 'long',
                     day: 'numeric'
                 });
-                const productosHtml = compra.productos.map(p => `<li><span>${p.cantidad} x ${p.nombre}</span><span>$${(p.cantidad * p.precioUnitario).toFixed(2)}</span></li>`).join('');
+                const productosHtml = compra.productos.map(p => `<li><span>${p.cantidad} x ${p.nombre}</span><span>${(p.cantidad * p.precioUnitario).toFixed(2)}</span></li>`).join('');
 
                 itemDiv.innerHTML = `
                     <div class="item-historial-header">
@@ -744,7 +750,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <span class="estado ${compra.estado}">${compra.estado}</span>
                     </div>
                     <div class="item-historial-productos"><ul>${productosHtml}</ul></div>
-                    <div class="item-historial-total">Total: $${compra.total.toFixed(2)}</div>
+                    <div class="item-historial-total">Total: ${compra.total.toFixed(2)}</div>
                 `;
                 listaHistorial.appendChild(itemDiv);
             });
@@ -774,7 +780,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <img src="${producto.imagen}" alt="${producto.nombre}" onerror="this.src='assets/placeholder.jpg'">
                 <div class="info-vendedor">
                     <h4>${producto.nombre}</h4>
-                    <p class="precio-vendedor" data-precio="${producto.precio}">$${producto.precio.toFixed(2)}</p>
+                    <p class="precio-vendedor" data-precio="${producto.precio}">${producto.precio.toFixed(2)}</p>
                     <p style="font-size: 0.8em; color: #666;">${producto.categoria}</p>
                 </div>
                 <input type="number" class="cantidad-vendedor" value="0" min="0" data-id="${producto._id}" data-precio="${producto.precio}">
@@ -820,7 +826,7 @@ document.addEventListener('DOMContentLoaded', function () {
         detallePedido.innerHTML = '';
         carritoVendedor.forEach(item => {
             const p = document.createElement('p');
-            p.textContent = `${item.cantidad} x ${item.nombre} - $${item.subtotal.toFixed(2)}`;
+            p.textContent = `${item.cantidad} x ${item.nombre} - ${item.subtotal.toFixed(2)}`;
             detallePedido.appendChild(p);
         });
     }
@@ -860,7 +866,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         y += 10;
         doc.setFontSize(16);
-        doc.text(`Total: $${totalPedidoSpan?.textContent || '0.00'}`, 10, y);
+        doc.text(`Total: ${totalPedidoSpan?.textContent || '0.00'}`, 10, y);
         
         doc.save(`presupuesto-${nombreClienteInput?.value || 'cliente'}.pdf`);
         mostrarNotificacion('PDF generado con éxito.', 'success');
