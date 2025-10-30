@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { enviarEmail } from './emailService.js'; // Asegúrate de que esta importación esté presente
+import { getCloudinaryUrl, IMG_CARD, IMG_THUMB, IMG_DETAIL } from './scripts/cloudinaryConfig.js';
 
 // ... (resto de tus importaciones y configuraciones iniciales)
 
@@ -32,7 +33,17 @@ mongoose.connect(dbUri)
 
 // =================== MIDDLEWARES ===================
 app.use(cors({
-    origin: ['https://colchonqn2.netlify.app', 'http://localhost:5500', 'http://127.0.0.1:5500']
+    origin: [
+        'https://colchonqn2.netlify.app',
+        'http://localhost:5500',
+        'http://127.0.0.1:5500',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:5174',
+        'http://localhost:5175',
+        'http://localhost:5176',
+        'http://localhost:5177'
+    ]
 }));
 app.use(express.json());
 
@@ -62,6 +73,7 @@ const ProductSchema = new mongoose.Schema({
     precio: { type: Number, required: true },
     categoria: { type: String, required: true },
     imagen: { type: String },
+    cloudinaryPublicId: { type: String },
     mostrar: { type: String }
 });
 const Product = mongoose.model('Product', ProductSchema);
@@ -299,16 +311,23 @@ const migrateExcelDataToMongoDB = async () => {
         if (productsToProcess.length > 0) {
             // Usar upsert para actualizar productos existentes o crear nuevos
 const bulkOps = productsToProcess.map(product => {
-    // Crear copia del producto sin _id para actualizaciones
+    // Crear copia del producto sin _id y sin campos de imagen para actualizaciones
     const productWithoutId = { ...product };
     delete productWithoutId._id;
-    
+    delete productWithoutId.imagen; // NO sobrescribir imagen
+    delete productWithoutId.cloudinaryPublicId; // NO sobrescribir cloudinaryPublicId
+    delete productWithoutId.imagenOptimizada; // NO sobrescribir imagenOptimizada
+
     return {
         updateOne: {
             filter: { nombre: product.nombre },
-            update: { 
-                $set: productWithoutId,  // Solo actualiza campos excepto _id
-                $setOnInsert: { _id: product._id }  // Solo establece _id en inserciones nuevas
+            update: {
+                $set: productWithoutId,  // Solo actualiza campos excepto _id e imágenes
+                $setOnInsert: {
+                    _id: product._id,
+                    imagen: product.imagen || '',
+                    cloudinaryPublicId: product.cloudinaryPublicId || '',
+                }  // Solo establece estos campos en inserciones nuevas
             },
             upsert: true
         }
@@ -364,16 +383,48 @@ app.get('/', (req, res) => {
     });
 });
 
-// Endpoint para productos MEJORADO
+// Endpoint para productos MEJORADO con URLs de Cloudinary optimizadas
 app.get('/api/colchones', async (req, res) => {
     try {
         console.log('📋 Solicitud de productos recibida');
-        
+
         const productos = await Product.find({ mostrar: 'si' }).sort({ categoria: 1, nombre: 1 });
-        
-        console.log(`✅ Enviando ${productos.length} productos`);
-        
-        res.json(productos);
+
+        // Transformar productos para incluir URLs optimizadas de Cloudinary
+        const productosOptimizados = productos.map(producto => {
+            const productoObj = producto.toObject();
+
+            // Si la imagen ya está en Cloudinary, generar URLs optimizadas
+            if (productoObj.imagen && productoObj.imagen.includes('cloudinary.com')) {
+                // Extraer el public_id o usar la URL completa
+                const publicIdOrUrl = productoObj.cloudinaryPublicId || productoObj.imagen;
+
+                // Generar diferentes versiones de la imagen
+                productoObj.imagenOptimizada = {
+                    original: productoObj.imagen,
+                    card: getCloudinaryUrl(publicIdOrUrl, IMG_CARD),      // 400x300 para tarjetas
+                    thumb: getCloudinaryUrl(publicIdOrUrl, IMG_THUMB),    // 150x150 para thumbnails
+                    detail: getCloudinaryUrl(publicIdOrUrl, IMG_DETAIL),  // 1200x900 para vista detallada
+                    // URL principal optimizada (usa la versión card por defecto)
+                    url: getCloudinaryUrl(publicIdOrUrl, IMG_CARD)
+                };
+            } else {
+                // Si no está en Cloudinary, usar la URL original para todos los tamaños
+                productoObj.imagenOptimizada = {
+                    original: productoObj.imagen,
+                    card: productoObj.imagen,
+                    thumb: productoObj.imagen,
+                    detail: productoObj.imagen,
+                    url: productoObj.imagen
+                };
+            }
+
+            return productoObj;
+        });
+
+        console.log(`✅ Enviando ${productosOptimizados.length} productos con imágenes optimizadas`);
+
+        res.json(productosOptimizados);
     } catch (err) {
         console.error('❌ Error al obtener productos:', err);
         res.status(500).json({ error: 'Error al cargar productos' });
