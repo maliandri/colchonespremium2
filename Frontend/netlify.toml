@@ -1,0 +1,19 @@
+[build]
+  # Comando para hacer el build
+  command = "npm run build"
+
+  # Directorio donde Vite genera los archivos estáticos
+  publish = "dist"
+
+  # Variables de entorno (si las necesitas)
+  # environment = { NODE_VERSION = "18" }
+
+[[redirects]]
+  # Redirigir todas las rutas a index.html para el enrutamiento de React
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  # Versión de Node a usar
+  NODE_VERSION = "18"
