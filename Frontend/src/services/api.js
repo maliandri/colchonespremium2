@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 // Configuración de la URL base de la API
-const API_URL = import.meta.env.VITE_API_URL || 'https://colchonespremium2.onrender.com/api';
-
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 // Crear instancia de axios con configuración base
 const api = axios.create({
   baseURL: API_URL,
@@ -43,7 +42,7 @@ api.interceptors.response.use(
 
 export const getProductos = async () => {
   try {
-    const response = await api.get('/colchones');
+    const response = await api.get('/productos');
     return response.data;
   } catch (error) {
     console.error('Error al obtener productos:', error);

@@ -1,18 +1,26 @@
-# Archivos de entorno (NUNCA subir)
+# Dependencias
+node_modules/
+Frontend/node_modules/
+Backend/node_modules/
+api/node_modules/
+
+# Build
+dist/
+Frontend/dist/
+.vercel/
+
+# Variables de entorno
 .env
 .env.local
 .env*.local
+Frontend/.env.local
 
-# Dependencias
-node_modules/
+# Logs
+*.log
+npm-debug.log*
 
-# Builds
-dist/
-build/
-out/
-
-# System
+# Sistema
 .DS_Store
 Thumbs.db
-# claude
+
 .claude
