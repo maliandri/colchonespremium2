@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "vercel-build": "cd Frontend && npm install && npm run build"
+    "vercel-build": "npm install --prefix api && cd Frontend && npm install && npm run build"
   },
   "workspaces": [
     "Frontend",
