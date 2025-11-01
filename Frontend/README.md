@@ -106,23 +106,33 @@ Frontend/
 
 ## 🔧 Configuración
 
-### Variables de Entorno (.env)
+### Variables de Entorno
 
+El proyecto usa diferentes archivos `.env` para cada entorno:
+
+**Producción** (`.env.production`):
 ```env
-VITE_API_URL=https://colchonespremium2.onrender.com/api
+# Usa funciones serverless de Vercel (misma URL)
+VITE_API_URL=/api
+```
+
+**Desarrollo** (`.env.development`):
+```env
+# Conecta con backend local en desarrollo
+VITE_API_URL=http://localhost:3000/api
+```
+
+**Cloudinary** (opcional):
+```env
 VITE_CLOUDINARY_CLOUD_NAME=dlshym1te
 VITE_CLOUDINARY_FOLDER=alumine
 ```
 
-### Cambiar la URL del Backend
+### ⚡ Arquitectura Serverless en Vercel
 
-Si necesitas cambiar la URL del backend, actualiza el archivo `.env`:
-
-```env
-VITE_API_URL=http://localhost:3000/api  # Para desarrollo local
-# o
-VITE_API_URL=https://tu-backend.com/api  # Para producción
-```
+- Frontend y Backend en el **mismo dominio** (sin CORS)
+- Rutas `/api/*` → funciones serverless en carpeta `api/`
+- No se necesita backend separado en Render
 
 ## 📚 Componentes Principales
 
