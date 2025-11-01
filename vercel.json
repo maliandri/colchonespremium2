@@ -1,10 +1,5 @@
 {
-  "buildCommand": "npm run vercel-build",
-  "outputDirectory": "Frontend/dist",
-  "rewrites": [
-    {
-      "source": "/((?!api).*)",
-      "destination": "/index.html"
-    }
-  ]
+  "installCommand": "npm install --prefix=api && npm install --prefix=Frontend",
+  "buildCommand": "npm run build --prefix=Frontend",
+  "outputDirectory": "Frontend/dist"
 }
