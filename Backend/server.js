@@ -34,6 +34,7 @@ mongoose.connect(dbUri)
 // =================== MIDDLEWARES ===================
 app.use(cors({
     origin: [
+        'https://colchonespremium2.vercel.app',
         'https://colchonqn2.netlify.app',
         'http://localhost:5500',
         'http://127.0.0.1:5500',
