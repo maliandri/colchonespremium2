@@ -385,7 +385,8 @@ app.get('/', (req, res) => {
 });
 
 // Endpoint para productos MEJORADO con URLs de Cloudinary optimizadas
-app.get('/api/colchones', async (req, res) => {
+// Soporta tanto /api/colchones (legacy) como /api/productos (nuevo estándar)
+app.get(['/api/colchones', '/api/productos'], async (req, res) => {
     try {
         console.log('📋 Solicitud de productos recibida');
 
