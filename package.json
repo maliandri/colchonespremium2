@@ -4,10 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "vercel-build": "npm install --prefix api && cd Frontend && npm install && npm run build"
+    "vercel-build": "npm install --prefix api && cd Frontend && npm install && npm run build",
+    "renombrar-imagenes": "node scripts/renombrar-imagenes-cloudinary.js"
   },
   "workspaces": [
     "Frontend",
     "api"
-  ]
+  ],
+  "dependencies": {
+    "mongoose": "^8.0.0",
+    "cloudinary": "^1.41.0",
+    "dotenv": "^16.3.1"
+  }
 }
