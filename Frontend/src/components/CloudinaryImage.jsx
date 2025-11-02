@@ -17,6 +17,10 @@ export const CloudinaryImage = ({
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    // Resetear estados al cambiar producto
+    setIsLoading(true);
+    setHasError(false);
+
     // Obtener la URL optimizada según el tamaño solicitado
     if (product.imagenOptimizada) {
       const src = product.imagenOptimizada[size] || product.imagenOptimizada.url || product.imagen;
@@ -27,10 +31,8 @@ export const CloudinaryImage = ({
         return;
       }
       setImageSrc(src);
-      setHasError(false);
     } else if (product.imagen && product.imagen !== '') {
       setImageSrc(product.imagen);
-      setHasError(false);
     } else {
       // No hay imagen disponible
       setHasError(true);
@@ -50,26 +52,7 @@ export const CloudinaryImage = ({
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      {/* Placeholder mientras carga */}
-      {isLoading && !hasError && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-      )}
-
-      {/* Imagen */}
-      <img
-        src={imageSrc}
-        alt={alt || product.nombre}
-        className={`w-full h-full object-contain transition-opacity duration-300 ${
-          isLoading ? 'opacity-0' : 'opacity-100'
-        }`}
-        loading={loading}
-        onLoad={handleLoad}
-        onError={handleError}
-        onClick={onClick}
-      />
-
-      {/* Placeholder para productos sin imagen */}
-      {hasError && (
+      {hasError ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
           <div className="text-center text-gray-400 p-4">
             <svg
@@ -89,6 +72,24 @@ export const CloudinaryImage = ({
             <p className="text-xs text-gray-400 mt-1">Consultar disponibilidad</p>
           </div>
         </div>
+      ) : (
+        <>
+          {isLoading && (
+            <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+          )}
+
+          <img
+            src={imageSrc}
+            alt={alt || product.nombre}
+            className={`w-full h-full object-contain transition-opacity duration-300 ${
+              isLoading ? 'opacity-0' : 'opacity-100'
+            }`}
+            loading={loading}
+            onLoad={handleLoad}
+            onError={handleError}
+            onClick={onClick}
+          />
+        </>
       )}
     </div>
   );
