@@ -3,12 +3,13 @@ import Product from './_lib/models/Product.js';
 import { getCloudinaryUrl, IMG_CARD, IMG_THUMB, IMG_DETAIL } from './_lib/cloudinary.js';
 
 /**
- * Construye el path de Cloudinary usando el _id del producto
- * Ejemplo: _id="COL-001", categoria="Colchon" -> "alumine/alumine/colchon/COL-001"
+ * Construye el path de Cloudinary usando el nombre del producto
+ * Ejemplo: nombre="Almohada Venecia 0.65", categoria="Almohada"
+ *          -> "alumine/alumine/almohada/Almohada Venecia 0.65"
  */
-function buildCloudinaryPath(productId, categoria) {
+function buildCloudinaryPath(nombre, categoria) {
   const categoriaLower = categoria.toLowerCase().replace(/\s+/g, '-');
-  return `alumine/alumine/${categoriaLower}/${productId}`;
+  return `alumine/alumine/${categoriaLower}/${nombre}`;
 }
 
 export default async function handler(req, res) {
@@ -31,8 +32,8 @@ export default async function handler(req, res) {
       const productoObj = producto.toObject();
 
       // SISTEMA SIMPLIFICADO:
-      // Siempre construir el path usando el _id del producto
-      const cloudinaryPath = buildCloudinaryPath(productoObj._id, productoObj.categoria);
+      // Construir el path usando el nombre del producto
+      const cloudinaryPath = buildCloudinaryPath(productoObj.nombre, productoObj.categoria);
 
       productoObj.imagenOptimizada = {
         original: productoObj.imagen || '',
