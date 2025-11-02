@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Mail, Lock, User } from 'lucide-react';
+import { X, Mail, Lock, User, HelpCircle } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { login, register } from '../services/api';
 
@@ -178,19 +178,53 @@ export const AuthModal = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {/* Remember Me Checkbox */}
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="rememberMe"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-            />
-            <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
-              Recordar mi usuario y contraseña
-            </label>
-          </div>
+          {/* Remember Me Checkbox (only for login) */}
+          {isLogin && (
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+              />
+              <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
+                Recordar mi usuario y contraseña
+              </label>
+            </div>
+          )}
+
+          {/* Forgot Password/Email Links (only for login) */}
+          {isLogin && (
+            <div className="flex flex-col space-y-2 text-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  const savedEmail = localStorage.getItem('savedEmail');
+                  if (savedEmail) {
+                    alert(`Tu usuario guardado es: ${savedEmail}`);
+                    setEmail(savedEmail);
+                  } else {
+                    alert('No hay usuarios guardados en este navegador. Activa "Recordar mi usuario" al iniciar sesión.');
+                  }
+                }}
+                className="text-primary hover:text-accent transition-colors flex items-center gap-1 justify-start"
+              >
+                <HelpCircle className="w-4 h-4" />
+                <span>¿Olvidaste tu usuario?</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  alert('Por favor contacta al administrador para recuperar tu contraseña enviando un email a: colchonqn@marianoaliandri.com.ar');
+                }}
+                className="text-primary hover:text-accent transition-colors flex items-center gap-1 justify-start"
+              >
+                <HelpCircle className="w-4 h-4" />
+                <span>¿Olvidaste tu contraseña?</span>
+              </button>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (

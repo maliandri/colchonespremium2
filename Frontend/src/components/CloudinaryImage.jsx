@@ -20,20 +20,32 @@ export const CloudinaryImage = ({
     // Obtener la URL optimizada según el tamaño solicitado
     if (product.imagenOptimizada) {
       const src = product.imagenOptimizada[size] || product.imagenOptimizada.url || product.imagen;
+      // Si la URL está vacía, marcar como sin imagen
+      if (!src || src === '') {
+        setHasError(true);
+        setIsLoading(false);
+        return;
+      }
       setImageSrc(src);
+      setHasError(false);
+    } else if (product.imagen && product.imagen !== '') {
+      setImageSrc(product.imagen);
+      setHasError(false);
     } else {
-      setImageSrc(product.imagen || '/assets/placeholder.jpg');
+      // No hay imagen disponible
+      setHasError(true);
+      setIsLoading(false);
     }
   }, [product, size]);
 
   const handleLoad = () => {
     setIsLoading(false);
+    setHasError(false);
   };
 
   const handleError = () => {
     setIsLoading(false);
     setHasError(true);
-    setImageSrc('/assets/placeholder.jpg');
   };
 
   return (
@@ -56,12 +68,12 @@ export const CloudinaryImage = ({
         onClick={onClick}
       />
 
-      {/* Indicador de error */}
+      {/* Placeholder para productos sin imagen */}
       {hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-          <div className="text-center text-gray-400">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="text-center text-gray-400 p-4">
             <svg
-              className="w-16 h-16 mx-auto mb-2"
+              className="w-20 h-20 mx-auto mb-3"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -69,11 +81,12 @@ export const CloudinaryImage = ({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                strokeWidth={1.5}
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
               />
             </svg>
-            <p className="text-sm">Imagen no disponible</p>
+            <p className="text-sm font-medium text-gray-500">Producto sin imagen</p>
+            <p className="text-xs text-gray-400 mt-1">Consultar disponibilidad</p>
           </div>
         </div>
       )}
