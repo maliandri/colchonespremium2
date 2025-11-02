@@ -4,12 +4,11 @@ import { getCloudinaryUrl, IMG_CARD, IMG_THUMB, IMG_DETAIL } from './_lib/cloudi
 
 /**
  * Construye el path de Cloudinary usando el nombre del producto
- * Ejemplo: nombre="Almohada Venecia 0.65", categoria="Almohada"
- *          -> "alumine/alumine/almohada/Almohada Venecia 0.65"
+ * Todas las imágenes están en la carpeta: alumine/
+ * Ejemplo: "Cocina MORELLI 820..." -> "alumine/Cocina MORELLI 820..."
  */
-function buildCloudinaryPath(nombre, categoria) {
-  const categoriaLower = categoria.toLowerCase().replace(/\s+/g, '-');
-  return `alumine/alumine/${categoriaLower}/${nombre}`;
+function buildCloudinaryPath(nombre) {
+  return `alumine/${nombre}`;
 }
 
 export default async function handler(req, res) {
@@ -32,8 +31,8 @@ export default async function handler(req, res) {
       const productoObj = producto.toObject();
 
       // SISTEMA SIMPLIFICADO:
-      // Construir el path usando el nombre del producto
-      const cloudinaryPath = buildCloudinaryPath(productoObj.nombre, productoObj.categoria);
+      // Construir el path usando solo el nombre del producto
+      const cloudinaryPath = buildCloudinaryPath(productoObj.nombre);
 
       productoObj.imagenOptimizada = {
         original: productoObj.imagen || '',
