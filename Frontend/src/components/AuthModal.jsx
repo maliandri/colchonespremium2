@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Mail, Lock, User } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { login, register } from '../services/api';
@@ -8,10 +8,24 @@ export const AuthModal = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const setAuth = useAuthStore((state) => state.setAuth);
+
+  // Cargar credenciales guardadas al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      const savedEmail = localStorage.getItem('savedEmail');
+      const savedPassword = localStorage.getItem('savedPassword');
+      if (savedEmail && savedPassword) {
+        setEmail(savedEmail);
+        setPassword(savedPassword);
+        setRememberMe(true);
+      }
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +37,16 @@ export const AuthModal = ({ isOpen, onClose }) => {
         // Login
         const response = await login(email, password);
         setAuth(response.token, { email });
+
+        // Guardar credenciales si "Recordar" está activado
+        if (rememberMe) {
+          localStorage.setItem('savedEmail', email);
+          localStorage.setItem('savedPassword', password);
+        } else {
+          localStorage.removeItem('savedEmail');
+          localStorage.removeItem('savedPassword');
+        }
+
         onClose();
       } else {
         // Register
@@ -38,10 +62,18 @@ export const AuthModal = ({ isOpen, onClose }) => {
         }
         const response = await register(email, password);
         setAuth(response.token, { email });
+
+        // Guardar credenciales si "Recordar" está activado
+        if (rememberMe) {
+          localStorage.setItem('savedEmail', email);
+          localStorage.setItem('savedPassword', password);
+        }
+
         onClose();
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al procesar la solicitud');
+      console.error('Error en auth:', err);
+      setError(err.response?.data?.error || err.response?.data?.message || 'Error al procesar la solicitud');
     } finally {
       setLoading(false);
     }
@@ -52,6 +84,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
     setPassword('');
     setConfirmPassword('');
     setError('');
+    setRememberMe(false);
   };
 
   const switchMode = () => {
@@ -144,6 +177,20 @@ export const AuthModal = ({ isOpen, onClose }) => {
               </div>
             </div>
           )}
+
+          {/* Remember Me Checkbox */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+            />
+            <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
+              Recordar mi usuario y contraseña
+            </label>
+          </div>
 
           {/* Error Message */}
           {error && (
