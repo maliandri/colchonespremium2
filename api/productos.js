@@ -2,6 +2,15 @@ import { connectDB } from './_lib/db.js';
 import Product from './_lib/models/Product.js';
 import { getCloudinaryUrl, IMG_CARD, IMG_THUMB, IMG_DETAIL } from './_lib/cloudinary.js';
 
+/**
+ * Construye el path de Cloudinary usando el _id del producto
+ * Ejemplo: _id="COL-001", categoria="Colchon" -> "alumine/alumine/colchon/COL-001"
+ */
+function buildCloudinaryPath(productId, categoria) {
+  const categoriaLower = categoria.toLowerCase().replace(/\s+/g, '-');
+  return `alumine/alumine/${categoriaLower}/${productId}`;
+}
+
 export default async function handler(req, res) {
   // Solo permitir método GET
   if (req.method !== 'GET') {
@@ -21,26 +30,17 @@ export default async function handler(req, res) {
     const productosOptimizados = productos.map(producto => {
       const productoObj = producto.toObject();
 
-      // Si la imagen ya está en Cloudinary, generar URLs optimizadas
-      if (productoObj.imagen && productoObj.imagen.includes('cloudinary.com')) {
-        const publicIdOrUrl = productoObj.cloudinaryPublicId || productoObj.imagen;
+      // SISTEMA SIMPLIFICADO:
+      // Siempre construir el path usando el _id del producto
+      const cloudinaryPath = buildCloudinaryPath(productoObj._id, productoObj.categoria);
 
-        productoObj.imagenOptimizada = {
-          original: productoObj.imagen,
-          card: getCloudinaryUrl(publicIdOrUrl, IMG_CARD),
-          thumb: getCloudinaryUrl(publicIdOrUrl, IMG_THUMB),
-          detail: getCloudinaryUrl(publicIdOrUrl, IMG_DETAIL),
-          url: getCloudinaryUrl(publicIdOrUrl, IMG_CARD)
-        };
-      } else {
-        productoObj.imagenOptimizada = {
-          original: productoObj.imagen,
-          card: productoObj.imagen,
-          thumb: productoObj.imagen,
-          detail: productoObj.imagen,
-          url: productoObj.imagen
-        };
-      }
+      productoObj.imagenOptimizada = {
+        original: productoObj.imagen || '',
+        card: getCloudinaryUrl(cloudinaryPath, IMG_CARD),
+        thumb: getCloudinaryUrl(cloudinaryPath, IMG_THUMB),
+        detail: getCloudinaryUrl(cloudinaryPath, IMG_DETAIL),
+        url: getCloudinaryUrl(cloudinaryPath, IMG_CARD)
+      };
 
       return productoObj;
     });
