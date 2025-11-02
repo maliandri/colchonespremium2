@@ -30,9 +30,15 @@ export default async function handler(req, res) {
     const productosOptimizados = productos.map(producto => {
       const productoObj = producto.toObject();
 
-      // SISTEMA SIMPLIFICADO:
-      // Construir el path usando solo el nombre del producto
-      const cloudinaryPath = buildCloudinaryPath(productoObj.nombre);
+      // Usar cloudinaryPublicId si existe, sino construir con el nombre
+      let cloudinaryPath;
+      if (productoObj.cloudinaryPublicId) {
+        // Ya tiene el path codificado (ej: "alumine/alumine/colchon/col-001")
+        cloudinaryPath = productoObj.cloudinaryPublicId;
+      } else {
+        // Construir con el nombre completo del producto
+        cloudinaryPath = buildCloudinaryPath(productoObj.nombre);
+      }
 
       productoObj.imagenOptimizada = {
         original: productoObj.imagen || '',
