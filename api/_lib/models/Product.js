@@ -8,7 +8,8 @@ const ProductSchema = new mongoose.Schema({
   categoria: { type: String, required: true },
   imagen: { type: String },
   cloudinaryPublicId: { type: String },
-  mostrar: { type: String }
+  mostrar: { type: String },
+  especificaciones: { type: String }
 });
 
 export default mongoose.models.Product || mongoose.model('Product', ProductSchema);

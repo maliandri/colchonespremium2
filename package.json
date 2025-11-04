@@ -6,7 +6,8 @@
   "scripts": {
     "build": "npm install --prefix api && cd Frontend && npm install --legacy-peer-deps --force && npm run build",
     "vercel-build": "npm install --prefix api && cd Frontend && npm install --legacy-peer-deps --force && npm run build",
-    "renombrar-imagenes": "node scripts/renombrar-imagenes-cloudinary.js"
+    "renombrar-imagenes": "node scripts/renombrar-imagenes-cloudinary.js",
+    "agregar-especificaciones": "node scripts/agregar-especificaciones.js"
   },
   "workspaces": [
     "Frontend",
@@ -15,6 +16,8 @@
   "dependencies": {
     "mongoose": "^8.0.0",
     "cloudinary": "^1.41.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "xlsx": "^0.18.5",
+    "@google/generative-ai": "^0.21.0"
   }
 }

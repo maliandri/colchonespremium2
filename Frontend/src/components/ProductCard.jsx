@@ -1,24 +1,35 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, ZoomIn, Tag } from 'lucide-react';
 import { CloudinaryImage } from './CloudinaryImage';
 import { useCartStore } from '../store/cartStore';
 
 export const ProductCard = ({ product }) => {
   const [showImageModal, setShowImageModal] = useState(false);
+  const navigate = useNavigate();
   const addToCart = useCartStore((state) => state.addToCart);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e) => {
+    e.stopPropagation(); // Evitar que se active el click del card
     addToCart(product);
     // TODO: Mostrar notificación de "Agregado al carrito"
   };
 
-  const handleImageClick = () => {
+  const handleCardClick = () => {
+    navigate(`/producto/${encodeURIComponent(product._id)}`);
+  };
+
+  const handleImageClick = (e) => {
+    e.stopPropagation(); // Evitar que se active el click del card
     setShowImageModal(true);
   };
 
   return (
     <>
-      <div className="card group cursor-pointer transform hover:scale-105 transition-all duration-300">
+      <div
+        className="card group cursor-pointer transform hover:scale-105 transition-all duration-300"
+        onClick={handleCardClick}
+      >
         {/* Imagen del producto */}
         <div
           className="relative h-64 overflow-hidden bg-gray-50 flex items-center justify-center"

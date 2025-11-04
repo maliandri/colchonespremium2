@@ -23,4 +23,8 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+# Scripts locales
+scripts/
+!scripts/README.md
+
 .claude
