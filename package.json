@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "npm install --prefix api && cd Frontend && npm ci --legacy-peer-deps && npm run build",
     "vercel-build": "npm install --prefix api && cd Frontend && npm ci --legacy-peer-deps && npm run build",
     "renombrar-imagenes": "node scripts/renombrar-imagenes-cloudinary.js"
   },
