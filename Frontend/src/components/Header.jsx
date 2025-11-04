@@ -17,9 +17,9 @@ export const Header = ({ onOpenVendedorModal, onOpenAuthModal }) => {
           {/* Logo */}
           <a href="/" className="flex items-center">
             <img
-              src="https://res.cloudinary.com/dlshym1te/image/upload/f_auto,q_auto/Alumine%CC%81_Hogar-logo"
+              src="https://res.cloudinary.com/dlshym1te/image/upload/f_png,fl_preserve_transparency,q_auto/Alumine%CC%81_Hogar-logo"
               alt="Aluminé Hogar"
-              className="h-12 md:h-16 w-auto"
+              className="h-12 md:h-16 w-auto object-contain" style={{ backgroundColor: "transparent" }}
               onError={(e) => {
                 e.target.src = '/assets/logo.png';
               }}

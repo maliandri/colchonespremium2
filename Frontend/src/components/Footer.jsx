@@ -14,7 +14,7 @@ export const Footer = () => {
               Tu mejor descanso comienza aquí. Ofrecemos los mejores colchones y almohadas de Neuquén.
             </p>
             <img
-              src="https://res.cloudinary.com/dlshym1te/image/upload/f_auto,q_auto/Alumine%CC%81_Hogar-logo"
+              src="https://res.cloudinary.com/dlshym1te/image/upload/f_png,fl_preserve_transparency,q_auto/Alumine%CC%81_Hogar-logo"
               alt="Aluminé Hogar"
               className="h-12 w-auto opacity-80"
               onError={(e) => {
