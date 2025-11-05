@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, MessageCircle, Plus, Minus } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { CloudinaryImage } from '../components/CloudinaryImage';
 
@@ -10,8 +10,34 @@ export const ProductDetail = () => {
   const [producto, setProducto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [especificacionesOpen, setEspecificacionesOpen] = useState(true);
+  const [openSpecs, setOpenSpecs] = useState({});
   const addToCart = useCartStore((state) => state.addToCart);
+
+  // Función para parsear especificaciones HTML
+  const parseEspecificaciones = (htmlString) => {
+    if (!htmlString) return [];
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    const items = doc.querySelectorAll('li');
+
+    return Array.from(items).map((item, index) => {
+      const strongTag = item.querySelector('strong');
+      const titulo = strongTag ? strongTag.textContent : `Especificación ${index + 1}`;
+      const contenido = strongTag
+        ? item.innerHTML.replace(strongTag.outerHTML, '').trim()
+        : item.textContent;
+
+      return { titulo, contenido };
+    });
+  };
+
+  const toggleSpec = (index) => {
+    setOpenSpecs(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
 
   useEffect(() => {
     const fetchProducto = async () => {
@@ -123,31 +149,50 @@ export const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Specifications - Acordeón */}
+              {/* Specifications - Acordeones Individuales */}
               {producto.especificaciones && (
-                <div className="mb-6 border border-gray-200 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => setEspecificacionesOpen(!especificacionesOpen)}
-                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
-                  >
-                    <h2 className="text-xl font-semibold text-gray-800">
-                      Especificaciones Técnicas
-                    </h2>
-                    {especificacionesOpen ? (
-                      <ChevronUp className="w-5 h-5 text-gray-600" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-600" />
-                    )}
-                  </button>
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-3">
+                    Especificaciones Técnicas
+                  </h2>
+                  <div className="space-y-2">
+                    {parseEspecificaciones(producto.especificaciones).map((spec, index) => {
+                      const isOpen = openSpecs[index];
+                      return (
+                        <div
+                          key={index}
+                          className="rounded-lg overflow-hidden border border-gray-200"
+                        >
+                          <button
+                            onClick={() => toggleSpec(index)}
+                            className={`w-full flex items-center justify-between p-4 transition-colors ${
+                              isOpen
+                                ? 'bg-primary text-white'
+                                : 'bg-green-500 hover:bg-green-600 text-white'
+                            }`}
+                          >
+                            <span className="font-semibold text-left">
+                              {spec.titulo.replace(':', '')}
+                            </span>
+                            {isOpen ? (
+                              <Minus className="w-5 h-5 flex-shrink-0 text-green-400" />
+                            ) : (
+                              <Plus className="w-5 h-5 flex-shrink-0 text-green-400" />
+                            )}
+                          </button>
 
-                  {especificacionesOpen && (
-                    <div className="p-4 bg-white animate-fadeIn">
-                      <div
-                        className="prose prose-sm max-w-none text-gray-600"
-                        dangerouslySetInnerHTML={{ __html: producto.especificaciones }}
-                      />
-                    </div>
-                  )}
+                          {isOpen && (
+                            <div className="p-4 bg-white animate-fadeIn">
+                              <div
+                                className="text-gray-700 leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: spec.contenido }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
