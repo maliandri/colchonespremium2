@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { X, Search, FileDown, Send, Trash2 } from 'lucide-react';
+import { X, Search, FileDown, Send, Trash2, Lock, Percent } from 'lucide-react';
 import { CloudinaryImage } from './CloudinaryImage';
 import jsPDF from 'jspdf';
 import { enviarPresupuesto } from '../services/api';
 
 export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [carritoVendedor, setCarritoVendedor] = useState({});
   const [vendedor, setVendedor] = useState({ nombre: '' });
@@ -25,13 +27,37 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
     'Tierra del Fuego', 'Tucumán'
   ];
 
+  // Autenticación
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (password === import.meta.env.VITE_VENDEDOR_PASSWORD) {
+      setIsAuthenticated(true);
+      setPassword('');
+    } else {
+      alert('Contraseña incorrecta');
+      setPassword('');
+    }
+  };
+
   // Filtrar productos según categoría
   const productosFiltrados = selectedCategory
     ? productos.filter(p => p.categoria === selectedCategory)
     : productos;
 
-  // Calcular total
+  // Calcular total con descuentos
   const calcularTotal = () => {
+    return Object.values(carritoVendedor).reduce(
+      (total, item) => {
+        const descuento = item.descuento || 0;
+        const precioConDescuento = item.precio * (1 - descuento / 100);
+        return total + (precioConDescuento * item.cantidad);
+      },
+      0
+    );
+  };
+
+  // Calcular total sin descuento
+  const calcularTotalSinDescuento = () => {
     return Object.values(carritoVendedor).reduce(
       (total, item) => total + (item.precio * item.cantidad),
       0
@@ -51,7 +77,24 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
         ...carritoVendedor,
         [producto._id]: {
           ...producto,
-          cantidad: cant
+          cantidad: cant,
+          descuento: carritoVendedor[producto._id]?.descuento || 0
+        }
+      });
+    }
+  };
+
+  // Actualizar descuento (máximo 15%)
+  const handleDescuentoChange = (productoId, descuento) => {
+    const desc = parseFloat(descuento) || 0;
+    const descuentoFinal = Math.min(Math.max(desc, 0), 15); // Entre 0 y 15%
+
+    if (carritoVendedor[productoId]) {
+      setCarritoVendedor({
+        ...carritoVendedor,
+        [productoId]: {
+          ...carritoVendedor[productoId],
+          descuento: descuentoFinal
         }
       });
     }
@@ -85,7 +128,7 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
 
     // Título
     doc.setFontSize(20);
-    doc.text('Presupuesto - Colchones Premium', 20, 20);
+    doc.text('Presupuesto - Alumine Hogar', 20, 20);
 
     // Info vendedor
     doc.setFontSize(12);
@@ -97,9 +140,9 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
     doc.text('Datos del Cliente:', 20, 55);
     doc.setFontSize(11);
     doc.text(`Nombre: ${cliente.nombre || 'N/A'}`, 20, 63);
-    doc.text(`Teléfono: ${cliente.telefono || 'N/A'}`, 20, 70);
+    doc.text(`Telefono: ${cliente.telefono || 'N/A'}`, 20, 70);
     doc.text(`Email: ${cliente.email || 'N/A'}`, 20, 77);
-    doc.text(`Dirección: ${cliente.direccion || 'N/A'}`, 20, 84);
+    doc.text(`Direccion: ${cliente.direccion || 'N/A'}`, 20, 84);
     doc.text(`${cliente.localidad || 'N/A'}, ${cliente.provincia}`, 20, 91);
 
     // Productos
@@ -110,17 +153,26 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
     doc.setFontSize(10);
 
     items.forEach((item, index) => {
-      const subtotal = item.precio * item.cantidad;
-      doc.text(
-        `${index + 1}. ${item.nombre}`,
-        20,
-        y
-      );
-      doc.text(
-        `${item.cantidad} x $${item.precio.toFixed(2)} = $${subtotal.toFixed(2)}`,
-        20,
-        y + 7
-      );
+      const descuento = item.descuento || 0;
+      const precioConDescuento = item.precio * (1 - descuento / 100);
+      const subtotal = precioConDescuento * item.cantidad;
+
+      doc.text(`${index + 1}. ${item.nombre}`, 20, y);
+
+      if (descuento > 0) {
+        doc.text(
+          `${item.cantidad} x $${item.precio.toFixed(2)} (${descuento}% OFF) = $${subtotal.toFixed(2)}`,
+          20,
+          y + 7
+        );
+      } else {
+        doc.text(
+          `${item.cantidad} x $${item.precio.toFixed(2)} = $${subtotal.toFixed(2)}`,
+          20,
+          y + 7
+        );
+      }
+
       y += 15;
 
       // Nueva página si es necesario
@@ -130,10 +182,24 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
       }
     });
 
-    // Total
+    // Totales
+    const totalSinDescuento = calcularTotalSinDescuento();
+    const totalConDescuento = calcularTotal();
+    const ahorroTotal = totalSinDescuento - totalConDescuento;
+
     y += 10;
+    doc.setFontSize(12);
+
+    if (ahorroTotal > 0) {
+      doc.text(`Subtotal: $${totalSinDescuento.toFixed(2)}`, 20, y);
+      doc.setTextColor(220, 38, 38);
+      doc.text(`Descuento: -$${ahorroTotal.toFixed(2)}`, 20, y + 7);
+      doc.setTextColor(0, 0, 0);
+      y += 14;
+    }
+
     doc.setFontSize(14);
-    doc.text(`TOTAL: $${calcularTotal().toFixed(2)}`, 20, y);
+    doc.text(`TOTAL: $${totalConDescuento.toFixed(2)}`, 20, y);
 
     // Descargar
     doc.save(`presupuesto-${Date.now()}.pdf`);
@@ -154,12 +220,19 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
     }
 
     try {
-      const productosFormateados = items.map(item => ({
-        nombre: item.nombre,
-        cantidad: item.cantidad,
-        precioUnitario: item.precio,
-        subtotal: item.precio * item.cantidad
-      }));
+      const productosFormateados = items.map(item => {
+        const descuento = item.descuento || 0;
+        const precioConDescuento = item.precio * (1 - descuento / 100);
+
+        return {
+          nombre: item.nombre,
+          cantidad: item.cantidad,
+          precioUnitario: item.precio,
+          descuento: descuento,
+          precioConDescuento: precioConDescuento,
+          subtotal: precioConDescuento * item.cantidad
+        };
+      });
 
       await enviarPresupuesto({
         cliente: {
@@ -186,12 +259,61 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
 
   if (!isOpen) return null;
 
+  // Pantalla de login
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Acceso Vendedores</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Lock className="w-4 h-4 inline mr-2" />
+                Contraseña
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-field"
+                placeholder="Ingrese la contraseña"
+                required
+                autoFocus
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full btn-primary"
+            >
+              Ingresar
+            </button>
+          </form>
+
+          <p className="text-xs text-gray-500 text-center mt-4">
+            Solo personal autorizado
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Panel principal (después del login)
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-primary text-white px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Acceso Vendedores</h2>
+          <h2 className="text-2xl font-bold">Panel de Vendedores</h2>
           <button
             onClick={onClose}
             className="text-white hover:bg-red-700 rounded-full p-2 transition-colors"
@@ -232,22 +354,39 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
                       <CloudinaryImage
                         product={producto}
                         size="thumb"
-                        className="w-full h-full rounded"
+                        className="w-full h-full rounded object-cover"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-sm truncate">{producto.nombre}</h4>
-                      <p className="text-primary font-bold">${producto.precio.toFixed(2)}</p>
+                      <p className="text-primary font-bold">${producto.precio.toLocaleString('es-AR')}</p>
                       <p className="text-xs text-gray-600">{producto.categoria}</p>
                     </div>
-                    <input
-                      type="number"
-                      min="0"
-                      value={carritoVendedor[producto._id]?.cantidad || 0}
-                      onChange={(e) => handleCantidadChange(producto, e.target.value)}
-                      className="w-20 px-2 py-1 border rounded text-center"
-                      placeholder="0"
-                    />
+                    <div className="flex flex-col gap-1">
+                      <input
+                        type="number"
+                        min="0"
+                        value={carritoVendedor[producto._id]?.cantidad || 0}
+                        onChange={(e) => handleCantidadChange(producto, e.target.value)}
+                        className="w-20 px-2 py-1 border rounded text-center"
+                        placeholder="Cant."
+                      />
+                      {carritoVendedor[producto._id] && (
+                        <div className="flex items-center">
+                          <Percent className="w-3 h-3 text-gray-400 mr-1" />
+                          <input
+                            type="number"
+                            min="0"
+                            max="15"
+                            step="0.5"
+                            value={carritoVendedor[producto._id]?.descuento || 0}
+                            onChange={(e) => handleDescuentoChange(producto._id, e.target.value)}
+                            className="w-16 px-1 py-1 border rounded text-center text-xs"
+                            placeholder="0"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -327,23 +466,53 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
                   <p className="text-gray-500 text-sm">No hay productos seleccionados</p>
                 ) : (
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {Object.values(carritoVendedor).map(item => (
-                      <div key={item._id} className="flex justify-between text-sm">
-                        <span className="truncate flex-1">{item.nombre}</span>
-                        <span className="font-medium ml-2">
-                          {item.cantidad} x ${item.precio.toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
+                    {Object.values(carritoVendedor).map(item => {
+                      const descuento = item.descuento || 0;
+                      const precioConDescuento = item.precio * (1 - descuento / 100);
+                      const subtotal = precioConDescuento * item.cantidad;
+
+                      return (
+                        <div key={item._id} className="text-sm">
+                          <div className="flex justify-between">
+                            <span className="truncate flex-1">{item.nombre}</span>
+                            <span className="font-medium ml-2">
+                              {item.cantidad} x ${item.precio.toLocaleString('es-AR')}
+                            </span>
+                          </div>
+                          {descuento > 0 && (
+                            <div className="flex justify-between text-red-600 text-xs">
+                              <span>Descuento {descuento}%</span>
+                              <span>-${(item.precio * item.cantidad * descuento / 100).toLocaleString('es-AR')}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between font-semibold">
+                            <span>Subtotal:</span>
+                            <span>${subtotal.toLocaleString('es-AR')}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
               {/* Total */}
               <div className="bg-primary text-white p-4 rounded-lg mb-4">
-                <div className="flex justify-between items-center text-xl font-bold">
+                {calcularTotalSinDescuento() !== calcularTotal() && (
+                  <div className="flex justify-between items-center text-sm mb-2 opacity-75">
+                    <span>Subtotal:</span>
+                    <span>${calcularTotalSinDescuento().toLocaleString('es-AR')}</span>
+                  </div>
+                )}
+                {calcularTotalSinDescuento() !== calcularTotal() && (
+                  <div className="flex justify-between items-center text-sm mb-2 text-yellow-300">
+                    <span>Ahorro:</span>
+                    <span>-${(calcularTotalSinDescuento() - calcularTotal()).toLocaleString('es-AR')}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-xl font-bold border-t border-white/20 pt-2">
                   <span>TOTAL:</span>
-                  <span>${calcularTotal().toFixed(2)}</span>
+                  <span>${calcularTotal().toLocaleString('es-AR')}</span>
                 </div>
               </div>
 

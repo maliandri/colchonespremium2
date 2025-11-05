@@ -38,7 +38,7 @@ export const ProductCard = ({ product }) => {
           <CloudinaryImage
             product={product}
             size="card"
-            className="w-full h-full"
+            className="w-full h-full object-contain"
           />
 
           {/* Overlay en hover */}

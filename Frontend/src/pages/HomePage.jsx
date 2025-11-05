@@ -88,10 +88,10 @@ export const HomePage = ({ showVendedorModal, setShowVendedorModal, showAuthModa
         <div className="gradient-overlay absolute inset-0" />
         <div className="relative z-10 container-custom px-4">
           <h1 className="text-4xl md:text-6xl font-bold mb-4 text-shadow animate-fadeIn">
-            Descanso de Calidad para tu Hogar
+            Aluminé con el calor del HOGAR!
           </h1>
           <p className="text-xl md:text-2xl mb-8 text-shadow animate-fadeIn">
-            Encuentra los mejores colchones y almohadas para tu descanso
+            Encuentra los mejores productos para tu descanso
           </p>
           <a
             href="#productos"

@@ -3,7 +3,7 @@ import { ShoppingCart, User, Menu, X, UserCog } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
 
-export const Header = ({ onOpenVendedorModal, onOpenAuthModal }) => {
+export const Header = ({ onOpenVendedorModal, onOpenAuthModal, onOpenCartModal }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const getTotalItems = useCartStore((state) => state.getTotalItems);
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -75,9 +75,8 @@ export const Header = ({ onOpenVendedorModal, onOpenAuthModal }) => {
             {/* Cart */}
             <button
               className="relative flex items-center space-x-2 text-white hover:text-purple-200 transition-colors"
-              onClick={() => {
-                // TODO: Abrir modal de carrito
-              }}
+              onClick={onOpenCartModal}
+              title="Ver carrito"
             >
               <ShoppingCart className="w-6 h-6" />
               {cartCount > 0 && (

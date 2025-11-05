@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { CloudinaryImage } from '../components/CloudinaryImage';
 
@@ -10,6 +10,7 @@ export const ProductDetail = () => {
   const [producto, setProducto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [especificacionesOpen, setEspecificacionesOpen] = useState(true);
   const addToCart = useCartStore((state) => state.addToCart);
 
   useEffect(() => {
@@ -88,11 +89,11 @@ export const ProductDetail = () => {
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="grid md:grid-cols-2 gap-8 p-6 md:p-8">
             {/* Image Section */}
-            <div className="relative">
+            <div className="relative flex items-center justify-center bg-gray-50 rounded-lg p-4">
               <CloudinaryImage
                 product={producto}
                 alt={producto.nombre}
-                className="w-full h-96 rounded-lg"
+                className="w-full h-96 object-contain rounded-lg"
                 loading="eager"
               />
               {producto.categoria && (
@@ -122,16 +123,31 @@ export const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Specifications */}
+              {/* Specifications - Acordeón */}
               {producto.especificaciones && (
-                <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-3">
-                    Especificaciones Técnicas
-                  </h2>
-                  <div
-                    className="prose prose-sm max-w-none text-gray-600"
-                    dangerouslySetInnerHTML={{ __html: producto.especificaciones }}
-                  />
+                <div className="mb-6 border border-gray-200 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setEspecificacionesOpen(!especificacionesOpen)}
+                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      Especificaciones Técnicas
+                    </h2>
+                    {especificacionesOpen ? (
+                      <ChevronUp className="w-5 h-5 text-gray-600" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-600" />
+                    )}
+                  </button>
+
+                  {especificacionesOpen && (
+                    <div className="p-4 bg-white animate-fadeIn">
+                      <div
+                        className="prose prose-sm max-w-none text-gray-600"
+                        dangerouslySetInnerHTML={{ __html: producto.especificaciones }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
