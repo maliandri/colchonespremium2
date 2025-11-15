@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Página principal -->
+  <url>
+    <loc>https://colchonqn2.netlify.app/</loc>
+    <lastmod>2025-11-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Nota: Este es un sitemap estático básico -->
+  <!-- Para un sitemap dinámico con todos los productos, considera usar -->
+  <!-- una herramienta de generación en el build process -->
+  <!-- o un servicio externo como xml-sitemaps.com -->
+</urlset>

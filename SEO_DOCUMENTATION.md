@@ -127,39 +127,45 @@ El hook `useSEO` genera automáticamente Schema.org para cada producto:
 
 ## Sitemap.xml
 
-### Endpoint
+### Archivo Estático
 
-Se creó el endpoint [api/sitemap.xml.js](api/sitemap.xml.js) que genera dinámicamente el sitemap con:
-
-- Página principal
-- Todos los productos visibles del catálogo
+Debido al límite de funciones serverless en Vercel (plan gratuito), se creó un archivo estático [Frontend/public/sitemap.xml](Frontend/public/sitemap.xml).
 
 ### Acceso
 
 ```
-https://colchonqn2.netlify.app/api/sitemap.xml
+https://colchonqn2.netlify.app/sitemap.xml
 ```
 
 ### Características
 
-- ✅ Actualización dinámica basada en la base de datos
-- ✅ Incluye fecha de última modificación
-- ✅ Prioridades configuradas (1.0 para home, 0.8 para productos)
-- ✅ Frecuencia de actualización (daily, weekly)
-- ✅ Cache de 1 hora
+- ✅ Archivo estático en carpeta `public`
+- ✅ Incluye página principal
+- ⚠️ **Nota:** Para incluir productos dinámicamente, considera:
+  - Generar sitemap en el proceso de build
+  - Usar servicios externos como xml-sitemaps.com
+  - Actualizar manualmente cuando agregues productos clave
+
+### Actualización Dinámica (Opcional)
+
+Si necesitas un sitemap dinámico, puedes:
+
+1. **Opción 1:** Generar en build time con un script
+2. **Opción 2:** Usar un servicio de terceros
+3. **Opción 3:** Actualizar a Vercel Pro para más funciones serverless
 
 ---
 
 ## Robots.txt
 
-### Endpoint
+### Archivo Estático
 
-Se creó el endpoint [api/robots.txt.js](api/robots.txt.js) que permite a los motores de búsqueda:
+Se creó un archivo estático [Frontend/public/robots.txt](Frontend/public/robots.txt).
 
 ### Acceso
 
 ```
-https://colchonqn2.netlify.app/api/robots.txt
+https://colchonqn2.netlify.app/robots.txt
 ```
 
 ### Configuración
@@ -173,7 +179,7 @@ Disallow: /api/auth/*
 Disallow: /api/ventas/*
 Disallow: /api/admin/*
 
-Sitemap: https://colchonqn2.netlify.app/api/sitemap.xml
+Sitemap: https://colchonqn2.netlify.app/sitemap.xml
 ```
 
 ### Características
@@ -181,7 +187,7 @@ Sitemap: https://colchonqn2.netlify.app/api/sitemap.xml
 - ✅ Permite indexación de todo el sitio público
 - ✅ Bloquea APIs privadas
 - ✅ Referencia al sitemap.xml
-- ✅ Cache de 24 horas
+- ✅ Archivo estático (no consume función serverless)
 
 ---
 
@@ -295,8 +301,8 @@ Se agregó la variable `VITE_SITE_URL` en todos los archivos `.env`:
 ### Creados
 
 - [Frontend/src/hooks/useSEO.js](Frontend/src/hooks/useSEO.js)
-- [api/sitemap.xml.js](api/sitemap.xml.js)
-- [api/robots.txt.js](api/robots.txt.js)
+- [Frontend/public/sitemap.xml](Frontend/public/sitemap.xml) - Estático
+- [Frontend/public/robots.txt](Frontend/public/robots.txt) - Estático
 - [SEO_DOCUMENTATION.md](SEO_DOCUMENTATION.md)
 
 ### Modificados
