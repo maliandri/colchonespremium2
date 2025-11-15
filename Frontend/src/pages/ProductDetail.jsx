@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, MessageCircle, Plus, Minus } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { CloudinaryImage } from '../components/CloudinaryImage';
+import { useSEO, generateTitle, generateCanonicalUrl, generateImageUrl } from '../hooks/useSEO';
 
 export const ProductDetail = () => {
   const { id } = useParams();
@@ -38,6 +39,21 @@ export const ProductDetail = () => {
       [index]: !prev[index]
     }));
   };
+
+  // SEO dinámico basado en el producto
+  useSEO({
+    title: producto ? generateTitle(producto.nombre) : generateTitle('Producto'),
+    description: producto
+      ? `${producto.nombre} - ${producto.descripcion || 'Producto de calidad premium en Aluminé Hogar'}. Precio: $${producto.precio?.toLocaleString('es-AR')}. Envíos a todo el país.`
+      : 'Producto de Aluminé Hogar - Tu mejor descanso en Neuquén',
+    keywords: producto
+      ? `${producto.nombre}, ${producto.categoria}, colchones neuquén, ${producto.nombre} precio, comprar ${producto.nombre}`
+      : 'colchones, almohadas, neuquén',
+    url: generateCanonicalUrl(`/producto/${id}`),
+    type: 'product',
+    image: producto ? generateImageUrl(producto.imagen || producto.imagenOptimizada?.detail) : undefined,
+    product: producto || undefined,
+  });
 
   useEffect(() => {
     const fetchProducto = async () => {

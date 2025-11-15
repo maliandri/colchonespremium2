@@ -5,6 +5,7 @@ import { VendedorModal } from '../components/VendedorModal';
 import { AuthModal } from '../components/AuthModal';
 import { CategorySidebar } from '../components/CategorySidebar';
 import { getProductos, getCategorias } from '../services/api';
+import { useSEO, generateTitle, generateCanonicalUrl } from '../hooks/useSEO';
 
 export const HomePage = ({ showVendedorModal, setShowVendedorModal, showAuthModal, setShowAuthModal }) => {
   const [productos, setProductos] = useState([]);
@@ -16,6 +17,16 @@ export const HomePage = ({ showVendedorModal, setShowVendedorModal, showAuthModa
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortOrder, setSortOrder] = useState('nombre-asc');
+
+  // SEO para la página de inicio
+  useSEO({
+    title: generateTitle('Colchones y Almohadas Premium en Neuquén'),
+    description: 'Descubrí la mejor selección de colchones y almohadas en Neuquén. Envíos a todo el país. Calidad, confort y los mejores precios en Aluminé Hogar.',
+    keywords: 'colchones neuquén, almohadas neuquén, colchones premium, descanso, sommier, ropa de cama, neuquén, argentina',
+    url: generateCanonicalUrl('/'),
+    type: 'website',
+    image: 'https://res.cloudinary.com/dlshym1te/image/upload/f_auto,q_auto/Alumine%CC%81_Hogar-logo',
+  });
 
   useEffect(() => {
     loadData();
