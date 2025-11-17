@@ -132,7 +132,7 @@ export const generateTitle = (pageTitle) => {
  * Genera la URL completa para SEO
  */
 export const generateCanonicalUrl = (path = '') => {
-  const baseUrl = import.meta.env.VITE_SITE_URL || 'https://colchonqn2.netlify.app';
+  const baseUrl = import.meta.env.VITE_SITE_URL || 'https://aluminehogar.com.ar';
   return `${baseUrl}${path}`;
 };
 

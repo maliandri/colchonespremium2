@@ -80,7 +80,7 @@ En [Frontend/index.html](Frontend/index.html) se agregó el Schema.org de la org
   "@type": "Store",
   "name": "Aluminé Hogar",
   "description": "Tienda especializada en colchones y almohadas premium en Neuquén",
-  "url": "https://colchonqn2.netlify.app/",
+  "url": "https://aluminehogar.com.ar/",
   "logo": "...",
   "address": {
     "@type": "PostalAddress",
@@ -134,7 +134,7 @@ Debido al límite de funciones serverless en Vercel (plan gratuito), se creó un
 ### Acceso
 
 ```
-https://colchonqn2.netlify.app/sitemap.xml
+https://aluminehogar.com.ar/sitemap.xml
 ```
 
 ### Características
@@ -165,7 +165,7 @@ Se creó un archivo estático [Frontend/public/robots.txt](Frontend/public/robot
 ### Acceso
 
 ```
-https://colchonqn2.netlify.app/robots.txt
+https://aluminehogar.com.ar/robots.txt
 ```
 
 ### Configuración
@@ -179,7 +179,7 @@ Disallow: /api/auth/*
 Disallow: /api/ventas/*
 Disallow: /api/admin/*
 
-Sitemap: https://colchonqn2.netlify.app/sitemap.xml
+Sitemap: https://aluminehogar.com.ar/sitemap.xml
 ```
 
 ### Características
@@ -198,7 +198,7 @@ Sitemap: https://colchonqn2.netlify.app/sitemap.xml
 ```html
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://colchonqn2.netlify.app/" />
+<meta property="og:url" content="https://aluminehogar.com.ar/" />
 <meta property="og:title" content="Aluminé Hogar | Tu Mejor Descanso en Neuquén" />
 <meta property="og:description" content="..." />
 <meta property="og:image" content="..." />
@@ -229,7 +229,7 @@ El hook `useSEO` actualiza estos tags automáticamente en cada página.
 ### Ejemplo
 
 ```javascript
-// Genera: https://colchonqn2.netlify.app/producto/ABC-0001
+// Genera: https://aluminehogar.com.ar/producto/ABC-0001
 const canonicalUrl = generateCanonicalUrl('/producto/ABC-0001');
 ```
 
@@ -241,9 +241,9 @@ const canonicalUrl = generateCanonicalUrl('/producto/ABC-0001');
 
 Se agregó la variable `VITE_SITE_URL` en todos los archivos `.env`:
 
-- ✅ `.env.local` → https://colchonqn2.netlify.app
+- ✅ `.env.local` → https://aluminehogar.com.ar
 - ✅ `.env.development` → http://localhost:5173
-- ✅ `.env.production` → https://colchonqn2.netlify.app
+- ✅ `.env.production` → https://aluminehogar.com.ar
 - ✅ `.env.example` → Documentado para futuros desarrolladores
 
 ---

@@ -173,7 +173,7 @@ Campos nuevos necesarios:
 Opciones:
 1. Scheduled Fetch (Recomendado)
    - Facebook descarga automáticamente desde tu servidor
-   - URL: https://colchonqn2.netlify.app/api/catalog-feed.xml
+   - URL: https://aluminehogar.com.ar/api/catalog-feed.xml
    - Frecuencia: Cada 24 horas
 
 2. Manual Upload
@@ -266,14 +266,14 @@ Con catálogo conectado:
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>Aluminé Hogar - Catálogo de Productos</title>
-    <link>https://colchonqn2.netlify.app</link>
+    <link>https://aluminehogar.com.ar</link>
     <description>Colchones y almohadas premium en Neuquén</description>
 
     <item>
       <g:id>COL-0001</g:id>
       <g:title>Colchón Premium 2 plazas 140x190</g:title>
       <g:description>Colchón de alta densidad con espuma viscoelástica</g:description>
-      <g:link>https://colchonqn2.netlify.app/producto/COL-0001</g:link>
+      <g:link>https://aluminehogar.com.ar/producto/COL-0001</g:link>
       <g:image_link>https://res.cloudinary.com/dlshym1te/...</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in stock</g:availability>

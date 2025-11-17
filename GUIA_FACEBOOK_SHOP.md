@@ -33,7 +33,7 @@ Foto de portada: Imagen de tus productos o tienda
 ### 1.3 Completar información
 - Agregar dirección: Neuquén, Argentina
 - Agregar teléfono: +54 9 299 576-9999
-- Agregar sitio web: https://colchonqn2.netlify.app
+- Agregar sitio web: https://aluminehogar.com.ar
 - Agregar horarios de atención
 
 ---
@@ -115,7 +115,7 @@ Nombre del feed: Productos Aluminé Hogar
 Tipo de feed: Productos
 
 URL del feed:
-👉 https://colchonqn2.netlify.app/api/catalog-feed.xml
+👉 https://aluminehogar.com.ar/api/catalog-feed.xml
 
 Frecuencia de actualización: Cada 24 horas
 Horario: 02:00 AM (hora local)
@@ -261,6 +261,6 @@ Tu catálogo se actualizará automáticamente cada 24 horas desde MongoDB.
 Cuando agregues/modifiques productos en tu base de datos, se reflejarán
 automáticamente en Facebook/Instagram al día siguiente.
 
-**URL del feed:** https://colchonqn2.netlify.app/api/catalog-feed.xml
+**URL del feed:** https://aluminehogar.com.ar/api/catalog-feed.xml
 
 ¡Éxitos con tu tienda en Facebook! 🚀

@@ -46,7 +46,7 @@ export default async function handler(req, res) {
         <body>
           <div class="container">
             <div class="header">
-            <img src="https://colchonqn2.netlify.app/assets/logo.png" alt="Aluminé Hogar Logo">
+            <img src="https://aluminehogar.com.ar/assets/logo.png" alt="Aluminé Hogar Logo">
             <h2>¡Gracias por unirte a Aluminé Hogar!</h2>
             <p>Estamos encantados de tenerte con nosotros. Ahora eres parte de nuestra comunidad y tienes acceso a la mejor selección de productos para tu hogar.</p>
             <p>Explora nuestro catálogo y encuentra lo que necesitas para tu hogar.</p>

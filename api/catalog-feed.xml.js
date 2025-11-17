@@ -68,7 +68,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'No hay productos disponibles' });
     }
 
-    const baseUrl = 'https://colchonqn2.netlify.app';
+    const baseUrl = 'https://aluminehogar.com.ar';
     const currentDate = new Date().toISOString();
 
     // Generar items del feed
