@@ -9,20 +9,32 @@ export default async function handler(req, res) {
   try {
     await connectDB();
 
-    const producto = await Product.findOne({ _id: 'FRE-0002' }).lean();
+    // Intentar con modelo
+    const productoConModelo = await Product.findOne({ _id: 'FRE-0002' }).lean();
+
+    // Intentar sin modelo (acceso directo a colección)
+    const db = Product.db;
+    const collection = db.collection('productos');
+    const productoSinModelo = await collection.findOne({ _id: 'FRE-0002' });
 
     return res.status(200).json({
-      encontrado: !!producto,
-      producto: producto ? {
-        _id: producto._id,
-        nombre: producto.nombre,
-        cloudinaryPublicId: producto.cloudinaryPublicId,
-        imagen: producto.imagen,
-        tieneCloudinaryPublicId: !!producto.cloudinaryPublicId
+      conModelo: productoConModelo ? {
+        _id: productoConModelo._id,
+        nombre: productoConModelo.nombre,
+        cloudinaryPublicId: productoConModelo.cloudinaryPublicId,
+        tieneCloudinaryPublicId: !!productoConModelo.cloudinaryPublicId,
+        camposDisponibles: Object.keys(productoConModelo)
       } : null,
-      dbUri: process.env.MONGODB_URI || process.env.DB_URI ? 'CONFIGURADO' : 'NO CONFIGURADO'
+      sinModelo: productoSinModelo ? {
+        _id: productoSinModelo._id,
+        nombre: productoSinModelo.nombre,
+        cloudinaryPublicId: productoSinModelo.cloudinaryPublicId,
+        tieneCloudinaryPublicId: !!productoSinModelo.cloudinaryPublicId,
+        camposDisponibles: Object.keys(productoSinModelo)
+      } : null,
+      dbUri: 'CONFIGURADO'
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message, stack: error.stack });
   }
 }
