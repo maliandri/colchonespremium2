@@ -1,6 +1,6 @@
 # 🎯 Facebook Pixel - CONFIGURADO ✅
 
-**Pixel ID:** 879838197733539
+**Pixel ID:** 2015330669252172
 **Estado:** Integrado y funcionando
 
 ## ¿Qué es el Facebook Pixel?
