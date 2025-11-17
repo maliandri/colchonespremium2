@@ -18,7 +18,7 @@ export const CartModal = ({ isOpen, onClose }) => {
   const handleWhatsAppCheckout = () => {
     if (cartItems.length === 0) return;
 
-    const whatsappNumber = '5492995414422';
+    const whatsappNumber = '5492995769999';
     let mensaje = `¡Hola! Quiero hacer un pedido:\n\n`;
 
     cartItems.forEach((item) => {

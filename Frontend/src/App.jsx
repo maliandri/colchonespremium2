@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
 import { CartModal } from './components/CartModal'
+import { WhatsAppButton } from './components/WhatsAppButton'
 import { HomePage } from './pages/HomePage'
 import { ProductDetail } from './pages/ProductDetail'
 import { CartProvider } from './store/cartStore'
@@ -44,6 +45,9 @@ function App() {
               </Routes>
             </main>
             <Footer />
+
+            {/* Botón flotante de WhatsApp */}
+            <WhatsAppButton />
           </div>
         </Router>
       </CartProvider>

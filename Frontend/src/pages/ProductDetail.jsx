@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, MessageCircle, Plus, Minus } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { CloudinaryImage } from '../components/CloudinaryImage';
@@ -7,7 +7,6 @@ import { useSEO, generateTitle, generateCanonicalUrl, generateImageUrl } from '.
 
 export const ProductDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [producto, setProducto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -85,7 +84,7 @@ export const ProductDetail = () => {
 
   const handleWhatsApp = () => {
     const mensaje = `Hola! Me interesa el producto: ${producto.nombre} - Precio: $${producto.precio.toLocaleString('es-AR')}`;
-    const whatsappUrl = `https://wa.me/5492995414422?text=${encodeURIComponent(mensaje)}`;
+    const whatsappUrl = `https://wa.me/5492995769999?text=${encodeURIComponent(mensaje)}`;
     window.open(whatsappUrl, '_blank');
   };
 
