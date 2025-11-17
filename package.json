@@ -8,7 +8,9 @@
     "vercel-build": "npm install --prefix api && cd Frontend && npm install --legacy-peer-deps --force && npm run build",
     "renombrar-imagenes": "node scripts/renombrar-imagenes-cloudinary.js",
     "agregar-especificaciones": "node scripts/agregar-especificaciones.js",
-    "borrar-especificaciones": "node scripts/borrar-especificaciones.js"
+    "borrar-especificaciones": "node scripts/borrar-especificaciones.js",
+    "buscar-imagenes": "node scripts/buscar-imagenes.js",
+    "reporte-sin-foto": "node scripts/reporte-productos-sin-foto.js"
   },
   "workspaces": [
     "Frontend",

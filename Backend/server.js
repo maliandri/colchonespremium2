@@ -35,7 +35,7 @@ mongoose.connect(dbUri)
 app.use(cors({
     origin: [
         'https://colchonespremium2.vercel.app',
-        'https://colchonqn2.netlify.app',
+        'https://aluminehogar.com.ar',
         'http://localhost:5500',
         'http://127.0.0.1:5500',
         'http://localhost:5173',
@@ -137,14 +137,14 @@ app.post('/api/auth/register', async (req, res) => {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <img src="https://colchonqn2.netlify.app/assets/logo.png" alt="Colchones Premium Logo">
+                            <img src="https://aluminehogar.com.ar/assets/logo.png" alt="Colchones Premium Logo">
                         </div>
                         <div class="content">
                             <h2>¡Gracias por unirte a Colchones Premium!</h2>
                             <p>Hola <strong>${email}</strong>,</p>
                             <p>Estamos encantados de tenerte con nosotros. Ahora eres parte de nuestra comunidad y tienes acceso a la mejor selección de colchones.</p>
                             <p>Explora nuestro catálogo y encuentra el colchón perfecto para tu descanso.</p>
-                            <a href="https://colchonqn2.netlify.app" class="button">Ir a la Tienda</a>
+                            <a href="https://aluminehogar.com.ar" class="button">Ir a la Tienda</a>
                         </div>
                         <div class="footer">
                             <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.</p>

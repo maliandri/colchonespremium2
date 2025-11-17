@@ -27,4 +27,7 @@ Thumbs.db
 scripts/
 !scripts/README.md
 
+# Guías y documentación interna
+Guias/
+
 .claude
