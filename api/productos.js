@@ -34,14 +34,16 @@ function generarIdUnico(categoria, contador) {
 
 /**
  * Migra datos de Excel/JSON a MongoDB
+ * IMPORTANTE: Elimina TODOS los productos existentes y reimporta desde cero
  */
-async function migrateProductsToMongoDB(excelData) {
+async function migrateProductsToMongoDB(excelData, cleanDatabase = true) {
   console.log('🔄 Iniciando migración de productos...');
 
   const productsToProcess = [];
   const contadores = {};
   let procesados = 0;
   let omitidos = 0;
+  let eliminados = 0;
 
   excelData.forEach((item, index) => {
     const mostrar = item.Mostrar?.toString().toLowerCase().trim();
@@ -70,30 +72,18 @@ async function migrateProductsToMongoDB(excelData) {
   console.log(`⏭️ Productos omitidos: ${omitidos}`);
 
   if (productsToProcess.length > 0) {
-    const bulkOps = productsToProcess.map(product => {
-      const productWithoutId = { ...product };
-      delete productWithoutId._id;
-      delete productWithoutId.imagen;
-      delete productWithoutId.cloudinaryPublicId;
-      delete productWithoutId.imagenOptimizada;
+    // PASO 1: Limpiar base de datos si está habilitado
+    if (cleanDatabase) {
+      console.log('🗑️ Limpiando base de datos...');
+      const deleteResult = await Product.deleteMany({});
+      eliminados = deleteResult.deletedCount;
+      console.log(`✅ ${eliminados} productos eliminados`);
+    }
 
-      return {
-        updateOne: {
-          filter: { nombre: product.nombre },
-          update: {
-            $set: productWithoutId,
-            $setOnInsert: {
-              _id: product._id,
-              imagen: product.imagen || '',
-              cloudinaryPublicId: product.cloudinaryPublicId || '',
-            }
-          },
-          upsert: true
-        }
-      };
-    });
-
-    const result = await Product.bulkWrite(bulkOps);
+    // PASO 2: Insertar productos nuevos
+    console.log('💾 Insertando productos...');
+    const insertResult = await Product.insertMany(productsToProcess);
+    console.log(`✅ ${insertResult.length} productos insertados`);
 
     const stats = {
       totalProductos: await Product.countDocuments(),
@@ -103,8 +93,8 @@ async function migrateProductsToMongoDB(excelData) {
 
     return {
       success: true,
-      insertados: result.upsertedCount || 0,
-      actualizados: result.modifiedCount || 0,
+      eliminados,
+      insertados: insertResult.length,
       procesados,
       omitidos,
       stats
