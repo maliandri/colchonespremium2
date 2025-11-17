@@ -9,6 +9,9 @@ import xlsx from 'xlsx';
  * Maneja:
  * - GET: Obtener productos con imágenes optimizadas de Cloudinary
  * - POST: Migrar Excel a MongoDB (convierte Excel a JSON y actualiza BD)
+ *
+ * IMPORTANTE: Usa cloudinaryPublicId para construir URLs de imágenes
+ * Si no existe cloudinaryPublicId, construye con el nombre (fallback)
  */
 
 /**
