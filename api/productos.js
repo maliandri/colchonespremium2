@@ -137,29 +137,33 @@ export default async function handler(req, res) {
 async function handleGetProducts(req, res) {
   console.log('📋 Solicitud de productos recibida');
 
-  const productos = await Product.find({ mostrar: 'si' }).sort({ categoria: 1, nombre: 1 });
+  // USAR ACCESO DIRECTO A COLECCIÓN (sin Mongoose) para obtener todos los campos
+  const db = Product.db;
+  const collection = db.collection('productos');
+  const productos = await collection
+    .find({ mostrar: 'si' })
+    .sort({ categoria: 1, nombre: 1 })
+    .toArray();
 
   // Transformar productos para incluir URLs optimizadas de Cloudinary
   const productosOptimizados = productos.map(producto => {
-    const productoObj = producto.toObject();
-
     // Usar cloudinaryPublicId si existe, sino construir con el nombre
     let cloudinaryPath;
-    if (productoObj.cloudinaryPublicId) {
-      cloudinaryPath = productoObj.cloudinaryPublicId;
+    if (producto.cloudinaryPublicId) {
+      cloudinaryPath = producto.cloudinaryPublicId;
     } else {
-      cloudinaryPath = buildCloudinaryPath(productoObj.nombre);
+      cloudinaryPath = buildCloudinaryPath(producto.nombre);
     }
 
-    productoObj.imagenOptimizada = {
-      original: productoObj.imagen || '',
+    producto.imagenOptimizada = {
+      original: producto.imagen || '',
       card: getCloudinaryUrl(cloudinaryPath, IMG_CARD),
       thumb: getCloudinaryUrl(cloudinaryPath, IMG_THUMB),
       detail: getCloudinaryUrl(cloudinaryPath, IMG_DETAIL),
       url: getCloudinaryUrl(cloudinaryPath, IMG_CARD)
     };
 
-    return productoObj;
+    return producto;
   });
 
   console.log(`✅ Enviando ${productosOptimizados.length} productos con imágenes optimizadas`);
