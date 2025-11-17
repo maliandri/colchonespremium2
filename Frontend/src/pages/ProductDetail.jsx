@@ -4,6 +4,7 @@ import { ArrowLeft, ShoppingCart, MessageCircle, Plus, Minus } from 'lucide-reac
 import { useCartStore } from '../store/cartStore';
 import { CloudinaryImage } from '../components/CloudinaryImage';
 import { useSEO, generateTitle, generateCanonicalUrl, generateImageUrl } from '../hooks/useSEO';
+import { trackViewContent, trackContact } from '../utils/facebookPixel';
 
 export const ProductDetail = () => {
   const { id } = useParams();
@@ -66,6 +67,9 @@ export const ProductDetail = () => {
 
         const data = await response.json();
         setProducto(data);
+
+        // Track Facebook Pixel ViewContent event
+        trackViewContent(data);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -85,6 +89,10 @@ export const ProductDetail = () => {
   const handleWhatsApp = () => {
     const mensaje = `Hola! Me interesa el producto: ${producto.nombre} - Precio: $${producto.precio.toLocaleString('es-AR')}`;
     const whatsappUrl = `https://wa.me/5492995769999?text=${encodeURIComponent(mensaje)}`;
+
+    // Track Facebook Pixel Contact event
+    trackContact('WhatsApp Product', producto.precio);
+
     window.open(whatsappUrl, '_blank');
   };
 

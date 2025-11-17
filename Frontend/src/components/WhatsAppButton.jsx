@@ -1,4 +1,5 @@
 import { MessageCircle } from 'lucide-react';
+import { trackContact } from '../utils/facebookPixel';
 
 /**
  * Botón flotante de WhatsApp
@@ -9,11 +10,17 @@ export const WhatsAppButton = () => {
   const mensaje = '¡Hola! Me gustaría consultar sobre sus productos.';
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(mensaje)}`;
 
+  const handleClick = () => {
+    // Track Facebook Pixel Contact event
+    trackContact('WhatsApp Button', 0);
+  };
+
   return (
     <a
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={handleClick}
       className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-2xl transition-all duration-300 hover:scale-110 flex items-center gap-2 group"
       aria-label="Contactar por WhatsApp"
     >

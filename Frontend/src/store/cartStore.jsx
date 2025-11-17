@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { trackAddToCart } from '../utils/facebookPixel';
 
 export const useCartStore = create(
   persist(
@@ -10,6 +11,8 @@ export const useCartStore = create(
       addToCart: (product) => {
         set((state) => {
           const cart = { ...state.cart };
+          const cantidadAnterior = cart[product._id]?.cantidad || 0;
+
           if (cart[product._id]) {
             cart[product._id].cantidad += 1;
           } else {
@@ -18,6 +21,11 @@ export const useCartStore = create(
               cantidad: 1,
             };
           }
+
+          // Track Facebook Pixel AddToCart event (solo si es nuevo o se agregó 1 más)
+          const cantidadAgregada = cart[product._id].cantidad - cantidadAnterior;
+          trackAddToCart(product, cantidadAgregada);
+
           return { cart };
         });
       },

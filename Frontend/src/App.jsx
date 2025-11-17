@@ -4,6 +4,7 @@ import { Header } from './components/Header'
 import { Footer } from './components/Footer'
 import { CartModal } from './components/CartModal'
 import { WhatsAppButton } from './components/WhatsAppButton'
+import { FacebookPixel } from './components/FacebookPixel'
 import { HomePage } from './pages/HomePage'
 import { ProductDetail } from './pages/ProductDetail'
 import { CartProvider } from './store/cartStore'
@@ -18,6 +19,9 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <Router>
+          {/* Facebook Pixel */}
+          <FacebookPixel />
+
           <div className="min-h-screen flex flex-col">
             <Header
         onOpenVendedorModal={() => setShowVendedorModal(true)}

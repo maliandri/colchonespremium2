@@ -1,5 +1,7 @@
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
+import { trackInitiateCheckout, trackContact } from '../utils/facebookPixel';
+import { useEffect } from 'react';
 
 export const CartModal = ({ isOpen, onClose }) => {
   const cart = useCartStore((state) => state.cart);
@@ -14,6 +16,13 @@ export const CartModal = ({ isOpen, onClose }) => {
   const cartItems = Object.values(cart);
   const totalPrice = getTotalPrice();
   const totalItems = getTotalItems();
+
+  // Track InitiateCheckout when cart modal opens with items
+  useEffect(() => {
+    if (isOpen && cartItems.length > 0) {
+      trackInitiateCheckout(cartItems, totalPrice);
+    }
+  }, [isOpen, cartItems.length, totalPrice]);
 
   const handleWhatsAppCheckout = () => {
     if (cartItems.length === 0) return;
@@ -32,6 +41,9 @@ export const CartModal = ({ isOpen, onClose }) => {
 
     const encodedMensaje = encodeURIComponent(mensaje);
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMensaje}`;
+
+    // Track Facebook Pixel Contact event
+    trackContact('WhatsApp Checkout', totalPrice);
 
     window.open(whatsappUrl, '_blank');
   };
