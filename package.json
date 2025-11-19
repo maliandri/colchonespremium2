@@ -6,6 +6,7 @@
   "scripts": {
     "build": "npm install --prefix api && cd Frontend && npm install --legacy-peer-deps --force && npm run build",
     "vercel-build": "npm install --prefix api && cd Frontend && npm install --legacy-peer-deps --force && npm run build",
+    "generar-sitemap": "node scripts/seo/generar-sitemap.js",
     "renombrar-imagenes": "node scripts/renombrar-imagenes-cloudinary.js",
     "agregar-especificaciones": "node scripts/agregar-especificaciones.js",
     "borrar-especificaciones": "node scripts/borrar-especificaciones.js",
