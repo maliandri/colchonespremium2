@@ -55,17 +55,17 @@ export const Footer = () => {
               </li>
               <li className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-primary flex-shrink-0" />
-                <a href="tel:+542995123456" className="hover:text-primary transition-colors">
-                  +54 299 512 3456
+                <a href="tel:+542995769999" className="hover:text-primary transition-colors">
+                  +54 9 299 576-9999
                 </a>
               </li>
               <li className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-primary flex-shrink-0" />
                 <a
-                  href="mailto:info@colchonespremium.com"
+                  href="mailto:info@aluminehogar.com.ar"
                   className="hover:text-primary transition-colors"
                 >
-                  info@colchonespremium.com
+                  info@aluminehogar.com.ar
                 </a>
               </li>
             </ul>
@@ -74,7 +74,7 @@ export const Footer = () => {
 
         {/* Copyright */}
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
-          <p>&copy; {currentYear} Colchones Premium. Todos los derechos reservados.</p>
+          <p>&copy; {currentYear} Aluminé Hogar. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
