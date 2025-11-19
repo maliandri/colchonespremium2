@@ -20,7 +20,7 @@ User-agent: Googlebot-Image
 Allow: /
 
 # Ubicación del sitemap
-Sitemap: https://www.aluminehogar.com.ar/sitemap.xml
+Sitemap: https://aluminehogar.com.ar/sitemap.xml
 
 # Crawl-delay (cortesía para no sobrecargar el servidor)
 Crawl-delay: 1
