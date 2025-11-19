@@ -62,10 +62,10 @@ export const Footer = () => {
               <li className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-primary flex-shrink-0" />
                 <a
-                  href="mailto:info@aluminehogar.com.ar"
+                  href="mailto:aluminehogar@gmail.com"
                   className="hover:text-primary transition-colors"
                 >
-                  info@aluminehogar.com.ar
+                  aluminehogar@gmail.com
                 </a>
               </li>
             </ul>
