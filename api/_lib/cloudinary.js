@@ -8,9 +8,10 @@ cloudinary.config({
 });
 
 // Constantes de transformación
-export const IMG_CARD = 'c_fill,w_400,h_300,q_auto,f_auto';
-export const IMG_THUMB = 'c_fill,w_150,h_150,q_auto,f_auto';
-export const IMG_DETAIL = 'c_fill,w_1200,h_900,q_auto,f_auto';
+// Usar c_fit para evitar recortar las imágenes
+export const IMG_CARD = 'c_fit,w_400,h_300,q_auto,f_auto';
+export const IMG_THUMB = 'c_fit,w_150,h_150,q_auto,f_auto';
+export const IMG_DETAIL = 'c_fit,w_1200,h_900,q_auto,f_auto';
 
 export function getCloudinaryUrl(publicIdOrUrl, transformation) {
   if (!publicIdOrUrl) return '';

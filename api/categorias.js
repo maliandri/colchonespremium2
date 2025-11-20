@@ -13,8 +13,12 @@ export default async function handler(req, res) {
     // Conectar a la base de datos
     await connectDB();
 
+    // USAR ACCESO DIRECTO A COLECCIÓN (sin Mongoose schema) para evitar filtrado de campos
+    const db = Product.db;
+    const collection = db.collection('productos');
+
     // Obtener categorías únicas de productos visibles
-    const categorias = await Product.distinct('categoria', { mostrar: 'si' });
+    const categorias = await collection.distinct('categoria', { mostrar: 'si' });
 
     console.log(`✅ Enviando ${categorias.length} categorías:`, categorias);
 
