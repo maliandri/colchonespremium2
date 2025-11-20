@@ -1,6 +1,7 @@
 import { connectDB } from './_lib/db.js';
 import Product from './_lib/models/Product.js';
 import { getCloudinaryUrl, IMG_CARD, IMG_THUMB, IMG_DETAIL } from './_lib/cloudinary.js';
+import { MAPEO_NOMBRES_CLOUDINARY } from './_lib/cloudinary-mapeo-nombres.js';
 import xlsx from 'xlsx';
 
 /**
@@ -10,15 +11,16 @@ import xlsx from 'xlsx';
  * - GET: Obtener productos con imágenes optimizadas de Cloudinary
  * - POST: Migrar Excel a MongoDB (convierte Excel a JSON y actualiza BD)
  *
- * IMPORTANTE: Usa cloudinaryPublicId para construir URLs de imágenes
- * Si no existe cloudinaryPublicId, construye con el nombre (fallback)
+ * IMPORTANTE: Usa mapeo de nombres para encontrar paths de Cloudinary
+ * Prioridad: nombre del producto → cloudinaryPublicId (fallback)
  */
 
 /**
- * Construye el path de Cloudinary usando el nombre del producto
+ * Obtiene el path de Cloudinary basado en el nombre del producto
  */
-function buildCloudinaryPath(nombre) {
-  return `alumine/${nombre}`;
+function getCloudinaryPathFromNombre(nombre) {
+  // Buscar en el mapeo de nombres
+  return MAPEO_NOMBRES_CLOUDINARY[nombre] || null;
 }
 
 /**
@@ -147,20 +149,31 @@ async function handleGetProducts(req, res) {
 
   // Transformar productos para incluir URLs optimizadas de Cloudinary
   const productosOptimizados = productos.map(producto => {
-    // Usar cloudinaryPublicId si existe, sino construir con el nombre
-    let cloudinaryPath;
-    if (producto.cloudinaryPublicId) {
+    // PRIORIDAD: Buscar por nombre del producto en el mapeo
+    let cloudinaryPath = getCloudinaryPathFromNombre(producto.nombre);
+
+    // FALLBACK 1: Usar cloudinaryPublicId si existe y no hay mapeo por nombre
+    if (!cloudinaryPath && producto.cloudinaryPublicId) {
       cloudinaryPath = producto.cloudinaryPublicId;
-    } else {
-      cloudinaryPath = buildCloudinaryPath(producto.nombre);
     }
 
-    producto.imagenOptimizada = {
+    // FALLBACK 2: Si no hay nada, dejar vacío (no generar URL inválida)
+    if (!cloudinaryPath) {
+      console.warn(`⚠️  Sin imagen para: ${producto.nombre}`);
+    }
+
+    producto.imagenOptimizada = cloudinaryPath ? {
       original: producto.imagen || '',
       card: getCloudinaryUrl(cloudinaryPath, IMG_CARD),
       thumb: getCloudinaryUrl(cloudinaryPath, IMG_THUMB),
       detail: getCloudinaryUrl(cloudinaryPath, IMG_DETAIL),
       url: getCloudinaryUrl(cloudinaryPath, IMG_CARD)
+    } : {
+      original: '',
+      card: '',
+      thumb: '',
+      detail: '',
+      url: ''
     };
 
     return producto;

@@ -1,12 +1,13 @@
 import { connectDB } from '../_lib/db.js';
 import Product from '../_lib/models/Product.js';
 import { getCloudinaryUrl, IMG_CARD, IMG_THUMB, IMG_DETAIL } from '../_lib/cloudinary.js';
+import { MAPEO_NOMBRES_CLOUDINARY } from '../_lib/cloudinary-mapeo-nombres.js';
 
 /**
- * Construye el path de Cloudinary usando el nombre del producto
+ * Obtiene el path de Cloudinary basado en el nombre del producto
  */
-function buildCloudinaryPath(nombre) {
-  return `alumine/${nombre}`;
+function getCloudinaryPathFromNombre(nombre) {
+  return MAPEO_NOMBRES_CLOUDINARY[nombre] || null;
 }
 
 export default async function handler(req, res) {
@@ -37,20 +38,26 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
-    // Usar cloudinaryPublicId si existe, sino construir con el nombre
-    let cloudinaryPath;
-    if (producto.cloudinaryPublicId) {
+    // PRIORIDAD: Buscar por nombre del producto en el mapeo
+    let cloudinaryPath = getCloudinaryPathFromNombre(producto.nombre);
+
+    // FALLBACK: Usar cloudinaryPublicId si existe y no hay mapeo por nombre
+    if (!cloudinaryPath && producto.cloudinaryPublicId) {
       cloudinaryPath = producto.cloudinaryPublicId;
-    } else {
-      cloudinaryPath = buildCloudinaryPath(producto.nombre);
     }
 
-    producto.imagenOptimizada = {
+    producto.imagenOptimizada = cloudinaryPath ? {
       original: producto.imagen || '',
       card: getCloudinaryUrl(cloudinaryPath, IMG_CARD),
       thumb: getCloudinaryUrl(cloudinaryPath, IMG_THUMB),
       detail: getCloudinaryUrl(cloudinaryPath, IMG_DETAIL),
       url: getCloudinaryUrl(cloudinaryPath, IMG_DETAIL) // Usar imagen de alta calidad para detalle
+    } : {
+      original: '',
+      card: '',
+      thumb: '',
+      detail: '',
+      url: ''
     };
 
     console.log(`✅ Producto encontrado: ${producto.nombre}`);
