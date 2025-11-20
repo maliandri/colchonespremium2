@@ -27,6 +27,14 @@ Thumbs.db
 scripts/
 !scripts/README.md
 
+# Archivos temporales generados
+*.xlsx
+cloudinary-*.json
+cloudinary-*.txt
+imagenes-*.json
+auditoria-*.xlsx
+productos-*.xlsx
+
 # Guías y documentación interna
 Guias/
 
