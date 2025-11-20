@@ -5,7 +5,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    open: true
+    open: true,
+    proxy: {
+      '/api': {
+        target: 'https://colchonespremium.com.ar',
+        changeOrigin: true,
+        secure: true
+      }
+    }
   },
   build: {
     outDir: 'dist',

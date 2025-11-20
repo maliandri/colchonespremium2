@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search } from 'lucide-react';
-import { ProductCard } from '../components/ProductCard';
+import { Search, Grid, List, Layers } from 'lucide-react';
+import { ProductGridView } from '../components/ProductGridView';
+import { ProductListView } from '../components/ProductListView';
+import { ProductCarouselView } from '../components/ProductCarouselView';
 import { VendedorModal } from '../components/VendedorModal';
 import { AuthModal } from '../components/AuthModal';
 import { CategorySidebar } from '../components/CategorySidebar';
@@ -17,6 +19,16 @@ export const HomePage = ({ showVendedorModal, setShowVendedorModal, showAuthModa
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortOrder, setSortOrder] = useState('nombre-asc');
+
+  // Vista de productos: 'grid', 'list', 'carousel'
+  const [viewMode, setViewMode] = useState(() => {
+    return localStorage.getItem('productViewMode') || 'grid';
+  });
+
+  // Guardar preferencia de vista
+  useEffect(() => {
+    localStorage.setItem('productViewMode', viewMode);
+  }, [viewMode]);
 
   // SEO para la página de inicio
   useSEO({
@@ -164,25 +176,67 @@ export const HomePage = ({ showVendedorModal, setShowVendedorModal, showAuthModa
                   </select>
                 </div>
 
-                {/* Resultados encontrados y categoría seleccionada */}
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="text-gray-600 text-sm">
-                    {filteredProducts.length} producto{filteredProducts.length !== 1 && 's'} encontrado{filteredProducts.length !== 1 && 's'}
-                  </div>
-                  {selectedCategory && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">Mostrando:</span>
-                      <span className="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">
-                        {selectedCategory}
-                      </span>
-                      <button
-                        onClick={() => setSelectedCategory('')}
-                        className="text-sm text-gray-500 hover:text-primary"
-                      >
-                        Limpiar
-                      </button>
+                {/* Resultados y botones de vista */}
+                <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="text-gray-600 text-sm">
+                      {filteredProducts.length} producto{filteredProducts.length !== 1 && 's'} encontrado{filteredProducts.length !== 1 && 's'}
                     </div>
-                  )}
+                    {selectedCategory && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-600">Mostrando:</span>
+                        <span className="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">
+                          {selectedCategory}
+                        </span>
+                        <button
+                          onClick={() => setSelectedCategory('')}
+                          className="text-sm text-gray-500 hover:text-primary"
+                        >
+                          Limpiar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Botones de cambio de vista */}
+                  <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                        viewMode === 'grid'
+                          ? 'bg-white text-primary shadow-sm font-medium'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      title="Vista en cuadrícula"
+                    >
+                      <Grid className="w-4 h-4" />
+                      <span className="hidden sm:inline">Cuadrícula</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                        viewMode === 'list'
+                          ? 'bg-white text-primary shadow-sm font-medium'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      title="Vista en lista"
+                    >
+                      <List className="w-4 h-4" />
+                      <span className="hidden sm:inline">Lista</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('carousel')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                        viewMode === 'carousel'
+                          ? 'bg-white text-primary shadow-sm font-medium'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      title="Vista en carrusel por categoría"
+                    >
+                      <Layers className="w-4 h-4" />
+                      <span className="hidden sm:inline">Carrusel</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -207,15 +261,24 @@ export const HomePage = ({ showVendedorModal, setShowVendedorModal, showAuthModa
             </div>
           )}
 
-              {/* Grid de productos */}
+              {/* Productos - Vista Dinámica */}
               {!loading && !error && (
                 <>
                   {filteredProducts.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {filteredProducts.map((producto) => (
-                        <ProductCard key={producto._id} product={producto} />
-                      ))}
-                    </div>
+                    <>
+                      {viewMode === 'grid' && (
+                        <ProductGridView products={filteredProducts} />
+                      )}
+                      {viewMode === 'list' && (
+                        <ProductListView products={filteredProducts} />
+                      )}
+                      {viewMode === 'carousel' && (
+                        <ProductCarouselView
+                          products={filteredProducts}
+                          categorias={categorias}
+                        />
+                      )}
+                    </>
                   ) : (
                     <div className="text-center py-20">
                       <p className="text-gray-500 text-lg">
