@@ -1,3 +1,16 @@
 {
-  "outputDirectory": "Frontend/dist"
+  "outputDirectory": "Frontend/dist",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.aluminehogar.com.ar"
+        }
+      ],
+      "destination": "https://aluminehogar.com.ar/:path*",
+      "permanent": true
+    }
+  ]
 }
