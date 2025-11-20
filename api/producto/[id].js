@@ -27,40 +27,35 @@ export default async function handler(req, res) {
     // Conectar a la base de datos
     await connectDB();
 
-    // Buscar el producto por ID o por nombre
-    let producto = await Product.findById(id);
-
-    // Si no se encuentra por ID, buscar por nombre
-    if (!producto) {
-      producto = await Product.findOne({ nombre: id });
-    }
+    // USAR ACCESO DIRECTO A COLECCIÓN (sin Mongoose) para obtener todos los campos
+    const db = Product.db;
+    const collection = db.collection('productos');
+    const producto = await collection.findOne({ _id: id });
 
     if (!producto) {
+      console.log(`❌ Producto no encontrado: ${id}`);
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
-    // Transformar producto para incluir URLs optimizadas de Cloudinary
-    const productoObj = producto.toObject();
-
     // Usar cloudinaryPublicId si existe, sino construir con el nombre
     let cloudinaryPath;
-    if (productoObj.cloudinaryPublicId) {
-      cloudinaryPath = productoObj.cloudinaryPublicId;
+    if (producto.cloudinaryPublicId) {
+      cloudinaryPath = producto.cloudinaryPublicId;
     } else {
-      cloudinaryPath = buildCloudinaryPath(productoObj.nombre);
+      cloudinaryPath = buildCloudinaryPath(producto.nombre);
     }
 
-    productoObj.imagenOptimizada = {
-      original: productoObj.imagen || '',
+    producto.imagenOptimizada = {
+      original: producto.imagen || '',
       card: getCloudinaryUrl(cloudinaryPath, IMG_CARD),
       thumb: getCloudinaryUrl(cloudinaryPath, IMG_THUMB),
       detail: getCloudinaryUrl(cloudinaryPath, IMG_DETAIL),
       url: getCloudinaryUrl(cloudinaryPath, IMG_DETAIL) // Usar imagen de alta calidad para detalle
     };
 
-    console.log(`✅ Producto encontrado: ${productoObj.nombre}`);
+    console.log(`✅ Producto encontrado: ${producto.nombre}`);
 
-    return res.status(200).json(productoObj);
+    return res.status(200).json(producto);
   } catch (err) {
     console.error('❌ Error al obtener producto:', err);
     return res.status(500).json({ error: 'Error al cargar producto', details: err.message });
