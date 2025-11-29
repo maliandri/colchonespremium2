@@ -1,6 +1,39 @@
 {
   "outputDirectory": "Frontend/dist",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "index, follow"
+        }
+      ]
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(bot|crawler|spider|crawling).*"
+        }
+      ],
+      "destination": "/api/render?url=/"
+    },
+    {
+      "source": "/producto/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(bot|crawler|spider|crawling).*"
+        }
+      ],
+      "destination": "/api/render?url=/producto/:path*"
+    },
     {
       "source": "/((?!api).*)",
       "destination": "/index.html"
