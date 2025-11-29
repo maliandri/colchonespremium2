@@ -1,34 +1,33 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ShoppingCart, ZoomIn, Tag } from 'lucide-react';
 import { CloudinaryImage } from './CloudinaryImage';
 import { useCartStore } from '../store/cartStore';
 
 export const ProductCard = ({ product }) => {
   const [showImageModal, setShowImageModal] = useState(false);
-  const navigate = useNavigate();
   const addToCart = useCartStore((state) => state.addToCart);
 
   const handleAddToCart = (e) => {
-    e.stopPropagation(); // Evitar que se active el click del card
+    e.preventDefault(); // Evitar que se active el Link
+    e.stopPropagation();
     addToCart(product);
     // TODO: Mostrar notificación de "Agregado al carrito"
   };
 
-  const handleCardClick = () => {
-    navigate(`/producto/${encodeURIComponent(product._id)}`);
-  };
-
   const handleImageClick = (e) => {
-    e.stopPropagation(); // Evitar que se active el click del card
+    e.preventDefault(); // Evitar que se active el Link
+    e.stopPropagation();
     setShowImageModal(true);
   };
 
+  const productUrl = `/producto/${encodeURIComponent(product._id)}`;
+
   return (
     <>
-      <div
-        className="card group cursor-pointer transform hover:scale-105 transition-all duration-300"
-        onClick={handleCardClick}
+      <Link
+        to={productUrl}
+        className="card group cursor-pointer transform hover:scale-105 transition-all duration-300 block"
       >
         {/* Imagen del producto */}
         <div
@@ -82,7 +81,7 @@ export const ProductCard = ({ product }) => {
             </button>
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* Modal de imagen ampliada */}
       {showImageModal && (
