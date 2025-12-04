@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, MessageSquare, Minimize2, Loader2 } from 'lucide-react';
+import { X, Send, MessageSquare, Minimize2, Loader2, User, MessageCircle } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -37,7 +37,7 @@ export default function ChatBot() {
       setMessages([
         {
           role: 'assistant',
-          content: '¡Hola! 👋 Soy el asistente virtual de Aluminé Hogar. ¿En qué puedo ayudarte hoy? Puedo ayudarte a encontrar colchones, almohadas, darte precios y más.',
+          content: '¡Hola! 👋 Soy el asistente virtual de Aluminé Hogar. ¿En qué puedo ayudarte hoy? Puedo ayudarte a encontrar productos para tu hogar, darte precios, información sobre envíos y más.',
           timestamp: new Date()
         }
       ]);
@@ -139,6 +139,22 @@ export default function ChatBot() {
     window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
   };
 
+  const handleWhatsAppClick = () => {
+    const whatsappNumber = '5492995769999';
+    const conversationSummary = messages.slice(-3).map(m => `${m.role === 'user' ? 'Cliente' : 'Bot'}: ${m.content}`).join('\n');
+    const message = encodeURIComponent(`Hola, necesito asistencia.\n\nResumen de conversación:\n${conversationSummary}`);
+    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+  };
+
+  const handleHumanAssistance = () => {
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: '¡Por supuesto! Te conecto con un asesor humano. Puedes contactarnos por WhatsApp haciendo clic en el botón verde de arriba o escribirnos directamente.',
+      timestamp: new Date(),
+      showContactForm: true
+    }]);
+  };
+
   return (
     <>
       {/* Botón flotante */}
@@ -159,30 +175,52 @@ export default function ChatBot() {
       {isOpen && (
         <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200">
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-t-2xl flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-5 h-5" />
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-t-2xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Asistente Virtual</h3>
+                  <p className="text-xs text-white/80">Con tecnología Gemini AI</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold">Asistente Virtual</h3>
-                <p className="text-xs text-white/80">Con tecnología Gemini AI</p>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleClose}
+                  className="hover:bg-white/10 p-2 rounded-lg transition-colors"
+                  aria-label="Minimizar chat"
+                >
+                  <Minimize2 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleClose}
+                  className="hover:bg-white/10 p-2 rounded-lg transition-colors"
+                  aria-label="Cerrar chat"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+
+            {/* Botones de acción */}
+            <div className="flex items-center gap-2">
               <button
-                onClick={handleClose}
-                className="hover:bg-white/10 p-2 rounded-lg transition-colors"
-                aria-label="Minimizar chat"
+                onClick={handleWhatsAppClick}
+                className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                aria-label="Contactar por WhatsApp"
               >
-                <Minimize2 className="w-5 h-5" />
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp
               </button>
               <button
-                onClick={handleClose}
-                className="hover:bg-white/10 p-2 rounded-lg transition-colors"
-                aria-label="Cerrar chat"
+                onClick={handleHumanAssistance}
+                className="flex-1 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                aria-label="Hablar con asesor humano"
               >
-                <X className="w-5 h-5" />
+                <User className="w-4 h-4" />
+                Asesor
               </button>
             </div>
           </div>
