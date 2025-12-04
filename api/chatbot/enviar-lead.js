@@ -25,13 +25,25 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Datos del lead requeridos' });
     }
 
-    console.log('📧 [Lead] Enviando lead capturado por chatbot:', leadData);
+    console.log('📧 [Lead] Procesando lead capturado por chatbot');
+    console.log('📊 Datos del lead:', JSON.stringify(leadData, null, 2));
+
+    // Verificar configuración de email
+    const destinatario = process.env.EMAIL_EMPRESA || process.env.EMAIL_USER;
+    console.log(`📬 Destinatario configurado: ${destinatario}`);
+
+    if (!destinatario) {
+      console.error('❌ No hay destinatario configurado');
+      // Guardar el lead localmente aunque no se pueda enviar email
+      return res.status(200).json({
+        success: true,
+        message: 'Lead capturado (email no configurado)',
+        warning: 'Email no enviado - configuración pendiente'
+      });
+    }
 
     // Construir el email HTML
     const emailHtml = construirEmailLead(leadData, conversationSummary, sessionId);
-
-    // Enviar email al mail de la empresa
-    const destinatario = process.env.EMAIL_EMPRESA || process.env.EMAIL_USER;
 
     // Determinar el asunto según el tipo de solicitud
     const esAsistenciaHumana = leadData.tipoSolicitud === 'asistencia_humana';
@@ -39,24 +51,40 @@ export default async function handler(req, res) {
       ? `👨‍💼 Solicitud de Asistencia Humana - ${leadData.nombre || 'Cliente'}`
       : `🤖 Nuevo Lead del Chatbot - ${leadData.nombre || 'Cliente'}`;
 
-    await enviarEmail({
-      destinatario,
-      asunto,
-      cuerpoHtml: emailHtml
-    });
+    console.log(`📧 Intentando enviar email a: ${destinatario}`);
 
-    console.log('✅ Lead enviado exitosamente');
+    try {
+      await enviarEmail({
+        destinatario,
+        asunto,
+        cuerpoHtml: emailHtml
+      });
 
-    return res.status(200).json({
-      success: true,
-      message: 'Lead enviado exitosamente'
-    });
+      console.log('✅ Email enviado exitosamente');
+      return res.status(200).json({
+        success: true,
+        message: 'Lead enviado exitosamente'
+      });
+
+    } catch (emailError) {
+      console.error('❌ Error al enviar email:', emailError.message);
+      console.error('Stack:', emailError.stack);
+
+      // El lead se capturó pero el email falló
+      return res.status(200).json({
+        success: true,
+        message: 'Lead capturado (error al enviar email)',
+        warning: `Error de email: ${emailError.message}`,
+        leadData: leadData
+      });
+    }
 
   } catch (error) {
-    console.error('❌ Error al enviar lead:', error);
+    console.error('❌ Error general al procesar lead:', error);
     return res.status(500).json({
-      error: 'Error al enviar lead',
-      message: error.message
+      error: 'Error al procesar lead',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }
