@@ -139,13 +139,12 @@ export default async function handler(req, res) {
 async function handleGetProducts(req, res) {
   console.log('📋 Solicitud de productos recibida');
 
-  // USAR ACCESO DIRECTO A COLECCIÓN (sin Mongoose) para obtener todos los campos
-  const db = Product.db;
-  const collection = db.collection('productos');
-  const productos = await collection
+  // Usar Mongoose con lean() para obtener objetos planos con todos los campos
+  const productos = await Product
     .find({ mostrar: 'si' })
     .sort({ categoria: 1, nombre: 1 })
-    .toArray();
+    .lean()
+    .exec();
 
   // Transformar productos para incluir URLs optimizadas de Cloudinary
   const productosOptimizados = productos.map(producto => {
