@@ -1,12 +1,31 @@
 import nodemailer from 'nodemailer';
 
+// Función para decodificar la contraseña si viene codificada
+const decodePassword = (pass) => {
+  if (!pass) return '';
+  // Si la contraseña está en base64 o URL encoded, decodificarla
+  try {
+    // Intentar decodificar URL encoding primero
+    const decoded = decodeURIComponent(pass);
+    return decoded;
+  } catch (e) {
+    // Si falla, usar la contraseña tal cual
+    return pass;
+  }
+};
+
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: parseInt(process.env.EMAIL_PORT || '465'),
   secure: true,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    pass: decodePassword(process.env.EMAIL_PASS)
+  },
+  // Agregar estas opciones para manejar mejor la autenticación
+  authMethod: 'PLAIN',
+  tls: {
+    rejectUnauthorized: false
   }
 });
 
