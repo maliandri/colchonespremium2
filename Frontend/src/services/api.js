@@ -64,7 +64,7 @@ export const getCategorias = async () => {
 
 export const login = async (email, password) => {
   try {
-    const response = await api.post('/auth/login', { email, password });
+    const response = await api.post('/auth', { action: 'login', email, password });
     return response.data;
   } catch (error) {
     console.error('Error en login:', error);
@@ -74,7 +74,7 @@ export const login = async (email, password) => {
 
 export const register = async (email, password) => {
   try {
-    const response = await api.post('/auth/register', { email, password });
+    const response = await api.post('/auth', { action: 'register', email, password });
     return response.data;
   } catch (error) {
     console.error('Error en registro:', error);
@@ -96,7 +96,7 @@ export const guardarVenta = async (ventaData) => {
 
 export const getHistorialVentas = async () => {
   try {
-    const response = await api.get('/ventas/historial');
+    const response = await api.get('/ventas');
     return response.data;
   } catch (error) {
     console.error('Error al obtener historial:', error);
