@@ -139,22 +139,13 @@ export default async function handler(req, res) {
 async function handleGetProducts(req, res) {
   console.log('📋 Solicitud de productos recibida');
 
-  // Debug: verificar total de productos en BD
-  const totalProductos = await Product.countDocuments();
-  console.log(`📊 Total productos en BD: ${totalProductos}`);
-
-  // Obtener un producto de ejemplo para ver el formato
-  const productoEjemplo = await Product.findOne().lean();
-  console.log(`🔍 Ejemplo - mostrar: "${productoEjemplo?.mostrar}"`);
-
-  // Intentar obtener productos (sin filtro primero para debug)
-  const productos = await Product
-    .find({})
+  // USAR ACCESO DIRECTO A COLECCIÓN (sin Mongoose) para obtener todos los campos
+  const db = Product.db;
+  const collection = db.collection('productos');
+  const productos = await collection
+    .find({ mostrar: 'si' })
     .sort({ categoria: 1, nombre: 1 })
-    .lean()
-    .exec();
-
-  console.log(`📦 Productos encontrados: ${productos.length}`);
+    .toArray();
 
   // Transformar productos para incluir URLs optimizadas de Cloudinary
   const productosOptimizados = productos.map(producto => {
