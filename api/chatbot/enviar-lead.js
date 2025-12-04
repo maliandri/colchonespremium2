@@ -33,9 +33,15 @@ export default async function handler(req, res) {
     // Enviar email al mail de la empresa
     const destinatario = process.env.EMAIL_EMPRESA || process.env.EMAIL_USER;
 
+    // Determinar el asunto según el tipo de solicitud
+    const esAsistenciaHumana = leadData.tipoSolicitud === 'asistencia_humana';
+    const asunto = esAsistenciaHumana
+      ? `👨‍💼 Solicitud de Asistencia Humana - ${leadData.nombre || 'Cliente'}`
+      : `🤖 Nuevo Lead del Chatbot - ${leadData.nombre || 'Cliente'}`;
+
     await enviarEmail({
       destinatario,
-      asunto: `🤖 Nuevo Lead del Chatbot - ${leadData.nombre || 'Cliente'}`,
+      asunto,
       cuerpoHtml: emailHtml
     });
 
@@ -64,6 +70,9 @@ function construirEmailLead(leadData, conversationSummary, sessionId) {
     dateStyle: 'full',
     timeStyle: 'short'
   });
+
+  const esAsistenciaHumana = leadData.tipoSolicitud === 'asistencia_humana';
+  const titulo = esAsistenciaHumana ? '👨‍💼 Solicitud de Asistencia Humana' : '🤖 Nuevo Lead del Chatbot';
 
   return `
 <!DOCTYPE html>
@@ -187,9 +196,20 @@ function construirEmailLead(leadData, conversationSummary, sessionId) {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🤖 Nuevo Lead del Chatbot</h1>
+      <h1>${titulo}</h1>
       <p>${fecha}</p>
     </div>
+
+    ${esAsistenciaHumana && leadData.interes ? `
+    <div class="info-section" style="background-color: #fff3cd; border-left-color: #ffc107;">
+      <h2 style="color: #856404;">💬 Consulta del Cliente</h2>
+      <div class="info-row" style="border-bottom: none;">
+        <span class="info-value" style="font-size: 16px; font-weight: 500; color: #333;">
+          ${leadData.interes}
+        </span>
+      </div>
+    </div>
+    ` : ''}
 
     <div class="info-section">
       <h2>📋 Información del Cliente</h2>
@@ -221,7 +241,7 @@ function construirEmailLead(leadData, conversationSummary, sessionId) {
       </div>
       ` : ''}
 
-      ${leadData.interes ? `
+      ${!esAsistenciaHumana && leadData.interes ? `
       <div class="info-row">
         <span class="info-label">🎯 Interés:</span>
         <span class="info-value">${leadData.interes}</span>

@@ -60,13 +60,57 @@ export default function ChatBot() {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
     try {
-      // Llamar a la API del chatbot
+      // Verificar si el usuario está respondiendo a solicitud de asistencia humana
+      const lastBotMessage = messages[messages.length - 1];
+      if (lastBotMessage?.needsHumanAssistance) {
+        // Guardar la consulta del usuario
+        const consultaCliente = currentInput;
+
+        // Pedir datos de contacto
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: 'Perfecto, ya tengo tu consulta. 📝\n\nAhora necesito tus datos para que un asesor te contacte:\n\n👤 ¿Cuál es tu nombre?\n📧 ¿Y tu email o teléfono?',
+          timestamp: new Date(),
+          waitingForContactData: true,
+          consultaCliente: consultaCliente
+        }]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Verificar si está proporcionando datos de contacto
+      if (lastBotMessage?.waitingForContactData) {
+        const consultaOriginal = lastBotMessage.consultaCliente;
+
+        // Extraer datos del mensaje del usuario y del historial
+        const allText = messages.map(m => m.content).join(' ') + ' ' + currentInput;
+        const leadData = extractLeadDataFromText(allText);
+
+        // Enviar solicitud de asistencia humana por email
+        await enviarSolicitudAsistenciaHumana({
+          ...leadData,
+          consulta: consultaOriginal,
+          conversationHistory: messages
+        });
+
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: '¡Listo! ✅ Tu solicitud ha sido enviada.\n\nUn asesor se comunicará contigo a la brevedad para ayudarte con tu consulta.\n\n¿Hay algo más en lo que pueda ayudarte?',
+          timestamp: new Date()
+        }]);
+
+        setIsLoading(false);
+        return;
+      }
+
+      // Flujo normal del chatbot
       const response = await axios.post(`${API_URL}/chatbot/conversacion`, {
-        message: inputMessage,
+        message: currentInput,
         conversationHistory: messages,
         sessionId
       });
@@ -91,7 +135,6 @@ export default function ChatBot() {
 
       // Si hay intención de compra y tenemos productos, mostrar botón de acción
       if (isPurchaseIntent && products && products.length > 0) {
-        // Opcional: agregar un mensaje con CTA
         setTimeout(() => {
           setMessages(prev => [...prev, {
             role: 'assistant',
@@ -113,6 +156,53 @@ export default function ChatBot() {
       }]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Extraer datos de contacto del texto
+  const extractLeadDataFromText = (text) => {
+    const leadData = {
+      nombre: null,
+      email: null,
+      telefono: null
+    };
+
+    // Extraer email
+    const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
+    if (emailMatch) {
+      leadData.email = emailMatch[0];
+    }
+
+    // Extraer teléfono argentino
+    const phoneMatch = text.match(/(?:\+54\s?)?(?:9\s?)?(?:11|\d{3,4})\s?\d{3,4}[-\s]?\d{4}/);
+    if (phoneMatch) {
+      leadData.telefono = phoneMatch[0].replace(/\s+/g, ' ').trim();
+    }
+
+    // Extraer nombre (después de "me llamo", "mi nombre es", "soy")
+    const nombreMatch = text.match(/(?:me llamo|mi nombre es|soy|nombre:?)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
+    if (nombreMatch) {
+      leadData.nombre = nombreMatch[1].trim();
+    }
+
+    return leadData;
+  };
+
+  // Enviar solicitud de asistencia humana
+  const enviarSolicitudAsistenciaHumana = async (data) => {
+    try {
+      await axios.post(`${API_URL}/chatbot/enviar-lead`, {
+        leadData: {
+          ...data,
+          interes: data.consulta,
+          tipoSolicitud: 'asistencia_humana'
+        },
+        conversationSummary: data.conversationHistory.slice(-5),
+        sessionId
+      });
+      console.log('✅ Solicitud de asistencia humana enviada');
+    } catch (error) {
+      console.error('❌ Error al enviar solicitud:', error);
     }
   };
 
@@ -149,9 +239,9 @@ export default function ChatBot() {
   const handleHumanAssistance = () => {
     setMessages(prev => [...prev, {
       role: 'assistant',
-      content: '¡Por supuesto! Te conecto con un asesor humano. Puedes contactarnos por WhatsApp haciendo clic en el botón verde de arriba o escribirnos directamente.',
+      content: '¡Perfecto! 👨‍💼 Voy a conectarte con un asesor humano.\n\nPrimero, cuéntame:\n¿Hay algún producto en particular que te interese o tenés alguna consulta específica?',
       timestamp: new Date(),
-      showContactForm: true
+      needsHumanAssistance: true
     }]);
   };
 
