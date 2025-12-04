@@ -45,7 +45,7 @@ export const ProductDetail = () => {
     title: producto ? generateTitle(producto.nombre) : generateTitle('Producto'),
     description: producto
       ? `${producto.nombre} - ${producto.descripcion || 'Producto de calidad premium en Aluminé Hogar'}. Precio: $${producto.precio?.toLocaleString('es-AR')}. Envíos a todo el país.`
-      : 'Producto de Aluminé Hogar - Tu mejor descanso en Neuquén',
+      : 'Producto de Aluminé Hogar - Calidad para tu hogar, precios para vos',
     keywords: producto
       ? `${producto.nombre}, ${producto.categoria}, colchones neuquén, ${producto.nombre} precio, comprar ${producto.nombre}`
       : 'colchones, almohadas, neuquén',

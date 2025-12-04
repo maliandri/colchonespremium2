@@ -11,7 +11,7 @@ export const Footer = () => {
           <div>
             <h3 className="text-white text-xl font-semibold mb-4">Aluminé Hogar</h3>
             <p className="text-purple-100 mb-4">
-              Tu mejor descanso comienza aquí. Ofrecemos los mejores colchones y almohadas de Neuquén.
+              Calidad para tu hogar, precios para vos. Todo lo que necesitás para tu hogar en Neuquén.
             </p>
             <img
               src="https://res.cloudinary.com/dlshym1te/image/upload/f_png,fl_preserve_transparency,q_auto/Alumine%CC%81_Hogar-logo"

@@ -32,9 +32,9 @@ export const HomePage = ({ showVendedorModal, setShowVendedorModal, showAuthModa
 
   // SEO para la página de inicio
   useSEO({
-    title: generateTitle('Colchones y Almohadas Premium en Neuquén'),
-    description: 'Descubrí la mejor selección de colchones y almohadas en Neuquén. Envíos a todo el país. Calidad, confort y los mejores precios en Aluminé Hogar.',
-    keywords: 'colchones neuquén, almohadas neuquén, colchones premium, descanso, sommier, ropa de cama, neuquén, argentina',
+    title: generateTitle('Todo para tu Hogar en Neuquén'),
+    description: 'Descubrí todo lo que necesitás para tu hogar en Neuquén. Colchones, muebles, electrodomésticos y más. Envíos a todo el país. Calidad para tu hogar, precios para vos.',
+    keywords: 'hogar neuquén, muebles neuquén, colchones neuquén, electrodomésticos, decoración, bazar, productos para el hogar, neuquén, argentina',
     url: generateCanonicalUrl('/'),
     type: 'website',
     image: 'https://res.cloudinary.com/dlshym1te/image/upload/f_auto,q_auto/Alumine%CC%81_Hogar-logo',

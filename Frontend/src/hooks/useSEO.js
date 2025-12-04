@@ -125,7 +125,7 @@ export const useSEO = ({
  * Genera el título SEO optimizado
  */
 export const generateTitle = (pageTitle) => {
-  return pageTitle ? `${pageTitle} | Aluminé Hogar` : 'Aluminé Hogar | Tu Mejor Descanso en Neuquén';
+  return pageTitle ? `${pageTitle} | Aluminé Hogar` : 'Aluminé Hogar | Calidad para tu hogar, precios para vos';
 };
 
 /**
