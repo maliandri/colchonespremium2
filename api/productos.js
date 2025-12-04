@@ -139,6 +139,11 @@ export default async function handler(req, res) {
 async function handleGetProducts(req, res) {
   console.log('📋 Solicitud de productos recibida');
 
+  // Debug: verificar total de productos en BD
+  const totalProductos = await Product.countDocuments();
+  const totalVisibles = await Product.countDocuments({ mostrar: 'si' });
+  console.log(`📊 Total productos en BD: ${totalProductos}, Visibles: ${totalVisibles}`);
+
   // Usar Mongoose con lean() para obtener objetos planos con todos los campos
   const productos = await Product
     .find({ mostrar: 'si' })
