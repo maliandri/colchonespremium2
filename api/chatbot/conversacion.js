@@ -24,7 +24,10 @@ export default async function handler(req, res) {
     const { message, conversationHistory = [], sessionId } = req.body;
 
     if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Mensaje inválido' });
+      return res.status(400).json({
+        error: 'Mensaje inválido',
+        message: 'Lo siento, no pude entender tu mensaje. ¿Podrías intentar de nuevo?'
+      });
     }
 
     console.log(`💬 [ChatBot] Nuevo mensaje: "${message}"`);
@@ -35,20 +38,38 @@ export default async function handler(req, res) {
 
     // Buscar productos relevantes si es necesario
     let productContext = [];
-    if (intent === 'product_search' || intent === 'price_inquiry') {
-      productContext = await buscarProductos(message);
-      console.log(`🔍 Productos encontrados: ${productContext.length}`);
+    try {
+      if (intent === 'product_search' || intent === 'price_inquiry') {
+        productContext = await buscarProductos(message);
+        console.log(`🔍 Productos encontrados: ${productContext.length}`);
+      }
+    } catch (searchError) {
+      console.error('⚠️ Error buscando productos (continuando sin productos):', searchError.message);
+      // Continuar sin productos en lugar de fallar
     }
 
     // Generar respuesta con Gemini
-    const aiResponse = await generateAIResponse(
-      message,
-      productContext,
-      conversationHistory
-    );
+    let aiResponse;
+    try {
+      aiResponse = await generateAIResponse(
+        message,
+        productContext,
+        conversationHistory
+      );
+    } catch (geminiError) {
+      console.error('❌ Error en Gemini:', geminiError.message);
+
+      // Respuesta de fallback si Gemini falla
+      aiResponse = 'Hola! En este momento estoy teniendo problemas técnicos, pero puedo ayudarte. ¿Buscás algún producto en particular? También podés contactarnos directamente por WhatsApp al +54 9 299 576-9999.';
+    }
 
     // Detectar si el usuario proporcionó información de contacto
-    const leadData = extractLeadData(message, conversationHistory);
+    let leadData = null;
+    try {
+      leadData = extractLeadData(message, conversationHistory);
+    } catch (leadError) {
+      console.error('⚠️ Error extrayendo lead (continuando):', leadError.message);
+    }
 
     // Detectar si es una intención de compra
     const isPurchaseIntent = intent === 'purchase_intent' ||
@@ -68,10 +89,19 @@ export default async function handler(req, res) {
     return res.status(200).json(response);
 
   } catch (error) {
-    console.error('❌ Error en el chatbot:', error);
-    return res.status(500).json({
-      error: 'Error interno del servidor',
-      message: 'Disculpa, estoy teniendo problemas técnicos. Por favor, intenta nuevamente.'
+    console.error('❌ Error crítico en el chatbot:', error);
+    console.error('Stack:', error.stack);
+
+    // Respuesta amigable incluso en error crítico
+    return res.status(200).json({
+      message: 'Disculpa, estoy teniendo problemas técnicos en este momento. ¿Podrías contactarnos por WhatsApp al +54 9 299 576-9999? Nuestro equipo te ayudará de inmediato.',
+      intent: 'error',
+      products: [],
+      leadDetected: false,
+      leadData: null,
+      isPurchaseIntent: false,
+      sessionId: req.body.sessionId || generateSessionId(),
+      error: true
     });
   }
 }
