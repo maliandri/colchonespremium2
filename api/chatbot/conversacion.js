@@ -4,7 +4,7 @@
  */
 
 import { generateAIResponse, detectIntent } from '../_lib/gemini.js';
-import { buscarProductos } from '../_lib/product-search.js';
+import { searchProducts } from '../_lib/product-search.js';
 
 export default async function handler(req, res) {
   // Configurar CORS
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     let productContext = [];
     try {
       if (intent === 'product_search' || intent === 'price_inquiry') {
-        productContext = await buscarProductos(message);
+        productContext = await searchProducts(message);
         console.log(`🔍 Productos encontrados: ${productContext.length}`);
       }
     } catch (searchError) {
