@@ -4,7 +4,7 @@
  */
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-1.5-flash'; // Modelo rápido y económico
+const GEMINI_MODEL = 'gemini-2.0-flash-exp'; // Modelo 2.0 Flash - más rápido y preciso
 
 /**
  * Genera una respuesta usando Gemini AI
@@ -32,7 +32,7 @@ export async function generateAIResponse(userMessage, productContext = [], conve
 
     // Llamar a la API de Gemini
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: {
