@@ -6,7 +6,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-2.5-flash'; // Mismo modelo que funciona en Almamod
+const GEMINI_MODEL = 'gemini-1.5-flash'; // Modelo con límite de 15 RPM (más generoso que 2.5-flash)
 
 /**
  * Genera una respuesta usando Gemini AI
