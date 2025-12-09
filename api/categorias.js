@@ -13,6 +13,12 @@ export default async function handler(req, res) {
     // Conectar a la base de datos
     await connectDB();
 
+    // Asegurar que la conexión esté lista antes de acceder a db
+    if (!Product.db || Product.db.readyState !== 1) {
+      console.log('⏳ Esperando a que MongoDB esté completamente conectado...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
     // USAR ACCESO DIRECTO A COLECCIÓN (sin Mongoose schema) para evitar filtrado de campos
     const db = Product.db;
     const collection = db.collection('productos');
