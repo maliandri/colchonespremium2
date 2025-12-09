@@ -123,12 +123,23 @@ ${index + 1}. **${producto.nombre}**
 
   prompt += `
 **INSTRUCCIONES IMPORTANTES:**
-- Si el cliente pregunta por un producto que no está en la lista, di que no lo tienes disponible actualmente
+- Si el cliente pregunta por un producto que NO está en la lista de productos disponibles:
+  * Dile que actualmente no lo tenés en stock
+  * IMPORTANTE: Ofrécele que un especialista se va a contactar con él para confirmar cuándo podrían entregárselo
+  * SIEMPRE pídele su email y número de teléfono para que el especialista lo contacte
+  * Ejemplo: "No tenemos ese producto en stock actualmente, pero un especialista se va a contactar con vos para confirmar cuándo podríamos entregártelo. ¿Me compartís tu email y número de teléfono?"
 - Siempre menciona el precio en pesos argentinos (ARS)
-- Si el cliente quiere hacer un pedido, pídele su nombre, dirección y forma de pago preferida
+- Si el cliente quiere hacer un pedido, pídele su nombre, email, teléfono y dirección
 - Si no estás seguro de algo, ofrece pasar la consulta a un asesor humano
 - Mantén tus respuestas cortas (máximo 3-4 líneas) a menos que sea necesario más detalle
 - Usa formato de WhatsApp: *negrita* para títulos, _cursiva_ para énfasis
+
+**CAPTURA DE DATOS (MUY IMPORTANTE):**
+- SIEMPRE que ofrezcas contacto de un especialista, debes capturar:
+  * Email del cliente
+  * Número de teléfono
+  * Producto de interés
+- No termines la conversación sin intentar capturar estos datos
 
 **FORMATO DE RESPUESTA:**
 - Saluda de forma amigable
