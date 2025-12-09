@@ -15,51 +15,58 @@ export async function searchProducts(userMessage) {
   try {
     await connectDB();
 
+    // Esperar hasta que la conexión esté realmente lista
+    let attempts = 0;
+    while ((!Product.db || Product.db.readyState !== 1) && attempts < 10) {
+      console.log(`⏳ Esperando conexión MongoDB para búsqueda (intento ${attempts + 1}/10)...`);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      attempts++;
+    }
+
     const lowerMessage = userMessage.toLowerCase();
-    const searchTerms = [];
 
-    // Detectar categorías
-    if (/(colchón|colchon)/i.test(userMessage)) {
-      searchTerms.push('Colchones');
-    }
-    if (/almohada/i.test(userMessage)) {
-      searchTerms.push('Almohadas');
-    }
+    // Extraer palabras clave del mensaje (más de 2 caracteres)
+    const words = lowerMessage
+      .replace(/[^\wáéíóúñ\s]/gi, ' ')
+      .split(/\s+/)
+      .filter(word => word.length > 2);
 
-    // Detectar tamaños/tipos
-    const sizePatterns = {
-      '1 plaza': /1 plaza|una plaza|individual/i,
-      '2 plazas': /2 plazas|dos plazas|matrimonial/i,
-      'queen': /queen/i,
-      'king': /king/i
-    };
+    console.log(`🔍 Palabras clave para buscar: ${words.join(', ')}`);
 
-    let sizeFilter = null;
-    for (const [size, pattern] of Object.entries(sizePatterns)) {
-      if (pattern.test(userMessage)) {
-        sizeFilter = size;
-        break;
-      }
-    }
+    // Construir búsqueda flexible con $or para buscar en múltiples campos
+    const searchConditions = [];
 
-    // Construir query de búsqueda
-    let query = { mostrar: 'si' };
+    // Buscar en nombre, descripción y categoría
+    words.forEach(word => {
+      searchConditions.push(
+        { nombre: { $regex: word, $options: 'i' } },
+        { descripcion: { $regex: word, $options: 'i' } },
+        { categoria: { $regex: word, $options: 'i' } }
+      );
+    });
 
-    if (searchTerms.length > 0) {
-      query.categoria = { $in: searchTerms };
-    }
+    // Si no hay palabras clave válidas, buscar productos destacados
+    if (searchConditions.length === 0) {
+      const productos = await Product.find({ mostrar: 'si' })
+        .select('_id nombre descripcion precio categoria imagen imagenOptimizada medidas')
+        .limit(5)
+        .sort({ precio: -1 })
+        .lean();
 
-    if (sizeFilter) {
-      query.nombre = { $regex: sizeFilter, $options: 'i' };
+      console.log(`✅ Mostrando ${productos.length} productos destacados`);
+      return productos;
     }
 
-    // Buscar productos
-    const productos = await Product.find(query)
+    // Buscar productos que coincidan con cualquiera de las condiciones
+    const productos = await Product.find({
+      mostrar: 'si',
+      $or: searchConditions
+    })
       .select('_id nombre descripcion precio categoria imagen imagenOptimizada medidas')
-      .limit(5)
+      .limit(10)
       .lean();
 
-    console.log(`✅ Encontrados ${productos.length} productos`);
+    console.log(`✅ Encontrados ${productos.length} productos para: "${userMessage}"`);
     return productos;
 
   } catch (error) {
