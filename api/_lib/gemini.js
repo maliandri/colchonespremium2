@@ -19,7 +19,16 @@ export async function generateAIResponse(userMessage, productContext = [], conve
     const systemPrompt = buildSystemPrompt(productContext);
 
     // Construir el historial de conversación
+    // Incluir el system prompt como primer mensaje del modelo
     const messages = [
+      {
+        role: 'user',
+        parts: [{ text: systemPrompt }]
+      },
+      {
+        role: 'model',
+        parts: [{ text: '¡Entendido! Soy el asistente virtual de Aluminé Hogar. ¿En qué puedo ayudarte hoy?' }]
+      },
       ...conversationHistory.map(msg => ({
         role: msg.role === 'user' ? 'user' : 'model',
         parts: [{ text: msg.content }]
@@ -40,9 +49,6 @@ export async function generateAIResponse(userMessage, productContext = [], conve
         },
         body: JSON.stringify({
           contents: messages,
-          systemInstruction: {
-            parts: [{ text: systemPrompt }]
-          },
           generationConfig: {
             temperature: 0.7,
             topK: 40,
