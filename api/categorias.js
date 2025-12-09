@@ -13,10 +13,16 @@ export default async function handler(req, res) {
     // Conectar a la base de datos
     await connectDB();
 
-    // Asegurar que la conexión esté lista antes de acceder a db
+    // Esperar hasta que la conexión esté realmente lista
+    let attempts = 0;
+    while ((!Product.db || Product.db.readyState !== 1) && attempts < 10) {
+      console.log(`⏳ Esperando conexión MongoDB (intento ${attempts + 1}/10)...`);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      attempts++;
+    }
+
     if (!Product.db || Product.db.readyState !== 1) {
-      console.log('⏳ Esperando a que MongoDB esté completamente conectado...');
-      await new Promise(resolve => setTimeout(resolve, 100));
+      throw new Error('MongoDB no se conectó después de varios intentos');
     }
 
     // USAR ACCESO DIRECTO A COLECCIÓN (sin Mongoose schema) para evitar filtrado de campos
