@@ -165,7 +165,7 @@ export function detectIntent(message) {
   }
 
   // Búsqueda de productos
-  if (/(colchón|colchon|almohada|busco|quiero|me interesa|mostrar|ver)/i.test(lowerMessage)) {
+  if (/(colchón|colchon|almohada|aire|acondicionado|calefactor|estufa|ventilador|mueble|mesa|silla|sommier|busco|quiero|me interesa|mostrar|ver|tenés|tenes|hay|venden)/i.test(lowerMessage)) {
     return 'product_search';
   }
 
