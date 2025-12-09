@@ -1,10 +1,12 @@
 /**
  * Cliente de Google Gemini AI
- * Utiliza la API de Gemini para generar respuestas inteligentes
+ * Utiliza el SDK oficial de Google Generative AI
  */
 
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-1.5-flash'; // Modelo estable y rápido
+const GEMINI_MODEL = 'gemini-2.0-flash-exp'; // Modelo 2.0 Flash experimental
 
 /**
  * Genera una respuesta usando Gemini AI
@@ -15,12 +17,27 @@ const GEMINI_MODEL = 'gemini-1.5-flash'; // Modelo estable y rápido
  */
 export async function generateAIResponse(userMessage, productContext = [], conversationHistory = []) {
   try {
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY no está configurada');
+    }
+
+    // Inicializar el cliente de Gemini
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+      }
+    });
+
     // Construir el prompt del sistema
     const systemPrompt = buildSystemPrompt(productContext);
 
     // Construir el historial de conversación
-    // Incluir el system prompt como primer mensaje del modelo
-    const messages = [
+    const history = [
       {
         role: 'user',
         parts: [{ text: systemPrompt }]
@@ -32,57 +49,18 @@ export async function generateAIResponse(userMessage, productContext = [], conve
       ...conversationHistory.map(msg => ({
         role: msg.role === 'user' ? 'user' : 'model',
         parts: [{ text: msg.content }]
-      })),
-      {
-        role: 'user',
-        parts: [{ text: userMessage }]
-      }
+      }))
     ];
 
-    // Llamar a la API de Gemini
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: messages,
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-          safetySettings: [
-            {
-              category: 'HARM_CATEGORY_HARASSMENT',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-            },
-            {
-              category: 'HARM_CATEGORY_HATE_SPEECH',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-            }
-          ]
-        })
-      }
-    );
+    // Iniciar chat con historial
+    const chat = model.startChat({ history });
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('❌ Error de Gemini API:', error);
-      throw new Error(`Gemini API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    // Extraer la respuesta
-    const aiResponse = data.candidates[0]?.content?.parts[0]?.text ||
-                      'Lo siento, no pude generar una respuesta. ¿Podrías reformular tu pregunta?';
+    // Enviar mensaje
+    const result = await chat.sendMessage(userMessage);
+    const response = await result.response.text();
 
     console.log('✅ Respuesta de Gemini generada');
-    return aiResponse;
+    return response;
 
   } catch (error) {
     console.error('❌ Error generando respuesta con Gemini:', error);

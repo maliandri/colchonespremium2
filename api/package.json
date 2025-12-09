@@ -4,6 +4,7 @@
   "type": "module",
   "dependencies": {
     "alumine-hogar": "file:..",
+    "@google/generative-ai": "^0.21.0",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.8.0",
     "jsonwebtoken": "^9.0.2",
