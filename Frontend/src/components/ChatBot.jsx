@@ -125,12 +125,16 @@ export default function ChatBot() {
         timestamp: new Date()
       };
 
+      // Crear la conversación completa ANTES de actualizar el estado
+      const updatedMessages = [...messages, userMessage, botMessage];
+
       setMessages(prev => [...prev, botMessage]);
 
       // Si se detectó un lead y no se ha capturado antes
       if (leadDetected && !leadCaptured && leadData) {
         setLeadCaptured(true);
-        await enviarLead(leadData);
+        // Enviar con la conversación completa (incluye mensaje del usuario y respuesta del bot)
+        await enviarLead(leadData, updatedMessages);
       }
 
       // Si hay intención de compra y tenemos productos, mostrar botón de acción
@@ -206,11 +210,11 @@ export default function ChatBot() {
     }
   };
 
-  const enviarLead = async (leadData) => {
+  const enviarLead = async (leadData, conversationToSend = null) => {
     try {
       await axios.post(`${API_URL}/chatbot/enviar-lead`, {
         leadData,
-        conversationSummary: messages, // Toda la conversación
+        conversationSummary: conversationToSend || messages, // Usar conversación pasada o estado actual
         sessionId
       });
       console.log('✅ Lead enviado exitosamente');
