@@ -110,7 +110,11 @@ export default async function handler(req, res) {
  * Extrae datos de contacto del lead del mensaje
  */
 function extractLeadData(message, history) {
-  const allMessages = [...history.map(h => h.content), message].join(' ');
+  // Solo analizar mensajes del USUARIO (role: 'user'), no del bot
+  const userMessages = history
+    .filter(h => h.role === 'user')
+    .map(h => h.content)
+    .join(' ') + ' ' + message;
 
   const leadData = {
     nombre: null,
@@ -121,37 +125,38 @@ function extractLeadData(message, history) {
   };
 
   // Extraer email
-  const emailMatch = allMessages.match(/[\w.-]+@[\w.-]+\.\w+/);
+  const emailMatch = userMessages.match(/[\w.-]+@[\w.-]+\.\w+/);
   if (emailMatch) {
     leadData.email = emailMatch[0];
   }
 
   // Extraer teléfono argentino
-  const phoneMatch = allMessages.match(/(?:\+54\s?)?(?:9\s?)?(?:11|\d{3,4})\s?\d{3,4}[-\s]?\d{4}/);
+  const phoneMatch = userMessages.match(/(?:\+54\s?)?(?:9\s?)?(?:11|\d{3,4})\s?\d{3,4}[-\s]?\d{4}/);
   if (phoneMatch) {
     leadData.telefono = phoneMatch[0].replace(/\s+/g, ' ').trim();
   }
 
-  // Extraer nombre (después de "me llamo", "mi nombre es", "soy")
-  const nombreMatch = allMessages.match(/(?:me llamo|mi nombre es|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
+  // Extraer nombre (después de "me llamo", "mi nombre es", "soy", "nombre:")
+  const nombreMatch = userMessages.match(/(?:me llamo|mi nombre es|soy|nombre:?)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
   if (nombreMatch) {
     leadData.nombre = nombreMatch[1].trim();
   }
 
   // Extraer dirección (mencionada con "vivo en", "dirección", "mi dirección")
-  const direccionMatch = allMessages.match(/(?:vivo en|dirección|mi dirección(?:\s+es)?)[:\s]+([^.!?]+)/i);
+  const direccionMatch = userMessages.match(/(?:vivo en|dirección|mi dirección(?:\s+es)?)[:\s]+([^.!?]+)/i);
   if (direccionMatch) {
     leadData.direccion = direccionMatch[1].trim();
   }
 
   // Extraer interés en productos
-  const productoMatch = allMessages.match(/(?:quiero|busco|me interesa|necesito)\s+(?:un|una)?\s*([^.!?]{3,50})/i);
+  const productoMatch = userMessages.match(/(?:quiero|busco|me interesa|necesito)\s+(?:un|una)?\s*([^.!?]{3,50})/i);
   if (productoMatch) {
     leadData.interes = productoMatch[1].trim();
   }
 
-  // Verificar si tenemos al menos un dato válido
-  const hasValidData = leadData.email || leadData.telefono || leadData.nombre;
+  // IMPORTANTE: Solo considerar lead válido si tiene nombre Y (email O teléfono)
+  // Esto evita capturas prematuras
+  const hasValidData = leadData.nombre && (leadData.email || leadData.telefono);
 
   return hasValidData ? leadData : null;
 }
