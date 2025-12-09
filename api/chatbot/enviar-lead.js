@@ -27,6 +27,7 @@ export default async function handler(req, res) {
 
     console.log('📧 [Lead] Procesando lead capturado por chatbot');
     console.log('📊 Datos del lead:', JSON.stringify(leadData, null, 2));
+    console.log('💬 Conversación recibida:', conversationSummary ? `${conversationSummary.length} mensajes` : 'No hay conversación');
 
     // Verificar configuración de email
     const destinatario = process.env.EMAIL_EMPRESA || process.env.EMAIL_USER;
