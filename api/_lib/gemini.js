@@ -6,7 +6,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-1.5-flash'; // Modelo con límite de 15 RPM (más generoso que 2.5-flash)
+const GEMINI_MODEL = 'gemini-1.5-flash-002'; // Versión específica del modelo
 
 /**
  * Genera una respuesta usando Gemini AI
