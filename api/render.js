@@ -3,8 +3,8 @@
  * Detecta Googlebot y otros crawlers y les sirve contenido con metadata
  */
 
-import connectDB from './_lib/mongodb.js';
-import Product from './_models/Product.js';
+import connectDB from './_lib/db.js';
+import Product from './_lib/models/Product.js';
 
 const isBot = (userAgent) => {
   if (!userAgent) return false;
