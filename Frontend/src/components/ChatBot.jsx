@@ -197,7 +197,7 @@ export default function ChatBot() {
           interes: data.consulta,
           tipoSolicitud: 'asistencia_humana'
         },
-        conversationSummary: data.conversationHistory.slice(-5),
+        conversationSummary: data.conversationHistory, // Toda la conversación
         sessionId
       });
       console.log('✅ Solicitud de asistencia humana enviada');
@@ -210,7 +210,7 @@ export default function ChatBot() {
     try {
       await axios.post(`${API_URL}/chatbot/enviar-lead`, {
         leadData,
-        conversationSummary: messages.slice(-5), // Últimos 5 mensajes
+        conversationSummary: messages, // Toda la conversación
         sessionId
       });
       console.log('✅ Lead enviado exitosamente');
