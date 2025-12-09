@@ -7,7 +7,7 @@ const decodePassword = (pass) => {
   try {
     // Primero verificar si está en base64
     // Base64 solo contiene A-Z, a-z, 0-9, +, /, =
-    if (/^[A-Za-z0-9+/]+=*$/.test(pass) && pass.length > 20) {
+    if (/^[A-Za-z0-9+/]+=*$/.test(pass) && pass.length >= 16) {
       const decoded = Buffer.from(pass, 'base64').toString('utf-8');
       console.log('🔓 Contraseña decodificada desde Base64');
       return decoded;
