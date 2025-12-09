@@ -6,7 +6,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-1.5-flash-002'; // Versión específica del modelo
+const GEMINI_MODEL = 'gemini-2.0-flash'; // Modelo estable con 1M token context
 
 /**
  * Genera una respuesta usando Gemini AI
