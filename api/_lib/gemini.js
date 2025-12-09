@@ -4,7 +4,7 @@
  */
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-1.5-flash-002'; // Modelo estable y rápido
+const GEMINI_MODEL = 'gemini-1.5-flash'; // Modelo estable y rápido
 
 /**
  * Genera una respuesta usando Gemini AI
