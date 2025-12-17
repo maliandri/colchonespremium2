@@ -109,7 +109,7 @@ export default function ChatBot() {
       }
 
       // Flujo normal del chatbot
-      const response = await axios.post(`${API_URL}/chatbot/conversacion`, {
+      const response = await axios.post(`${API_URL}/chatbot?action=conversation`, {
         message: currentInput,
         conversationHistory: messages,
         sessionId
@@ -195,7 +195,7 @@ export default function ChatBot() {
   // Enviar solicitud de asistencia humana
   const enviarSolicitudAsistenciaHumana = async (data) => {
     try {
-      await axios.post(`${API_URL}/chatbot/enviar-lead`, {
+      await axios.post(`${API_URL}/chatbot?action=lead`, {
         leadData: {
           ...data,
           interes: data.consulta,
@@ -212,7 +212,7 @@ export default function ChatBot() {
 
   const enviarLead = async (leadData, conversationToSend = null) => {
     try {
-      await axios.post(`${API_URL}/chatbot/enviar-lead`, {
+      await axios.post(`${API_URL}/chatbot?action=lead`, {
         leadData,
         conversationSummary: conversationToSend || messages, // Usar conversación pasada o estado actual
         sessionId
