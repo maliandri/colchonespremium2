@@ -15,13 +15,18 @@ export const useAuthStore = create(
           const data = await apiLogin(email, password);
 
           localStorage.setItem('authToken', data.token);
-          localStorage.setItem('userEmail', email);
 
-          // Decodificar el token para obtener el ID
+          // Decodificar el token para obtener los datos
           const payload = JSON.parse(atob(data.token.split('.')[1]));
 
           set({
-            user: { email, id: payload.id },
+            user: {
+              id: payload.userId,
+              email: payload.email,
+              role: payload.role,
+              nombre: data.user?.nombre || '',
+              telefono: data.user?.telefono || ''
+            },
             token: data.token,
             isAuthenticated: true,
           });
@@ -37,19 +42,24 @@ export const useAuthStore = create(
       },
 
       // Registrarse
-      register: async (email, password) => {
+      register: async (email, password, nombre, telefono) => {
         try {
-          const data = await apiRegister(email, password);
+          const data = await apiRegister(email, password, nombre, telefono);
 
           // Después del registro, hacer login automáticamente
           if (data.token) {
             localStorage.setItem('authToken', data.token);
-            localStorage.setItem('userEmail', email);
 
             const payload = JSON.parse(atob(data.token.split('.')[1]));
 
             set({
-              user: { email, id: payload.id },
+              user: {
+                id: payload.userId,
+                email: payload.email,
+                role: payload.role,
+                nombre: data.user?.nombre || nombre || '',
+                telefono: data.user?.telefono || telefono || ''
+              },
               token: data.token,
               isAuthenticated: true,
             });
@@ -68,7 +78,6 @@ export const useAuthStore = create(
       // Cerrar sesión
       logout: () => {
         localStorage.removeItem('authToken');
-        localStorage.removeItem('userEmail');
         set({
           user: null,
           token: null,
@@ -76,19 +85,28 @@ export const useAuthStore = create(
         });
       },
 
+      // Verificar si es admin
+      isAdmin: () => {
+        const { user } = get();
+        return user?.role === 'admin';
+      },
+
       // Verificar sesión guardada
       checkAuth: () => {
         const token = localStorage.getItem('authToken');
-        const email = localStorage.getItem('userEmail');
 
-        if (token && email) {
+        if (token) {
           try {
             const payload = JSON.parse(atob(token.split('.')[1]));
 
             // Verificar si el token no ha expirado
             if (payload.exp && payload.exp * 1000 > Date.now()) {
               set({
-                user: { email, id: payload.id },
+                user: {
+                  id: payload.userId,
+                  email: payload.email,
+                  role: payload.role
+                },
                 token,
                 isAuthenticated: true,
               });

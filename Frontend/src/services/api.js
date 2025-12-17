@@ -15,7 +15,7 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
     if (token) {
-      config.headers['auth-token'] = token;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
@@ -64,7 +64,7 @@ export const getCategorias = async () => {
 
 export const login = async (email, password) => {
   try {
-    const response = await api.post('/auth', { action: 'login', email, password });
+    const response = await api.post('/auth/login', { email, password });
     return response.data;
   } catch (error) {
     console.error('Error en login:', error);
@@ -72,9 +72,9 @@ export const login = async (email, password) => {
   }
 };
 
-export const register = async (email, password) => {
+export const register = async (email, password, nombre, telefono) => {
   try {
-    const response = await api.post('/auth', { action: 'register', email, password });
+    const response = await api.post('/auth/register', { email, password, nombre, telefono });
     return response.data;
   } catch (error) {
     console.error('Error en registro:', error);
@@ -110,6 +110,74 @@ export const enviarPresupuesto = async (presupuestoData) => {
     return response.data;
   } catch (error) {
     console.error('Error al enviar presupuesto:', error);
+    throw error;
+  }
+};
+
+// =================== ADMIN - PRODUCTOS ===================
+
+export const getProductosAdmin = async () => {
+  try {
+    const response = await api.get('/admin/products');
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener productos (admin):', error);
+    throw error;
+  }
+};
+
+export const crearProducto = async (productoData) => {
+  try {
+    const response = await api.post('/admin/products', productoData);
+    return response.data;
+  } catch (error) {
+    console.error('Error al crear producto:', error);
+    throw error;
+  }
+};
+
+export const actualizarProducto = async (id, productoData) => {
+  try {
+    const response = await api.put(`/admin/products?id=${id}`, productoData);
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar producto:', error);
+    throw error;
+  }
+};
+
+export const eliminarProducto = async (id) => {
+  try {
+    const response = await api.delete(`/admin/products?id=${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al eliminar producto:', error);
+    throw error;
+  }
+};
+
+export const subirImagen = async (imageBase64) => {
+  try {
+    const response = await api.post('/admin/upload-image', { image: imageBase64 });
+    return response.data;
+  } catch (error) {
+    console.error('Error al subir imagen:', error);
+    throw error;
+  }
+};
+
+// =================== MERCADO PAGO ===================
+
+export const crearPreferenciaPago = async (items, payer, shippingAddress) => {
+  try {
+    const response = await api.post('/mercadopago/create-preference', {
+      items,
+      payer,
+      shippingAddress
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al crear preferencia de pago:', error);
     throw error;
   }
 };
