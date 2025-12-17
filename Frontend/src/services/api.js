@@ -64,7 +64,7 @@ export const getCategorias = async () => {
 
 export const login = async (email, password) => {
   try {
-    const response = await api.post('/auth/login', { email, password });
+    const response = await api.post('/auth', { action: 'login', email, password });
     return response.data;
   } catch (error) {
     console.error('Error en login:', error);
@@ -74,7 +74,7 @@ export const login = async (email, password) => {
 
 export const register = async (email, password, nombre, telefono) => {
   try {
-    const response = await api.post('/auth/register', { email, password, nombre, telefono });
+    const response = await api.post('/auth', { action: 'register', email, password, nombre, telefono });
     return response.data;
   } catch (error) {
     console.error('Error en registro:', error);
@@ -118,7 +118,7 @@ export const enviarPresupuesto = async (presupuestoData) => {
 
 export const getProductosAdmin = async () => {
   try {
-    const response = await api.get('/admin/products');
+    const response = await api.get('/admin');
     return response.data;
   } catch (error) {
     console.error('Error al obtener productos (admin):', error);
@@ -128,7 +128,7 @@ export const getProductosAdmin = async () => {
 
 export const crearProducto = async (productoData) => {
   try {
-    const response = await api.post('/admin/products', productoData);
+    const response = await api.post('/admin', productoData);
     return response.data;
   } catch (error) {
     console.error('Error al crear producto:', error);
@@ -138,7 +138,7 @@ export const crearProducto = async (productoData) => {
 
 export const actualizarProducto = async (id, productoData) => {
   try {
-    const response = await api.put(`/admin/products?id=${id}`, productoData);
+    const response = await api.put(`/admin?id=${id}`, productoData);
     return response.data;
   } catch (error) {
     console.error('Error al actualizar producto:', error);
@@ -148,7 +148,7 @@ export const actualizarProducto = async (id, productoData) => {
 
 export const eliminarProducto = async (id) => {
   try {
-    const response = await api.delete(`/admin/products?id=${id}`);
+    const response = await api.delete(`/admin?id=${id}`);
     return response.data;
   } catch (error) {
     console.error('Error al eliminar producto:', error);
@@ -158,7 +158,7 @@ export const eliminarProducto = async (id) => {
 
 export const subirImagen = async (imageBase64) => {
   try {
-    const response = await api.post('/admin/upload-image', { image: imageBase64 });
+    const response = await api.post('/admin?action=upload', { image: imageBase64 });
     return response.data;
   } catch (error) {
     console.error('Error al subir imagen:', error);
@@ -170,7 +170,7 @@ export const subirImagen = async (imageBase64) => {
 
 export const crearPreferenciaPago = async (items, payer, shippingAddress) => {
   try {
-    const response = await api.post('/mercadopago/create-preference', {
+    const response = await api.post('/mercadopago?action=create', {
       items,
       payer,
       shippingAddress

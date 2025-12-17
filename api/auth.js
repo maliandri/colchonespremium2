@@ -1,8 +1,7 @@
 import { connectDB } from './_lib/db.js';
 import User from './_lib/models/User.js';
-import { generateToken } from './_lib/auth.js';
+import { generateToken, comparePassword } from './_lib/auth-helpers.js';
 import { enviarEmail } from './_lib/email.js';
-import bcrypt from 'bcryptjs';
 
 export default async function handler(req, res) {
   // Configurar CORS
@@ -29,33 +28,66 @@ export default async function handler(req, res) {
 
     // LOGIN
     if (action === 'login') {
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ email: email.toLowerCase() });
       if (!user) {
-        return res.status(400).json({ error: 'Credenciales inválidas.' });
+        return res.status(401).json({ error: 'Email o contraseña incorrectos' });
       }
 
-      const validPass = await bcrypt.compare(password, user.password);
-      if (!validPass) {
-        return res.status(400).json({ error: 'Credenciales inválidas.' });
+      const isValidPassword = await comparePassword(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: 'Email o contraseña incorrectos' });
       }
 
-      const token = generateToken(user._id);
+      const token = generateToken(user._id, user.email, user.role);
 
-      return res.status(200).json({ token });
+      console.log(`✅ Login exitoso: ${email} (${user.role})`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Login exitoso',
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          nombre: user.nombre,
+          telefono: user.telefono,
+          role: user.role
+        }
+      });
     }
 
     // REGISTER
     if (action === 'register') {
-      // Verificar si el usuario ya existe
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).json({ error: 'El email ya está registrado.' });
+      const { nombre, telefono } = req.body;
+
+      // Validaciones
+      if (password.length < 6) {
+        return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
       }
 
-      const newUser = new User({ email, password });
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Email inválido' });
+      }
+
+      // Verificar si el usuario ya existe
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
+        return res.status(400).json({ error: 'Este email ya está registrado' });
+      }
+
+      const newUser = new User({
+        email: email.toLowerCase(),
+        password,
+        nombre: nombre || '',
+        telefono: telefono || '',
+        role: 'customer'
+      });
       await newUser.save();
 
-      const token = generateToken(newUser._id);
+      const token = generateToken(newUser._id, newUser.email, newUser.role);
+
+      console.log(`✅ Usuario registrado: ${email}`);
 
       // Enviar correo de bienvenida (sin bloquear la respuesta)
       const asunto = '¡Bienvenido/a a Alumine Hogar!';
@@ -93,9 +125,15 @@ export default async function handler(req, res) {
       }).catch(err => console.error('Error al enviar email de bienvenida:', err));
 
       return res.status(201).json({
-        message: 'Usuario registrado exitosamente.',
+        success: true,
+        message: 'Usuario registrado exitosamente',
         token: token,
-        user: { id: newUser._id, email: newUser.email }
+        user: {
+          id: newUser._id,
+          email: newUser.email,
+          nombre: newUser.nombre,
+          role: newUser.role
+        }
       });
     }
 
