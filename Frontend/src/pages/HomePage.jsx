@@ -10,6 +10,7 @@ import { getProductos, getCategorias } from '../services/api';
 import { useSEO, generateTitle, generateCanonicalUrl } from '../hooks/useSEO';
 
 export const HomePage = ({ showVendedorModal, setShowVendedorModal, showAuthModal, setShowAuthModal }) => {
+  // v2.0 - Fixed sorting
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
