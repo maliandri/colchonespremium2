@@ -110,11 +110,16 @@ export async function POST(request) {
         user.resetCodeExpires = new Date(Date.now() + 15 * 60 * 1000);
         await user.save();
 
-        enviarEmail({
-          destinatario: email,
-          asunto: 'Codigo de recupero - Alumine Hogar',
-          cuerpoHtml: emailRecupero(code)
-        }).catch(err => console.error('Error al enviar email de recupero:', err));
+        try {
+          await enviarEmail({
+            destinatario: email,
+            asunto: 'Codigo de recupero - Alumine Hogar',
+            cuerpoHtml: emailRecupero(code)
+          });
+          console.log('Email de recupero enviado a:', email);
+        } catch (emailErr) {
+          console.error('Error al enviar email de recupero:', emailErr.message, emailErr.code);
+        }
       }
 
       return NextResponse.json({
