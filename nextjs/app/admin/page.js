@@ -19,15 +19,27 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    const unsub = useAuthStore.persist.onFinishHydration(() => {
+      setHydrated(true);
+    });
+    if (useAuthStore.persist.hasHydrated()) {
+      setHydrated(true);
+    }
+    return () => unsub?.();
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     if (!isAdmin()) {
       alert('Acceso denegado: Solo administradores');
       router.push('/');
       return;
     }
     fetchProductos();
-  }, []);
+  }, [hydrated]);
 
   const fetchProductos = async () => {
     try {
