@@ -1,0 +1,32 @@
+import { connectDB } from '@/lib/db';
+import Product from '@/lib/models/Product';
+
+const BASE_URL = 'https://aluminehogar.com.ar';
+
+export default async function sitemap() {
+  const staticPages = [
+    {
+      url: BASE_URL,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 1,
+    },
+  ];
+
+  try {
+    await connectDB();
+    const productos = await Product.find({ mostrar: 'si' }, '_id').lean();
+
+    const productPages = productos.map((p) => ({
+      url: `${BASE_URL}/producto/${encodeURIComponent(p._id)}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    }));
+
+    return [...staticPages, ...productPages];
+  } catch (error) {
+    console.error('Error generating sitemap:', error);
+    return staticPages;
+  }
+}
