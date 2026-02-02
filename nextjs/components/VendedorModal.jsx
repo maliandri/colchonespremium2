@@ -131,9 +131,9 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
       const subtotal = precioConDescuento * item.cantidad;
       doc.text(`${index + 1}. ${item.nombre}`, 20, y);
       if (descuento > 0) {
-        doc.text(`${item.cantidad} x $${item.precio.toFixed(2)} (${descuento}% OFF) = $${subtotal.toFixed(2)}`, 20, y + 7);
+        doc.text(`${item.cantidad} x $${item.precio.toLocaleString('es-AR', { maximumFractionDigits: 0 })} (${descuento}% OFF) = $${subtotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`, 20, y + 7);
       } else {
-        doc.text(`${item.cantidad} x $${item.precio.toFixed(2)} = $${subtotal.toFixed(2)}`, 20, y + 7);
+        doc.text(`${item.cantidad} x $${item.precio.toLocaleString('es-AR', { maximumFractionDigits: 0 })} = $${subtotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`, 20, y + 7);
       }
       y += 15;
       if (y > 270) { doc.addPage(); y = 20; }
@@ -145,14 +145,14 @@ export const VendedorModal = ({ isOpen, onClose, productos, categorias }) => {
     y += 10;
     doc.setFontSize(12);
     if (ahorroTotal > 0) {
-      doc.text(`Subtotal: $${totalSinDescuento.toFixed(2)}`, 20, y);
+      doc.text(`Subtotal: $${totalSinDescuento.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`, 20, y);
       doc.setTextColor(220, 38, 38);
-      doc.text(`Descuento: -$${ahorroTotal.toFixed(2)}`, 20, y + 7);
+      doc.text(`Descuento: -$${ahorroTotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`, 20, y + 7);
       doc.setTextColor(0, 0, 0);
       y += 14;
     }
     doc.setFontSize(14);
-    doc.text(`TOTAL: $${totalConDescuento.toFixed(2)}`, 20, y);
+    doc.text(`TOTAL: $${totalConDescuento.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`, 20, y);
     doc.save(`presupuesto-${Date.now()}.pdf`);
   };
 

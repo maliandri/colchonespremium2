@@ -62,7 +62,7 @@ export const ProductCard = ({ product }) => {
 
           <div className="flex items-center justify-between mt-4">
             <div className="text-2xl font-bold text-primary">
-              ${parseFloat(product.precio).toFixed(2)}
+              ${Math.round(product.precio).toLocaleString('es-AR')}
             </div>
 
             <button
@@ -100,7 +100,7 @@ export const ProductCard = ({ product }) => {
 
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6 text-white">
               <h3 className="text-2xl font-bold mb-2">{product.nombre}</h3>
-              <p className="text-lg">${parseFloat(product.precio).toFixed(2)}</p>
+              <p className="text-lg">${Math.round(product.precio).toLocaleString('es-AR')}</p>
             </div>
           </div>
         </div>
