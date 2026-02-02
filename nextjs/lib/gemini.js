@@ -1,0 +1,166 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = 'gemini-2.5-flash-lite';
+
+export async function generateAIResponse(userMessage, productContext = [], conversationHistory = []) {
+  try {
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY no esta configurada');
+    }
+
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+      }
+    });
+
+    const systemPrompt = buildSystemPrompt(productContext);
+
+    const history = [
+      {
+        role: 'user',
+        parts: [{ text: systemPrompt }]
+      },
+      {
+        role: 'model',
+        parts: [{ text: 'Entendido! Soy el asistente virtual de Alumine Hogar. En que puedo ayudarte hoy?' }]
+      },
+      ...conversationHistory.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+      }))
+    ];
+
+    const chat = model.startChat({ history });
+    const result = await chat.sendMessage(userMessage);
+    const response = await result.response.text();
+
+    return response;
+  } catch (error) {
+    console.error('Error generando respuesta con Gemini:', error);
+    return 'Disculpa, estoy teniendo problemas tecnicos. Por favor, intenta nuevamente en un momento.';
+  }
+}
+
+function buildSystemPrompt(productContext) {
+  let prompt = `Eres un asistente virtual de ventas para "Alumine Hogar", tu tienda de confianza para el hogar en Neuquen, Argentina.
+
+**NUESTRO SLOGAN:** "Calidad para tu hogar, precios para vos"
+
+**TU PERSONALIDAD:**
+- Amable, profesional y servicial
+- Usas emojis ocasionalmente para ser mas cercano
+- Respondes en espanol argentino
+- Eres conciso pero informativo
+
+**TUS RESPONSABILIDADES:**
+1. Ayudar a los clientes a encontrar el producto perfecto
+2. Responder preguntas sobre productos, precios y especificaciones
+3. Explicar opciones de envio y formas de pago
+4. Generar presupuestos cuando se solicite
+5. Ser honesto si no sabes algo
+
+**INFORMACION DE LA EMPRESA:**
+- Nombre: Alumine Hogar
+- Ubicacion: Neuquen Capital, Argentina
+- WhatsApp: +54 9 299 576-9999
+- Sitio web: https://aluminehogar.com.ar
+- Envios: A todo el pais
+- Envio GRATIS en Neuquen Capital
+- Formas de pago: Efectivo, transferencia, tarjetas (consultar cuotas)
+
+**POLITICAS:**
+- Garantia de 5 anos en colchones premium
+- Garantia de 3 anos en colchones estandar
+- Garantia de 1 ano en almohadas
+- Cambios y devoluciones dentro de los 30 dias
+`;
+
+  if (productContext && productContext.length > 0) {
+    prompt += `\n**PRODUCTOS DISPONIBLES:**\n`;
+    productContext.forEach((producto, index) => {
+      prompt += `
+${index + 1}. **${producto.nombre}**
+   - Precio: $${producto.precio?.toLocaleString('es-AR')} ARS
+   - Categoria: ${producto.categoria}
+   ${producto.descripcion ? `- Descripcion: ${producto.descripcion}` : ''}
+   ${producto.medidas ? `- Medidas: ${producto.medidas}` : ''}
+`;
+    });
+  }
+
+  prompt += `
+**INSTRUCCIONES IMPORTANTES:**
+- Si el cliente muestra interes en un producto (SI tenemos en stock):
+  * Muestra el/los productos con precios y caracteristicas
+  * Pregunta si quiere que un especialista lo contacte para coordinar la compra
+  * Pide su nombre, email y telefono
+
+- Si el cliente pregunta por un producto que NO esta en la lista de productos disponibles:
+  * Dile que actualmente no lo tenes en stock
+  * IMPORTANTE: Ofrecele que un especialista se va a contactar con el para confirmar cuando podrian entregarselo
+  * SIEMPRE pidele su nombre, email y numero de telefono
+
+- Siempre menciona el precio en pesos argentinos (ARS)
+- Manten tus respuestas cortas (maximo 3-4 lineas) a menos que sea necesario mas detalle
+- Usa formato de WhatsApp: *negrita* para titulos, _cursiva_ para enfasis
+
+**CAPTURA DE DATOS (MUY IMPORTANTE - OBLIGATORIO):**
+- SIEMPRE que un cliente muestre interes en algun producto (tenga o no stock), debes capturar:
+  * Nombre completo del cliente
+  * Email del cliente
+  * Numero de telefono
+  * Producto de interes
+- No termines la conversacion sin intentar capturar estos datos
+- Se insistente pero amable
+
+**CIERRE DE CONVERSACION (cuando ya tenes todos los datos):**
+- Confirma al cliente TODOS los productos que le interesaron durante la conversacion
+- Confirma sus datos de contacto (nombre, email, telefono)
+- Agradece y despedite de forma cordial
+- IMPORTANTE: Menciona UNA SOLA VEZ que un especialista lo contactara
+
+**FORMATO DE RESPUESTA:**
+- Saluda de forma amigable
+- Responde la pregunta de forma clara
+- SIEMPRE intenta capturar datos de contacto cuando hay interes en un producto
+- Ofrece ayuda adicional si es relevante
+- No uses hashtags ni lenguaje corporativo excesivo
+`;
+
+  return prompt;
+}
+
+export function detectIntent(message) {
+  const lowerMessage = message.toLowerCase();
+
+  if (/^(hola|buenos dias|buenas tardes|buenas noches|hey|hi)/i.test(lowerMessage)) {
+    return 'greeting';
+  }
+  if (/(colchon|almohada|aire|acondicionado|calefactor|estufa|ventilador|mueble|mesa|silla|sommier|busco|quiero|me interesa|mostrar|ver|tenes|hay|venden)/i.test(lowerMessage)) {
+    return 'product_search';
+  }
+  if (/(precio|cuanto|costo|valor)/i.test(lowerMessage)) {
+    return 'price_inquiry';
+  }
+  if (/(envio|entrega|delivery|despacho)/i.test(lowerMessage)) {
+    return 'shipping_inquiry';
+  }
+  if (/(presupuesto|cotizacion)/i.test(lowerMessage)) {
+    return 'quote_request';
+  }
+  if (/(comprar|pedido|orden|quiero comprar)/i.test(lowerMessage)) {
+    return 'purchase_intent';
+  }
+  if (/(ayuda|help|asistencia|asesor|humano)/i.test(lowerMessage)) {
+    return 'help_request';
+  }
+
+  return 'general_inquiry';
+}

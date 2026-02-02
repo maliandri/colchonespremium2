@@ -1,5 +1,4 @@
 {
-  "outputDirectory": "Frontend/dist",
   "headers": [
     {
       "source": "/(.*)",
@@ -9,12 +8,6 @@
           "value": "index, follow"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/((?!api).*)",
-      "destination": "/index.html"
     }
   ]
 }
