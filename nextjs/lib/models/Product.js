@@ -10,6 +10,6 @@ const ProductSchema = new mongoose.Schema({
   cloudinaryPublicId: { type: String },
   mostrar: { type: String },
   especificaciones: { type: String }
-}, { strict: false });
+}, { strict: false, collection: 'productos' });
 
 export default mongoose.models.Product || mongoose.model('Product', ProductSchema);
