@@ -1,33 +1,6 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const decodePassword = (pass) => {
-  if (!pass) return '';
-  try {
-    if (/^[A-Za-z0-9+/]+=*$/.test(pass) && pass.length >= 16) {
-      return Buffer.from(pass, 'base64').toString('utf-8');
-    }
-    if (pass.includes('%')) {
-      return decodeURIComponent(pass);
-    }
-    return pass;
-  } catch (e) {
-    return pass;
-  }
-};
-
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT || '465'),
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: decodePassword(process.env.EMAIL_PASS)
-  },
-  authMethod: 'LOGIN',
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export function emailBienvenida(nombre) {
   return `
@@ -86,15 +59,25 @@ export function emailRecupero(codigo) {
 }
 
 export async function enviarEmail({ destinatario, asunto, cuerpoHtml }) {
+  console.log('=== ENVIO EMAIL via Resend ===');
+  console.log('Destinatario:', destinatario);
+  console.log('Asunto:', asunto);
+  console.log('API Key present:', !!process.env.RESEND_API_KEY);
   try {
-    const info = await transporter.sendMail({
-      from: `"Alumine Hogar" <${process.env.EMAIL_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: 'Alumine Hogar <noreply@send.aluminehogar.com.ar>',
       to: destinatario,
       subject: asunto,
-      html: cuerpoHtml
+      html: cuerpoHtml,
     });
-    console.log('Email enviado:', info.messageId);
-    return info;
+
+    if (error) {
+      console.error('Error Resend:', error);
+      throw new Error(error.message);
+    }
+
+    console.log('Email enviado OK:', data?.id);
+    return data;
   } catch (error) {
     console.error('Error al enviar email:', error);
     throw error;

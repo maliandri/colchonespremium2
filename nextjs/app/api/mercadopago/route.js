@@ -3,20 +3,10 @@ import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import { connectDB } from '@/lib/db';
 import Order from '@/lib/models/Order';
 import { extractTokenFromHeaders, verifyToken } from '@/lib/auth-helpers';
-import nodemailer from 'nodemailer';
+import { enviarEmail } from '@/lib/email';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || ''
-});
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.zoho.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.ZOHO_MAIL_USER,
-    pass: process.env.ZOHO_MAIL_PASS ? Buffer.from(process.env.ZOHO_MAIL_PASS, 'base64').toString('utf-8') : ''
-  }
 });
 
 export async function POST(request) {
@@ -130,11 +120,10 @@ export async function POST(request) {
 
         if (paymentData.status === 'approved') {
           try {
-            await transporter.sendMail({
-              from: `"Alumine Hogar" <${process.env.ZOHO_MAIL_USER}>`,
-              to: paymentData.payer.email,
-              subject: 'Compra confirmada - Alumine Hogar',
-              html: `
+            await enviarEmail({
+              destinatario: paymentData.payer.email,
+              asunto: 'Compra confirmada - Alumine Hogar',
+              cuerpoHtml: `
                 <h2>Gracias por tu compra!</h2>
                 <p>Hola ${paymentData.payer.first_name},</p>
                 <p>Tu pago ha sido confirmado exitosamente.</p>
@@ -147,11 +136,10 @@ export async function POST(request) {
               `
             });
 
-            await transporter.sendMail({
-              from: `"Alumine Hogar" <${process.env.ZOHO_MAIL_USER}>`,
-              to: process.env.ZOHO_MAIL_USER,
-              subject: `Nueva venta - ${paymentData.external_reference}`,
-              html: `
+            await enviarEmail({
+              destinatario: process.env.ADMIN_EMAIL || 'aluminehogar@gmail.com',
+              asunto: `Nueva venta - ${paymentData.external_reference}`,
+              cuerpoHtml: `
                 <h2>Nueva venta confirmada</h2>
                 <ul>
                   <li><strong>Cliente:</strong> ${paymentData.payer.first_name} - ${paymentData.payer.email}</li>

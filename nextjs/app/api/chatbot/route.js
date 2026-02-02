@@ -1,17 +1,7 @@
 import { NextResponse } from 'next/server';
 import { generateAIResponse } from '@/lib/gemini';
 import { searchProducts } from '@/lib/product-search';
-import nodemailer from 'nodemailer';
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.zoho.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.ZOHO_MAIL_USER,
-    pass: process.env.ZOHO_MAIL_PASS ? Buffer.from(process.env.ZOHO_MAIL_PASS, 'base64').toString('utf-8') : ''
-  }
-});
+import { enviarEmail } from '@/lib/email';
 
 export async function POST(request) {
   const action = request.nextUrl.searchParams.get('action');
@@ -48,11 +38,10 @@ export async function POST(request) {
         ? conversationSummary.map(msg => `${msg.role === 'user' ? 'Cliente' : 'Bot'}: ${msg.content}`).join('\n')
         : 'Sin conversacion disponible';
 
-      await transporter.sendMail({
-        from: `"Alumine Hogar" <${process.env.ZOHO_MAIL_USER}>`,
-        to: leadData.email,
-        subject: 'Gracias por tu interes - Alumine Hogar',
-        html: `
+      await enviarEmail({
+        destinatario: leadData.email,
+        asunto: 'Gracias por tu interes - Alumine Hogar',
+        cuerpoHtml: `
           <h2>Gracias por tu interes en Alumine Hogar!</h2>
           <p>Hola ${leadData.nombre || 'Cliente'},</p>
           <p>Hemos recibido tu consulta y un especialista se pondra en contacto contigo pronto.</p>
@@ -60,11 +49,10 @@ export async function POST(request) {
         `
       });
 
-      await transporter.sendMail({
-        from: `"Alumine Hogar" <${process.env.ZOHO_MAIL_USER}>`,
-        to: process.env.ZOHO_MAIL_USER,
-        subject: `Nuevo Lead: ${leadData.nombre || leadData.email}`,
-        html: `
+      await enviarEmail({
+        destinatario: process.env.ADMIN_EMAIL || 'aluminehogar@gmail.com',
+        asunto: `Nuevo Lead: ${leadData.nombre || leadData.email}`,
+        cuerpoHtml: `
           <h2>Nuevo Lead Capturado</h2>
           <ul>
             <li><strong>Nombre:</strong> ${leadData.nombre || 'No proporcionado'}</li>
