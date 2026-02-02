@@ -1,6 +1,7 @@
 import { connectDB } from '@/lib/db';
 import Product from '@/lib/models/Product';
-import { getCloudinaryUrl, IMG_CARD } from '@/lib/cloudinary';
+import { getCloudinaryUrl, IMG_CARD, IMG_THUMB, IMG_DETAIL } from '@/lib/cloudinary';
+import { MAPEO_NOMBRES_CLOUDINARY } from '@/lib/cloudinary-mapeo-nombres';
 import HomePageClient from '@/components/HomePageClient';
 
 export const dynamic = 'force-dynamic';
@@ -14,25 +15,29 @@ export default async function HomePage() {
 
     const productosRaw = await Product.find({ mostrar: 'si' }).lean();
 
-    productos = productosRaw.map((p) => ({
-      _id: p._id.toString(),
-      nombre: p.nombre,
-      descripcion: p.descripcion || '',
-      precio: p.precio,
-      categoria: p.categoria || '',
-      medidas: p.medidas || '',
-      imagen: p.imagen || '',
-      imagenOptimizada: p.imagenOptimizada
-        ? {
-            url: p.imagenOptimizada.url || getCloudinaryUrl(p.nombre),
-            card: p.imagenOptimizada.card || getCloudinaryUrl(p.nombre, IMG_CARD),
-            thumb: p.imagenOptimizada.thumb || '',
-            detail: p.imagenOptimizada.detail || '',
-          }
-        : { url: getCloudinaryUrl(p.nombre), card: getCloudinaryUrl(p.nombre, IMG_CARD) },
-      stock: p.stock || 0,
-      especificaciones: p.especificaciones || '',
-    }));
+    productos = productosRaw.map((p) => {
+      const cloudinaryPath = MAPEO_NOMBRES_CLOUDINARY[p.nombre] || p.cloudinaryPublicId || null;
+
+      return {
+        _id: p._id.toString(),
+        nombre: p.nombre,
+        descripcion: p.descripcion || '',
+        precio: p.precio,
+        categoria: p.categoria || '',
+        medidas: p.medidas || '',
+        imagen: p.imagen || '',
+        imagenOptimizada: cloudinaryPath
+          ? {
+              url: getCloudinaryUrl(cloudinaryPath, IMG_CARD),
+              card: getCloudinaryUrl(cloudinaryPath, IMG_CARD),
+              thumb: getCloudinaryUrl(cloudinaryPath, IMG_THUMB),
+              detail: getCloudinaryUrl(cloudinaryPath, IMG_DETAIL),
+            }
+          : { url: '', card: '', thumb: '', detail: '' },
+        stock: p.stock || 0,
+        especificaciones: p.especificaciones || '',
+      };
+    });
 
     const categoriasRaw = await Product.distinct('categoria', { mostrar: 'si' });
     categorias = categoriasRaw.filter(Boolean);

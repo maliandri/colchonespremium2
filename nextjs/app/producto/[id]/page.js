@@ -1,8 +1,22 @@
 import { notFound } from 'next/navigation';
 import { connectDB } from '@/lib/db';
 import Product from '@/lib/models/Product';
-import { getCloudinaryUrl, IMG_CARD, IMG_DETAIL } from '@/lib/cloudinary';
+import { getCloudinaryUrl, IMG_CARD, IMG_DETAIL, IMG_THUMB } from '@/lib/cloudinary';
+import { MAPEO_NOMBRES_CLOUDINARY } from '@/lib/cloudinary-mapeo-nombres';
 import ProductDetailClient from '@/components/ProductDetailClient';
+
+function getImageData(producto) {
+  const cloudinaryPath = MAPEO_NOMBRES_CLOUDINARY[producto.nombre] || producto.cloudinaryPublicId || null;
+  if (cloudinaryPath) {
+    return {
+      url: getCloudinaryUrl(cloudinaryPath, IMG_CARD),
+      card: getCloudinaryUrl(cloudinaryPath, IMG_CARD),
+      thumb: getCloudinaryUrl(cloudinaryPath, IMG_THUMB),
+      detail: getCloudinaryUrl(cloudinaryPath, IMG_DETAIL),
+    };
+  }
+  return { url: '', card: '', thumb: '', detail: '' };
+}
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -15,9 +29,7 @@ export async function generateMetadata({ params }) {
       return { title: 'Producto no encontrado' };
     }
 
-    const imageUrl = producto.imagenOptimizada?.detail ||
-      getCloudinaryUrl(producto.nombre, IMG_DETAIL) ||
-      producto.imagen;
+    const imageData = getImageData(producto);
 
     return {
       title: producto.nombre,
@@ -26,7 +38,7 @@ export async function generateMetadata({ params }) {
       openGraph: {
         title: `${producto.nombre} | Alumine Hogar`,
         description: producto.descripcion || 'Producto de calidad premium',
-        images: imageUrl ? [{ url: imageUrl }] : [],
+        images: imageData.detail ? [{ url: imageData.detail }] : [],
         type: 'website',
       },
     };
@@ -56,18 +68,7 @@ export default async function ProductoPage({ params }) {
       categoria: productoRaw.categoria || '',
       medidas: productoRaw.medidas || '',
       imagen: productoRaw.imagen || '',
-      imagenOptimizada: productoRaw.imagenOptimizada
-        ? {
-            url: productoRaw.imagenOptimizada.url || getCloudinaryUrl(productoRaw.nombre),
-            card: productoRaw.imagenOptimizada.card || getCloudinaryUrl(productoRaw.nombre, IMG_CARD),
-            thumb: productoRaw.imagenOptimizada.thumb || '',
-            detail: productoRaw.imagenOptimizada.detail || getCloudinaryUrl(productoRaw.nombre, IMG_DETAIL),
-          }
-        : {
-            url: getCloudinaryUrl(productoRaw.nombre),
-            card: getCloudinaryUrl(productoRaw.nombre, IMG_CARD),
-            detail: getCloudinaryUrl(productoRaw.nombre, IMG_DETAIL),
-          },
+      imagenOptimizada: getImageData(productoRaw),
       stock: productoRaw.stock || 0,
       especificaciones: productoRaw.especificaciones || '',
     };
