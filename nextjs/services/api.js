@@ -180,6 +180,19 @@ export const subirImagen = async (imageBase64) => {
   }
 };
 
+// =================== ADMIN - CONVERSACIONES ===================
+
+export const getConversaciones = async (params = {}) => {
+  const query = new URLSearchParams({ action: 'conversations', ...params }).toString();
+  const response = await api.get(`/admin?${query}`);
+  return response.data;
+};
+
+export const getConversacion = async (id) => {
+  const response = await api.get(`/admin?action=conversation&id=${id}`);
+  return response.data;
+};
+
 // =================== MERCADO PAGO ===================
 
 export const crearPreferenciaPago = async (items, payer, shippingAddress) => {

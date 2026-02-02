@@ -1,11 +1,13 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { X, Send, MessageSquare, Minimize2, Loader2, User, MessageCircle } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = '/api';
 
 export default function ChatBot() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -249,6 +251,9 @@ export default function ChatBot() {
       needsHumanAssistance: true
     }]);
   };
+
+  // No mostrar el widget flotante en la pagina dedicada del bot
+  if (pathname === '/bot') return null;
 
   return (
     <>

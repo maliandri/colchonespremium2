@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Product from '@/lib/models/Product';
+import Conversation from '@/lib/models/Conversation';
 import { extractTokenFromHeaders, verifyToken, requireAdmin } from '@/lib/auth-helpers';
 import { v2 as cloudinary } from 'cloudinary';
 
@@ -23,6 +24,57 @@ export async function GET(request) {
     const decoded = authenticateAdmin(request);
     await connectDB();
 
+    const action = request.nextUrl.searchParams.get('action');
+
+    // LIST CONVERSATIONS
+    if (action === 'conversations') {
+      const page = parseInt(request.nextUrl.searchParams.get('page') || '1');
+      const limit = 20;
+      const dateFrom = request.nextUrl.searchParams.get('dateFrom');
+      const dateTo = request.nextUrl.searchParams.get('dateTo');
+      const status = request.nextUrl.searchParams.get('status');
+
+      const query = {};
+      if (dateFrom || dateTo) {
+        query.createdAt = {};
+        if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
+        if (dateTo) query.createdAt.$lte = new Date(dateTo + 'T23:59:59.999Z');
+      }
+      if (status) query.status = status;
+
+      const [conversations, total] = await Promise.all([
+        Conversation.find(query)
+          .select('sessionId userInfo status leadCaptured messageCount createdAt lastMessageAt')
+          .sort({ lastMessageAt: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .lean(),
+        Conversation.countDocuments(query)
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        conversations,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
+      });
+    }
+
+    // GET SINGLE CONVERSATION
+    if (action === 'conversation') {
+      const id = request.nextUrl.searchParams.get('id');
+      if (!id) {
+        return NextResponse.json({ error: 'ID de conversacion requerido' }, { status: 400 });
+      }
+      const conversation = await Conversation.findById(id).lean();
+      if (!conversation) {
+        return NextResponse.json({ error: 'Conversacion no encontrada' }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, conversation });
+    }
+
+    // DEFAULT: LIST PRODUCTS
     const productos = await Product.find({}).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json({ success: true, productos, total: productos.length });

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { generateAIResponse } from '@/lib/gemini';
 import { searchProducts } from '@/lib/product-search';
 import { enviarEmail } from '@/lib/email';
+import { connectDB } from '@/lib/db';
+import Conversation from '@/lib/models/Conversation';
 
 export async function POST(request) {
   const action = request.nextUrl.searchParams.get('action');
@@ -9,7 +11,7 @@ export async function POST(request) {
   try {
     // CONVERSATION
     if (action === 'conversation' || !action) {
-      const { message, history, sessionId } = await request.json();
+      const { message, conversationHistory, sessionId } = await request.json();
 
       if (!message || typeof message !== 'string') {
         return NextResponse.json({ error: 'El campo "message" es requerido y debe ser un string' }, { status: 400 });
@@ -18,7 +20,29 @@ export async function POST(request) {
       // Search for relevant products to provide context
       const productos = await searchProducts(message);
 
-      const response = await generateAIResponse(message, productos, history || []);
+      const response = await generateAIResponse(message, productos, conversationHistory || []);
+
+      // Persistir conversacion en MongoDB (no bloquea respuesta)
+      if (sessionId) {
+        connectDB().then(() => {
+          Conversation.findOneAndUpdate(
+            { sessionId },
+            {
+              $push: {
+                messages: {
+                  $each: [
+                    { role: 'user', content: message, timestamp: new Date() },
+                    { role: 'assistant', content: response, timestamp: new Date(), products: productos }
+                  ]
+                }
+              },
+              $inc: { messageCount: 2 },
+              $set: { lastMessageAt: new Date() }
+            },
+            { upsert: true }
+          ).catch(err => console.error('Error guardando conversacion:', err));
+        }).catch(err => console.error('Error conectando DB para conversacion:', err));
+      }
 
       return NextResponse.json({
         reply: response,
@@ -65,6 +89,25 @@ export async function POST(request) {
           <pre style="background:#f4f4f4;padding:10px;border-radius:5px;white-space:pre-wrap;">${conversacionTexto}</pre>
         `
       });
+
+      // Actualizar conversacion con datos del lead
+      if (sessionId) {
+        connectDB().then(() => {
+          Conversation.findOneAndUpdate(
+            { sessionId },
+            {
+              $set: {
+                leadCaptured: true,
+                leadData: leadData,
+                'userInfo.nombre': leadData.nombre || '',
+                'userInfo.email': leadData.email || '',
+                'userInfo.telefono': leadData.telefono || '',
+                status: 'lead_captured'
+              }
+            }
+          ).catch(err => console.error('Error actualizando lead en conversacion:', err));
+        }).catch(err => console.error('Error conectando DB para lead:', err));
+      }
 
       return NextResponse.json({ success: true, message: 'Lead enviado exitosamente' });
     }
