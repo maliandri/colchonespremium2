@@ -7,6 +7,8 @@ const UserSchema = new mongoose.Schema({
   nombre: { type: String },
   telefono: { type: String },
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
+  resetCode: { type: String },
+  resetCodeExpires: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
 

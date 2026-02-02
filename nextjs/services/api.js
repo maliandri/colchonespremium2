@@ -86,6 +86,16 @@ export const register = async (email, password, nombre, telefono) => {
   }
 };
 
+export const forgotPassword = async (email) => {
+  const response = await api.post('/auth', { action: 'forgot-password', email });
+  return response.data;
+};
+
+export const resetPassword = async (email, code, newPassword) => {
+  const response = await api.post('/auth', { action: 'reset-password', email, code, newPassword });
+  return response.data;
+};
+
 // =================== VENTAS / PRESUPUESTOS ===================
 
 export const guardarVenta = async (ventaData) => {
