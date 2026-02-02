@@ -3,6 +3,8 @@ import Product from '@/lib/models/Product';
 import { getCloudinaryUrl, IMG_CARD } from '@/lib/cloudinary';
 import HomePageClient from '@/components/HomePageClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   let productos = [];
   let categorias = [];
