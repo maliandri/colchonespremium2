@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { ShoppingCart, User, Menu, X, UserCog } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, UserCog, MessageSquare } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUI } from '@/components/ClientProviders';
@@ -48,6 +48,13 @@ export const Header = () => {
               className="text-white hover:text-purple-200 transition-colors font-medium"
             >
               Contacto
+            </a>
+            <a
+              href="/bot"
+              className="flex items-center gap-1.5 text-white hover:text-purple-200 transition-colors font-medium"
+            >
+              <MessageSquare className="w-4 h-4" />
+              Alumine Bot
             </a>
           </nav>
 
@@ -122,6 +129,14 @@ export const Header = () => {
               onClick={() => setIsMenuOpen(false)}
             >
               Contacto
+            </a>
+            <a
+              href="/bot"
+              className="flex items-center gap-1.5 text-white hover:text-purple-200 transition-colors font-medium"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <MessageSquare className="w-4 h-4" />
+              Alumine Bot
             </a>
             <button
               onClick={() => {

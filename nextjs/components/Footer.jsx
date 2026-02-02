@@ -1,5 +1,5 @@
 'use client';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, MessageSquare } from 'lucide-react';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -41,6 +41,12 @@ export const Footer = () => {
               <li>
                 <a href="#contacto" className="hover:text-primary transition-colors">
                   Contacto
+                </a>
+              </li>
+              <li>
+                <a href="/bot" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+                  <MessageSquare className="w-4 h-4" />
+                  Alumine Bot
                 </a>
               </li>
             </ul>
