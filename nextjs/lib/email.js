@@ -65,7 +65,7 @@ export async function enviarEmail({ destinatario, asunto, cuerpoHtml }) {
   console.log('API Key present:', !!process.env.RESEND_API_KEY);
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Alumine Hogar <noreply@send.aluminehogar.com.ar>',
+      from: 'Alumine Hogar <noreply@aluminehogar.com.ar>',
       to: destinatario,
       subject: asunto,
       html: cuerpoHtml,
