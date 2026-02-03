@@ -578,9 +578,19 @@ function ProductForm({ producto, categorias, onClose, onSuccess }) {
     }
   };
 
-  const imagenPreview = formData.imagen
-    ? (typeof formData.imagenOptimizada === 'object' ? formData.imagenOptimizada?.card : (formData.imagenOptimizada || formData.imagen))
-    : null;
+  // Determinar la imagen de preview - puede venir de imagenOptimizada (Cloudinary) o imagen directa
+  const imagenPreview = (() => {
+    if (typeof formData.imagenOptimizada === 'object' && formData.imagenOptimizada?.card) {
+      return formData.imagenOptimizada.card;
+    }
+    if (formData.imagenOptimizada && typeof formData.imagenOptimizada === 'string') {
+      return formData.imagenOptimizada;
+    }
+    if (formData.imagen) {
+      return formData.imagen;
+    }
+    return null;
+  })();
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
