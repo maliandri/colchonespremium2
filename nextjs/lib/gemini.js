@@ -137,6 +137,97 @@ ${index + 1}. **${producto.nombre}**
   return prompt;
 }
 
+/**
+ * Genera especificaciones técnicas para un producto usando Gemini AI
+ */
+export async function generarEspecificaciones(nombreProducto, categoria = '') {
+  try {
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY no esta configurada');
+    }
+
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+      }
+    });
+
+    const prompt = `Genera características técnicas profesionales en HTML para el producto "${nombreProducto}"${categoria ? ` de la categoría "${categoria}"` : ''}.
+
+Formato requerido:
+<ul>
+  <li><strong>Título:</strong> descripción detallada</li>
+  ...
+</ul>
+
+Reglas:
+- 4-6 características clave
+- HTML limpio sin bloques de código
+- Solo etiquetas <ul>, <li>, <strong>
+- Enfócate en beneficios y especificaciones técnicas
+- Lenguaje marketing profesional en español argentino
+- NO uses comillas invertidas ni markdown, solo HTML puro`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response.text();
+
+    // Limpiar respuesta
+    const cleaned = response
+      .replace(/```html/g, '')
+      .replace(/```/g, '')
+      .trim();
+
+    return cleaned;
+  } catch (error) {
+    console.error('Error generando especificaciones con Gemini:', error);
+    throw error;
+  }
+}
+
+/**
+ * Genera una descripción comercial para un producto usando Gemini AI
+ */
+export async function generarDescripcion(nombreProducto, categoria = '', especificaciones = '') {
+  try {
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY no esta configurada');
+    }
+
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      generationConfig: {
+        temperature: 0.8,
+        maxOutputTokens: 512,
+      }
+    });
+
+    const prompt = `Genera una descripción comercial atractiva para el producto "${nombreProducto}"${categoria ? ` de la categoría "${categoria}"` : ''}.
+
+${especificaciones ? `Especificaciones existentes:\n${especificaciones}\n` : ''}
+
+Reglas:
+- 2-3 oraciones máximo
+- Lenguaje marketing profesional pero cercano
+- En español argentino
+- Destaca beneficios principales
+- NO uses comillas, solo texto plano
+- NO uses emojis
+- Enfócate en calidad, confort y valor`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response.text();
+
+    return response.trim();
+  } catch (error) {
+    console.error('Error generando descripcion con Gemini:', error);
+    throw error;
+  }
+}
+
 export function detectIntent(message) {
   const lowerMessage = message.toLowerCase();
 

@@ -6,6 +6,7 @@ import { extractTokenFromHeaders, verifyToken, requireAdmin } from '@/lib/auth-h
 import { v2 as cloudinary } from 'cloudinary';
 import { getCloudinaryUrl, IMG_THUMB, IMG_CARD } from '@/lib/cloudinary';
 import { MAPEO_NOMBRES_CLOUDINARY } from '@/lib/cloudinary-mapeo-nombres';
+import { generarEspecificaciones, generarDescripcion } from '@/lib/gemini';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -108,6 +109,45 @@ export async function POST(request) {
   try {
     const decoded = authenticateAdmin(request);
     const action = request.nextUrl.searchParams.get('action');
+
+    // GENERATE SPECS WITH AI
+    if (action === 'generate-specs') {
+      const { productId, nombre, categoria } = await request.json();
+
+      if (!nombre) {
+        return NextResponse.json({ error: 'Nombre del producto requerido' }, { status: 400 });
+      }
+
+      try {
+        // Generar especificaciones y descripcion en paralelo
+        const [especificaciones, descripcion] = await Promise.all([
+          generarEspecificaciones(nombre, categoria),
+          generarDescripcion(nombre, categoria)
+        ]);
+
+        // Si hay productId, actualizar en DB
+        if (productId) {
+          await connectDB();
+          await Product.findByIdAndUpdate(productId, {
+            especificaciones,
+            descripcion
+          });
+        }
+
+        return NextResponse.json({
+          success: true,
+          especificaciones,
+          descripcion,
+          message: productId ? 'Especificaciones generadas y guardadas' : 'Especificaciones generadas'
+        });
+      } catch (error) {
+        console.error('Error generando especificaciones:', error);
+        return NextResponse.json({
+          error: 'Error al generar especificaciones con IA',
+          details: error.message
+        }, { status: 500 });
+      }
+    }
 
     // UPLOAD IMAGE
     if (action === 'upload') {

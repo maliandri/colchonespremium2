@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
-import { Search, ImagePlus, Trash2, Upload, MessageSquare, Package, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ImagePlus, Trash2, Upload, MessageSquare, Package, X, ChevronLeft, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
 import {
   getProductosAdmin,
   crearProducto,
@@ -11,7 +11,8 @@ import {
   eliminarProducto,
   subirImagen,
   getConversaciones,
-  getConversacion
+  getConversacion,
+  generarEspecificacionesIA
 } from '@/services/api';
 
 export default function AdminPanel() {
@@ -537,6 +538,7 @@ function ProductForm({ producto, categorias, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     nombre: producto?.nombre || '',
     descripcion: producto?.descripcion || '',
+    especificaciones: producto?.especificaciones || '',
     precio: producto?.precio || '',
     categoria: producto?.categoria || '',
     medidas: producto?.medidas || '',
@@ -548,6 +550,33 @@ function ProductForm({ producto, categorias, onClose, onSuccess }) {
 
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [generatingIA, setGeneratingIA] = useState(false);
+
+  const handleGenerarIA = async () => {
+    if (!formData.nombre) {
+      alert('Ingresa el nombre del producto primero');
+      return;
+    }
+    setGeneratingIA(true);
+    try {
+      const result = await generarEspecificacionesIA(producto?._id, formData.nombre, formData.categoria);
+      setFormData(prev => ({
+        ...prev,
+        descripcion: result.descripcion || prev.descripcion,
+        especificaciones: result.especificaciones || prev.especificaciones
+      }));
+      if (producto?._id) {
+        alert('Especificaciones generadas y guardadas en la base de datos');
+      } else {
+        alert('Especificaciones generadas. Se guardarán al crear el producto.');
+      }
+    } catch (error) {
+      console.error('Error generando especificaciones:', error);
+      alert('Error al generar especificaciones con IA');
+    } finally {
+      setGeneratingIA(false);
+    }
+  };
 
   const imagenPreview = formData.imagen
     ? (typeof formData.imagenOptimizada === 'object' ? formData.imagenOptimizada?.card : (formData.imagenOptimizada || formData.imagen))
@@ -656,9 +685,45 @@ function ProductForm({ producto, categorias, onClose, onSuccess }) {
                 className="w-full border rounded px-3 py-2" required />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Descripcion</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium">Descripcion</label>
+                <button
+                  type="button"
+                  onClick={handleGenerarIA}
+                  disabled={generatingIA || !formData.nombre}
+                  className="flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 disabled:bg-gray-100 disabled:text-gray-400 transition-colors"
+                >
+                  {generatingIA ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3 h-3" />
+                      Generar con IA
+                    </>
+                  )}
+                </button>
+              </div>
               <textarea value={formData.descripcion} onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                className="w-full border rounded px-3 py-2" rows="3" />
+                className="w-full border rounded px-3 py-2" rows="3" placeholder="Descripción comercial del producto" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Especificaciones (HTML)</label>
+              <textarea
+                value={formData.especificaciones}
+                onChange={(e) => setFormData({ ...formData, especificaciones: e.target.value })}
+                className="w-full border rounded px-3 py-2 font-mono text-xs"
+                rows="5"
+                placeholder="<ul><li><strong>Característica:</strong> valor</li></ul>"
+              />
+              {formData.especificaciones && (
+                <div className="mt-2 p-3 bg-gray-50 rounded border">
+                  <p className="text-xs text-gray-500 mb-2">Vista previa:</p>
+                  <div className="text-sm prose prose-sm" dangerouslySetInnerHTML={{ __html: formData.especificaciones }} />
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
