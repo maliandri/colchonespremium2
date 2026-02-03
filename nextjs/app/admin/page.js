@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
-import { Search, ImagePlus, Trash2, Upload, MessageSquare, Package, X, ChevronLeft, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
+import { Search, ImagePlus, Trash2, Upload, MessageSquare, Package, X, ChevronLeft, ChevronRight, Sparkles, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
 import {
   getProductosAdmin,
   crearProducto,
@@ -28,7 +28,8 @@ export default function AdminPanel() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategoria, setFilterCategoria] = useState('');
-  const [sortBy, setSortBy] = useState('');
+  const [sortColumn, setSortColumn] = useState('');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     const unsub = useAuthStore.persist.onFinishHydration(() => {
@@ -72,15 +73,49 @@ export default function AdminPanel() {
       .filter(p => !searchTerm || p.nombre?.toLowerCase().includes(searchTerm.toLowerCase()))
       .filter(p => !filterCategoria || p.categoria === filterCategoria)
       .sort((a, b) => {
-        switch (sortBy) {
-          case 'nombre-az': return (a.nombre || '').localeCompare(b.nombre || '');
-          case 'nombre-za': return (b.nombre || '').localeCompare(a.nombre || '');
-          case 'precio-asc': return (a.precio || 0) - (b.precio || 0);
-          case 'precio-desc': return (b.precio || 0) - (a.precio || 0);
-          default: return 0;
+        if (!sortColumn) return 0;
+        const dir = sortDirection === 'asc' ? 1 : -1;
+
+        switch (sortColumn) {
+          case 'imagen':
+            const aHasImg = !!(a.imagen || a.imagenOptimizada);
+            const bHasImg = !!(b.imagen || b.imagenOptimizada);
+            return (aHasImg === bHasImg ? 0 : aHasImg ? -1 : 1) * dir;
+          case 'nombre':
+            return (a.nombre || '').localeCompare(b.nombre || '') * dir;
+          case 'precio':
+            return ((a.precio || 0) - (b.precio || 0)) * dir;
+          case 'categoria':
+            return (a.categoria || '').localeCompare(b.categoria || '') * dir;
+          case 'stock':
+            return ((a.stock || 0) - (b.stock || 0)) * dir;
+          case 'mostrar':
+            return (a.mostrar || '').localeCompare(b.mostrar || '') * dir;
+          case 'descripcion':
+            const aHasDesc = !!(a.descripcion);
+            const bHasDesc = !!(b.descripcion);
+            return (aHasDesc === bHasDesc ? 0 : aHasDesc ? -1 : 1) * dir;
+          default:
+            return 0;
         }
       });
-  }, [productos, searchTerm, filterCategoria, sortBy]);
+  }, [productos, searchTerm, filterCategoria, sortColumn, sortDirection]);
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const SortIcon = ({ column }) => {
+    if (sortColumn !== column) return <ChevronUp className="w-3 h-3 opacity-30" />;
+    return sortDirection === 'asc'
+      ? <ChevronUp className="w-3 h-3" />
+      : <ChevronDown className="w-3 h-3" />;
+  };
 
   const handleDelete = async (id, nombre) => {
     if (!confirm(`Eliminar el producto "${nombre}"?`)) return;
@@ -178,69 +213,92 @@ export default function AdminPanel() {
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="border rounded px-3 py-2 text-sm min-w-[180px]"
-              >
-                <option value="">Ordenar por...</option>
-                <option value="nombre-az">Nombre A-Z</option>
-                <option value="nombre-za">Nombre Z-A</option>
-                <option value="precio-asc">Precio menor a mayor</option>
-                <option value="precio-desc">Precio mayor a menor</option>
-              </select>
+              {sortColumn && (
+                <button
+                  onClick={() => { setSortColumn(''); setSortDirection('asc'); }}
+                  className="text-xs text-gray-500 hover:text-gray-700 px-3 py-2 border rounded"
+                >
+                  Limpiar orden
+                </button>
+              )}
             </div>
             <p className="text-xs text-gray-500 mt-2">
               Mostrando {productosFiltrados.length} de {productos.length} productos
+              {sortColumn && ` • Ordenado por ${sortColumn} (${sortDirection === 'asc' ? '↑' : '↓'})`}
             </p>
           </div>
 
-          <div className="bg-white shadow rounded-lg overflow-hidden">
+          <div className="bg-white shadow rounded-lg overflow-hidden overflow-x-auto">
             <table className="min-w-full">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Imagen</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nombre</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Precio</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Categoria</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Stock</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Mostrar</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase">Acciones</th>
+                  <th onClick={() => handleSort('imagen')} className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase cursor-pointer hover:bg-gray-200 select-none">
+                    <span className="flex items-center gap-1">Img <SortIcon column="imagen" /></span>
+                  </th>
+                  <th onClick={() => handleSort('nombre')} className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase cursor-pointer hover:bg-gray-200 select-none">
+                    <span className="flex items-center gap-1">Nombre <SortIcon column="nombre" /></span>
+                  </th>
+                  <th onClick={() => handleSort('precio')} className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase cursor-pointer hover:bg-gray-200 select-none">
+                    <span className="flex items-center gap-1">Precio <SortIcon column="precio" /></span>
+                  </th>
+                  <th onClick={() => handleSort('categoria')} className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase cursor-pointer hover:bg-gray-200 select-none">
+                    <span className="flex items-center gap-1">Categoria <SortIcon column="categoria" /></span>
+                  </th>
+                  <th onClick={() => handleSort('stock')} className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase cursor-pointer hover:bg-gray-200 select-none">
+                    <span className="flex items-center gap-1">Stock <SortIcon column="stock" /></span>
+                  </th>
+                  <th onClick={() => handleSort('mostrar')} className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase cursor-pointer hover:bg-gray-200 select-none">
+                    <span className="flex items-center gap-1">Mostrar <SortIcon column="mostrar" /></span>
+                  </th>
+                  <th onClick={() => handleSort('descripcion')} className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase cursor-pointer hover:bg-gray-200 select-none">
+                    <span className="flex items-center gap-1">Desc. <SortIcon column="descripcion" /></span>
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {productosFiltrados.map((producto) => (
+                {productosFiltrados.map((producto) => {
+                  const tieneImagen = !!(producto.imagen || (typeof producto.imagenOptimizada === 'object' ? producto.imagenOptimizada?.thumb : producto.imagenOptimizada));
+                  return (
                   <tr key={producto._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      {producto.imagen ? (
+                    <td className="px-4 py-3">
+                      {tieneImagen ? (
                         <img
                           src={typeof producto.imagenOptimizada === 'object' ? producto.imagenOptimizada?.thumb : (producto.imagenOptimizada || producto.imagen)}
                           alt={producto.nombre}
-                          className="w-16 h-16 object-cover rounded"
+                          className="w-12 h-12 object-cover rounded"
                         />
                       ) : (
-                        <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                          <ImagePlus className="w-6 h-6 text-gray-300" />
+                        <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                          <ImagePlus className="w-5 h-5 text-gray-300" />
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 font-medium">{producto.nombre}</td>
-                    <td className="px-6 py-4">${producto.precio?.toLocaleString('es-AR')}</td>
-                    <td className="px-6 py-4">{producto.categoria}</td>
-                    <td className="px-6 py-4">{producto.stock || 0}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 font-medium text-sm max-w-[200px] truncate" title={producto.nombre}>{producto.nombre}</td>
+                    <td className="px-4 py-3 text-sm">${producto.precio?.toLocaleString('es-AR')}</td>
+                    <td className="px-4 py-3 text-sm">{producto.categoria}</td>
+                    <td className="px-4 py-3 text-sm">{producto.stock || 0}</td>
+                    <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded text-xs ${
                         producto.mostrar === 'si' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
                         {producto.mostrar === 'si' ? 'Si' : 'No'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button onClick={() => handleEdit(producto)} className="text-blue-600 hover:text-blue-800">Editar</button>
-                      <button onClick={() => handleDelete(producto._id, producto.nombre)} className="text-red-600 hover:text-red-800">Eliminar</button>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        producto.descripcion ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {producto.descripcion ? 'Si' : 'No'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right space-x-2">
+                      <button onClick={() => handleEdit(producto)} className="text-blue-600 hover:text-blue-800 text-sm">Editar</button>
+                      <button onClick={() => handleDelete(producto._id, producto.nombre)} className="text-red-600 hover:text-red-800 text-sm">Eliminar</button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
 
