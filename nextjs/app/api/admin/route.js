@@ -4,6 +4,8 @@ import Product from '@/lib/models/Product';
 import Conversation from '@/lib/models/Conversation';
 import { extractTokenFromHeaders, verifyToken, requireAdmin } from '@/lib/auth-helpers';
 import { v2 as cloudinary } from 'cloudinary';
+import { getCloudinaryUrl, IMG_THUMB, IMG_CARD } from '@/lib/cloudinary';
+import { MAPEO_NOMBRES_CLOUDINARY } from '@/lib/cloudinary-mapeo-nombres';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -75,7 +77,23 @@ export async function GET(request) {
     }
 
     // DEFAULT: LIST PRODUCTS
-    const productos = await Product.find({}).sort({ createdAt: -1 }).lean();
+    const productosRaw = await Product.find({}).sort({ createdAt: -1 }).lean();
+
+    // Transformar productos con imagenes de Cloudinary (igual que la pagina publica)
+    const productos = productosRaw.map((p) => {
+      const cloudinaryPath = MAPEO_NOMBRES_CLOUDINARY[p.nombre] || p.cloudinaryPublicId || null;
+
+      return {
+        ...p,
+        _id: p._id.toString(),
+        imagenOptimizada: cloudinaryPath
+          ? {
+              thumb: getCloudinaryUrl(cloudinaryPath, IMG_THUMB),
+              card: getCloudinaryUrl(cloudinaryPath, IMG_CARD),
+            }
+          : (p.imagenOptimizada || p.imagen || ''),
+      };
+    });
 
     return NextResponse.json({ success: true, productos, total: productos.length });
   } catch (error) {
