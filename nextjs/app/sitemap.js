@@ -11,15 +11,21 @@ export default async function sitemap() {
       changeFrequency: 'daily',
       priority: 1,
     },
+    {
+      url: `${BASE_URL}/bot`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
   ];
 
   try {
     await connectDB();
-    const productos = await Product.find({ mostrar: 'si' }, '_id').lean();
+    const productos = await Product.find({ mostrar: 'si' }, '_id updatedAt').lean();
 
     const productPages = productos.map((p) => ({
-      url: `${BASE_URL}/producto/${encodeURIComponent(p._id)}`,
-      lastModified: new Date(),
+      url: `${BASE_URL}/producto/${p._id}`,
+      lastModified: p.updatedAt || new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     }));
