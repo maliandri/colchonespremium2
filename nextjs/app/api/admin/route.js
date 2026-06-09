@@ -8,7 +8,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import { getCloudinaryUrl, IMG_THUMB, IMG_CARD } from '@/lib/cloudinary';
 import { MAPEO_NOMBRES_CLOUDINARY } from '@/lib/cloudinary-mapeo-nombres';
 import { generarEspecificaciones, generarDescripcion } from '@/lib/gemini';
-import xlsx from 'xlsx';
+import * as xlsx from 'xlsx';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
