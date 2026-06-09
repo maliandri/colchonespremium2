@@ -8,7 +8,7 @@ import { useUI } from '@/components/ClientProviders';
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const getTotalItems = useCartStore((state) => state.getTotalItems);
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user, logout, isVendedor } = useAuthStore();
   const { setShowVendedorModal, setShowAuthModal, setShowCartModal } = useUI();
 
   const cartCount = getTotalItems();
@@ -60,15 +60,17 @@ export const Header = () => {
 
           {/* Icons */}
           <div className="flex items-center space-x-4">
-            {/* Acceso Vendedores */}
-            <button
-              className="hidden md:flex items-center space-x-2 text-white hover:text-purple-200 transition-colors"
-              onClick={() => setShowVendedorModal(true)}
-              title="Acceso Vendedores"
-            >
-              <UserCog className="w-6 h-6" />
-              <span className="text-sm font-medium">Vendedores</span>
-            </button>
+            {/* Acceso Vendedores — solo visible para vendedores y admins */}
+            {isVendedor() && (
+              <button
+                className="hidden md:flex items-center space-x-2 text-white hover:text-purple-200 transition-colors"
+                onClick={() => setShowVendedorModal(true)}
+                title="Acceso Vendedores"
+              >
+                <UserCog className="w-6 h-6" />
+                <span className="text-sm font-medium">Vendedores</span>
+              </button>
+            )}
 
             {/* User Account */}
             <button
@@ -138,15 +140,17 @@ export const Header = () => {
               <MessageSquare className="w-4 h-4" />
               Alumine Bot
             </a>
-            <button
-              onClick={() => {
-                setShowVendedorModal(true);
-                setIsMenuOpen(false);
-              }}
-              className="block w-full text-left text-white hover:text-purple-200 transition-colors font-medium"
-            >
-              Acceso Vendedores
-            </button>
+            {isVendedor() && (
+              <button
+                onClick={() => {
+                  setShowVendedorModal(true);
+                  setIsMenuOpen(false);
+                }}
+                className="block w-full text-left text-white hover:text-purple-200 transition-colors font-medium"
+              >
+                Acceso Vendedores
+              </button>
+            )}
             {isAuthenticated && (
               <button
                 onClick={() => {

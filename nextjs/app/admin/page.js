@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
-import { Search, ImagePlus, Trash2, Upload, MessageSquare, Package, X, ChevronLeft, ChevronRight, Sparkles, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, ImagePlus, Trash2, Upload, MessageSquare, Package, X, ChevronLeft, ChevronRight, Sparkles, Loader2, ChevronUp, ChevronDown, Users, ShieldCheck, Ban, UserCheck } from 'lucide-react';
 import {
   getProductosAdmin,
   crearProducto,
@@ -12,7 +12,10 @@ import {
   subirImagen,
   getConversaciones,
   getConversacion,
-  generarEspecificacionesIA
+  generarEspecificacionesIA,
+  getUsuarios,
+  actualizarUsuario,
+  eliminarUsuario,
 } from '@/services/api';
 
 export default function AdminPanel() {
@@ -170,6 +173,17 @@ export default function AdminPanel() {
           <MessageSquare className="w-4 h-4" />
           Conversaciones
         </button>
+        <button
+          onClick={() => setActiveTab('usuarios')}
+          className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${
+            activeTab === 'usuarios'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          Usuarios
+        </button>
       </div>
 
       {/* Tab: Productos */}
@@ -313,7 +327,192 @@ export default function AdminPanel() {
 
       {/* Tab: Conversaciones */}
       {activeTab === 'conversaciones' && <ConversationsPanel />}
+
+      {/* Tab: Usuarios */}
+      {activeTab === 'usuarios' && <UsersPanel currentUserId={user?.id} />}
     </div>
+  );
+}
+
+// =================== USERS PANEL ===================
+
+function UsersPanel({ currentUserId }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [updating, setUpdating] = useState(null);
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await getUsuarios();
+      setUsers(data.users || []);
+    } catch {
+      alert('Error al cargar usuarios');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRoleChange = async (userId, role) => {
+    const labels = { customer: 'cliente', vendedor: 'vendedor', admin: 'administrador' };
+    if (!confirm(`¿Cambiar rol a ${labels[role]}?`)) return;
+    setUpdating(userId);
+    try {
+      await actualizarUsuario(userId, { role });
+      setUsers(prev => prev.map(u => u._id === userId ? { ...u, role } : u));
+    } catch (e) {
+      alert(e.response?.data?.error || 'Error al actualizar usuario');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleBan = async (userId, banned) => {
+    if (!confirm(banned ? '¿Banear este usuario?' : '¿Desbanear este usuario?')) return;
+    setUpdating(userId);
+    try {
+      await actualizarUsuario(userId, { banned });
+      setUsers(prev => prev.map(u => u._id === userId ? { ...u, banned } : u));
+    } catch (e) {
+      alert(e.response?.data?.error || 'Error al actualizar usuario');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleDelete = async (userId, email) => {
+    if (!confirm(`¿Eliminar permanentemente a "${email}"? Esta acción no se puede deshacer.`)) return;
+    setUpdating(userId);
+    try {
+      await eliminarUsuario(userId);
+      setUsers(prev => prev.filter(u => u._id !== userId));
+    } catch (e) {
+      alert(e.response?.data?.error || 'Error al eliminar usuario');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const roleBadge = (role) => {
+    const styles = {
+      admin: 'bg-purple-100 text-purple-800',
+      vendedor: 'bg-blue-100 text-blue-800',
+      customer: 'bg-gray-100 text-gray-700',
+    };
+    const labels = { admin: 'Admin', vendedor: 'Vendedor', customer: 'Cliente' };
+    return (
+      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[role] || 'bg-gray-100 text-gray-600'}`}>
+        {labels[role] || role}
+      </span>
+    );
+  };
+
+  const filtered = users.filter(u =>
+    !search ||
+    u.email?.toLowerCase().includes(search.toLowerCase()) ||
+    u.nombre?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading) return <div className="text-center py-12 text-gray-500">Cargando usuarios...</div>;
+
+  return (
+    <>
+      <div className="bg-white shadow rounded-lg p-4 mb-4">
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Buscar por email o nombre..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full border rounded px-3 py-2 pl-9 text-sm"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">{filtered.length} de {users.length} usuarios</p>
+      </div>
+
+      <div className="bg-white shadow rounded-lg overflow-hidden overflow-x-auto">
+        <table className="min-w-full">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Usuario</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Rol</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Estado</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Registro</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {filtered.map((u) => {
+              const isMe = u._id === currentUserId;
+              const isBusy = updating === u._id;
+              return (
+                <tr key={u._id} className={`hover:bg-gray-50 ${u.banned ? 'bg-red-50' : ''}`}>
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-sm">{u.nombre || '—'}</div>
+                    <div className="text-xs text-gray-500">{u.email}</div>
+                    {isMe && <span className="text-xs text-blue-500">(vos)</span>}
+                  </td>
+                  <td className="px-4 py-3">{roleBadge(u.role)}</td>
+                  <td className="px-4 py-3">
+                    {u.banned
+                      ? <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">Baneado</span>
+                      : <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">Activo</span>
+                    }
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-500">
+                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-AR') : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {isMe || isBusy ? (
+                      isBusy ? <Loader2 className="w-4 h-4 animate-spin inline text-gray-400" /> : null
+                    ) : (
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Cambio de rol */}
+                        <select
+                          value={u.role}
+                          onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                          className="text-xs border rounded px-2 py-1"
+                          title="Cambiar rol"
+                        >
+                          <option value="customer">Cliente</option>
+                          <option value="vendedor">Vendedor</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        {/* Ban / Unban */}
+                        <button
+                          onClick={() => handleBan(u._id, !u.banned)}
+                          title={u.banned ? 'Desbanear' : 'Banear'}
+                          className={`p-1.5 rounded transition-colors ${u.banned ? 'text-green-600 hover:bg-green-50' : 'text-orange-500 hover:bg-orange-50'}`}
+                        >
+                          {u.banned ? <UserCheck className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+                        </button>
+                        {/* Eliminar */}
+                        <button
+                          onClick={() => handleDelete(u._id, u.email)}
+                          title="Eliminar usuario"
+                          className="p-1.5 rounded text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {filtered.length === 0 && (
+          <div className="text-center py-12 text-gray-500">No se encontraron usuarios.</div>
+        )}
+      </div>
+    </>
   );
 }
 

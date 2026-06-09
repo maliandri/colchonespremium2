@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Product from '@/lib/models/Product';
+import User from '@/lib/models/User';
 import Conversation from '@/lib/models/Conversation';
 import { extractTokenFromHeaders, verifyToken, requireAdmin } from '@/lib/auth-helpers';
 import { v2 as cloudinary } from 'cloudinary';
@@ -75,6 +76,15 @@ export async function GET(request) {
         return NextResponse.json({ error: 'Conversacion no encontrada' }, { status: 404 });
       }
       return NextResponse.json({ success: true, conversation });
+    }
+
+    // LIST USERS
+    if (action === 'users') {
+      const users = await User.find({})
+        .select('-password -resetCode -resetCodeExpires')
+        .sort({ createdAt: -1 })
+        .lean();
+      return NextResponse.json({ success: true, users });
     }
 
     // DEFAULT: LIST PRODUCTS
@@ -212,6 +222,60 @@ export async function POST(request) {
   }
 }
 
+export async function PATCH(request) {
+  try {
+    const decoded = authenticateAdmin(request);
+    const id = request.nextUrl.searchParams.get('id');
+    const action = request.nextUrl.searchParams.get('action');
+
+    if (action !== 'user' || !id) {
+      return NextResponse.json({ error: 'Parametros invalidos' }, { status: 400 });
+    }
+
+    await connectDB();
+    const body = await request.json();
+    const { role, banned } = body;
+
+    // No permitir que el admin se modifique a si mismo
+    if (id === decoded.userId) {
+      return NextResponse.json({ error: 'No puedes modificar tu propia cuenta' }, { status: 400 });
+    }
+
+    const updates = {};
+    if (role !== undefined) {
+      if (!['customer', 'vendedor', 'admin'].includes(role)) {
+        return NextResponse.json({ error: 'Rol invalido' }, { status: 400 });
+      }
+      updates.role = role;
+    }
+    if (banned !== undefined) updates.banned = banned;
+
+    const user = await User.findByIdAndUpdate(id, updates, { new: true })
+      .select('-password -resetCode -resetCodeExpires');
+
+    if (!user) {
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+    }
+
+    // Enviar email si fue promovido a vendedor o admin
+    if (role && role !== 'customer') {
+      try {
+        const { sendPromotionEmail } = await import('@/lib/email');
+        await sendPromotionEmail(user.email, user.nombre || user.email, role);
+      } catch (emailError) {
+        console.error('Error enviando email de promocion:', emailError);
+      }
+    }
+
+    return NextResponse.json({ success: true, user });
+  } catch (error) {
+    if (error.message.includes('Token') || error.message.includes('administrador')) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    return NextResponse.json({ error: 'Error en el servidor' }, { status: 500 });
+  }
+}
+
 export async function PUT(request) {
   try {
     const decoded = authenticateAdmin(request);
@@ -248,18 +312,31 @@ export async function DELETE(request) {
   try {
     const decoded = authenticateAdmin(request);
     const id = request.nextUrl.searchParams.get('id');
+    const action = request.nextUrl.searchParams.get('action');
 
     if (!id) {
-      return NextResponse.json({ error: 'ID de producto requerido' }, { status: 400 });
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
     }
 
     await connectDB();
-    const productoEliminado = await Product.findByIdAndDelete(id);
 
+    // DELETE USER
+    if (action === 'user') {
+      if (id === decoded.userId) {
+        return NextResponse.json({ error: 'No puedes eliminar tu propia cuenta' }, { status: 400 });
+      }
+      const eliminado = await User.findByIdAndDelete(id);
+      if (!eliminado) {
+        return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, message: 'Usuario eliminado' });
+    }
+
+    // DELETE PRODUCT (default)
+    const productoEliminado = await Product.findByIdAndDelete(id);
     if (!productoEliminado) {
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
     }
-
     return NextResponse.json({ success: true, message: 'Producto eliminado exitosamente' });
   } catch (error) {
     if (error.message.includes('Token') || error.message.includes('administrador')) {

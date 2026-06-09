@@ -193,6 +193,28 @@ export const getConversacion = async (id) => {
   return response.data;
 };
 
+// =================== ADMIN - USUARIOS ===================
+
+export const getUsuarios = async () => {
+  const response = await api.get('/admin?action=users');
+  return response.data;
+};
+
+export const actualizarUsuario = async (id, updates) => {
+  const response = await api.patch(`/admin?action=user&id=${id}`, updates);
+  return response.data;
+};
+
+export const eliminarUsuario = async (id) => {
+  const response = await api.delete(`/admin?action=user&id=${id}`);
+  return response.data;
+};
+
+export const generarEspecificacionesIA = async (productId, nombre, categoria) => {
+  const response = await api.post('/admin?action=generate-specs', { productId, nombre, categoria });
+  return response.data;
+};
+
 export const generarEspecificacionesIA = async (productId, nombre, categoria) => {
   const response = await api.post('/admin?action=generate-specs', {
     productId,

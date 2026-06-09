@@ -58,6 +58,40 @@ export function emailRecupero(codigo) {
   `;
 }
 
+export async function sendPromotionEmail(email, nombre, role) {
+  const rolesLabels = { vendedor: 'Vendedor', admin: 'Administrador' };
+  const label = rolesLabels[role] || role;
+
+  const html = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+      <div style="background: linear-gradient(135deg, #2d5016 0%, #4a7c25 100%); padding: 30px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Alumine Hogar</h1>
+        <p style="color: #d4e8c2; margin: 8px 0 0; font-size: 14px;">Actualizacion de tu cuenta</p>
+      </div>
+      <div style="padding: 30px;">
+        <h2 style="color: #2d5016; margin-top: 0;">Hola${nombre ? `, ${nombre}` : ''}!</h2>
+        <p style="color: #333; line-height: 1.6;">Tu cuenta en <strong>Alumine Hogar</strong> fue actualizada. Ahora tenes acceso como <strong>${label}</strong>.</p>
+        <div style="background: #f0f7e6; border-left: 4px solid #4a7c25; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="margin: 0; color: #333;">Con tu nuevo rol podes acceder a funcionalidades exclusivas del sitio.</p>
+        </div>
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="https://aluminehogar.com.ar" style="background: #4a7c25; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Ingresar al sitio</a>
+        </div>
+      </div>
+      <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 12px; color: #888;">
+        <p style="margin: 0;">Alumine Hogar - Neuquen, Argentina</p>
+        <p style="margin: 5px 0 0;">+54 9 299 576-9999 | aluminehogar@gmail.com</p>
+      </div>
+    </div>
+  `;
+
+  return enviarEmail({
+    destinatario: email,
+    asunto: `Tu cuenta fue actualizada a ${label} - Alumine Hogar`,
+    cuerpoHtml: html,
+  });
+}
+
 export async function enviarEmail({ destinatario, asunto, cuerpoHtml }) {
   console.log('=== ENVIO EMAIL via Resend ===');
   console.log('Destinatario:', destinatario);
