@@ -60,16 +60,25 @@ function getImageData(producto) {
   return { url: '', card: '', thumb: '', detail: '' };
 }
 
+async function findProductById(id) {
+  const db = Product.db;
+  const collection = db.collection('productos');
+  return await collection.findOne({ _id: decodeURIComponent(id) });
+}
+
 export async function generateMetadata({ params }) {
   const { id } = await params;
 
   try {
     await connectDB();
 
-    let producto = null;
-    if (isValidObjectId(id)) {
+    let producto = await findProductById(id);
+
+    if (!producto && isValidObjectId(id)) {
       producto = await Product.findById(id).lean();
-    } else {
+    }
+
+    if (!producto) {
       producto = await findProductBySlug(id);
     }
 
@@ -103,38 +112,36 @@ export default async function ProductoPage({ params }) {
   try {
     await connectDB();
 
-    // Si es un ObjectId valido, buscar directamente
-    if (isValidObjectId(id)) {
-      const productoRaw = await Product.findById(id).lean();
+    // Primero buscar por _id string (ej: FRE-0001, COL-0001)
+    let productoRaw = await findProductById(id);
 
-      if (!productoRaw) {
-        notFound();
-      }
+    // Si no se encontró, intentar como ObjectId
+    if (!productoRaw && isValidObjectId(id)) {
+      productoRaw = await Product.findById(id).lean();
+    }
 
-      producto = {
-        _id: productoRaw._id.toString(),
-        nombre: productoRaw.nombre,
-        descripcion: productoRaw.descripcion || '',
-        precio: productoRaw.precio,
-        categoria: productoRaw.categoria || '',
-        medidas: productoRaw.medidas || '',
-        imagen: productoRaw.imagen || '',
-        imagenOptimizada: getImageData(productoRaw),
-        stock: productoRaw.stock || 0,
-        especificaciones: productoRaw.especificaciones || '',
-      };
-    } else {
-      // Es un slug antiguo - buscar por nombre y redirigir
+    // Si sigue sin encontrarse, intentar por slug (URLs antiguas)
+    if (!productoRaw) {
       const productoEncontrado = await findProductBySlug(id);
-
       if (productoEncontrado) {
-        // Redirigir permanentemente a la URL correcta con el ID
         redirect(`/producto/${productoEncontrado._id.toString()}`);
       } else {
-        // No se encontro el producto, mostrar 404
         notFound();
       }
     }
+
+    producto = {
+      _id: productoRaw._id.toString(),
+      nombre: productoRaw.nombre,
+      descripcion: productoRaw.descripcion || '',
+      precio: productoRaw.precio,
+      categoria: productoRaw.categoria || '',
+      medidas: productoRaw.medidas || '',
+      imagen: productoRaw.imagen || '',
+      imagenOptimizada: getImageData(productoRaw),
+      stock: productoRaw.stock || 0,
+      especificaciones: productoRaw.especificaciones || '',
+    };
   } catch (error) {
     console.error('Error loading product:', error);
     notFound();
