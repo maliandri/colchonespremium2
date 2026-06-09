@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
-import { Search, ImagePlus, Trash2, Upload, MessageSquare, Package, X, ChevronLeft, ChevronRight, Sparkles, Loader2, ChevronUp, ChevronDown, Users, ShieldCheck, Ban, UserCheck } from 'lucide-react';
+import { Search, ImagePlus, Trash2, Upload, MessageSquare, Package, X, ChevronLeft, ChevronRight, Sparkles, Loader2, ChevronUp, ChevronDown, Users, Ban, UserCheck, FileDown, FileUp, Plus, Minus } from 'lucide-react';
+import * as xlsxClient from 'xlsx';
 import {
   getProductosAdmin,
   crearProducto,
@@ -16,6 +17,8 @@ import {
   getUsuarios,
   actualizarUsuario,
   eliminarUsuario,
+  actualizarStock,
+  importarStockExcel,
 } from '@/services/api';
 
 export default function AdminPanel() {
@@ -33,6 +36,9 @@ export default function AdminPanel() {
   const [filterCategoria, setFilterCategoria] = useState('');
   const [sortColumn, setSortColumn] = useState('');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [stockEditId, setStockEditId] = useState(null);
+  const [stockEditValue, setStockEditValue] = useState('');
+  const [importingStock, setImportingStock] = useState(false);
 
   useEffect(() => {
     const unsub = useAuthStore.persist.onFinishHydration(() => {
@@ -136,6 +142,55 @@ export default function AdminPanel() {
     setShowForm(true);
   };
 
+  const handleStockChange = async (id, nuevoStock) => {
+    const stock = Math.max(0, parseInt(nuevoStock) || 0);
+    setProductos(prev => prev.map(p => p._id === id ? { ...p, stock } : p));
+    try {
+      await actualizarStock(id, stock);
+    } catch {
+      alert('Error al actualizar stock');
+      fetchProductos();
+    }
+  };
+
+  const handleExportarExcel = () => {
+    const data = productos.map(p => ({
+      _id: p._id,
+      nombre: p.nombre,
+      categoria: p.categoria,
+      stock: p.stock || 0,
+      precio: p.precio,
+    }));
+    const ws = xlsxClient.utils.json_to_sheet(data);
+    const wb = xlsxClient.utils.book_new();
+    xlsxClient.utils.book_append_sheet(wb, ws, 'Stock');
+    xlsxClient.writeFile(wb, 'stock-productos.xlsx');
+  };
+
+  const handleImportarExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = '';
+    setImportingStock(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const result = await importarStockExcel(ev.target.result);
+          alert(`Stock actualizado: ${result.actualizados} productos.\n${result.errores?.length ? 'Errores:\n' + result.errores.join('\n') : ''}`);
+          fetchProductos();
+        } catch (err) {
+          alert(err.response?.data?.error || 'Error al importar');
+        } finally {
+          setImportingStock(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setImportingStock(false);
+    }
+  };
+
   const handleCreate = () => {
     setEditingProduct(null);
     setShowForm(true);
@@ -189,8 +244,19 @@ export default function AdminPanel() {
       {/* Tab: Productos */}
       {activeTab === 'productos' && (
         <>
-          <div className="flex justify-end mb-4">
-            <button onClick={handleCreate} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+          <div className="flex justify-end gap-2 mb-4 flex-wrap">
+            <button
+              onClick={handleExportarExcel}
+              className="flex items-center gap-2 border border-green-600 text-green-700 px-4 py-2 rounded hover:bg-green-50 text-sm"
+            >
+              <FileDown className="w-4 h-4" /> Exportar stock
+            </button>
+            <label className={`flex items-center gap-2 border border-orange-500 text-orange-600 px-4 py-2 rounded hover:bg-orange-50 text-sm cursor-pointer ${importingStock ? 'opacity-50 pointer-events-none' : ''}`}>
+              {importingStock ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
+              {importingStock ? 'Importando...' : 'Importar stock'}
+              <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportarExcel} />
+            </label>
+            <button onClick={handleCreate} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 text-sm">
               + Crear Producto
             </button>
           </div>
@@ -291,7 +357,42 @@ export default function AdminPanel() {
                     <td className="px-4 py-3 font-medium text-sm max-w-[200px] truncate" title={producto.nombre}>{producto.nombre}</td>
                     <td className="px-4 py-3 text-sm">${producto.precio?.toLocaleString('es-AR')}</td>
                     <td className="px-4 py-3 text-sm">{producto.categoria}</td>
-                    <td className="px-4 py-3 text-sm">{producto.stock || 0}</td>
+                    <td className="px-4 py-3">
+                      {stockEditId === producto._id ? (
+                        <input
+                          type="number"
+                          min="0"
+                          value={stockEditValue}
+                          onChange={(e) => setStockEditValue(e.target.value)}
+                          onBlur={() => {
+                            handleStockChange(producto._id, stockEditValue);
+                            setStockEditId(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { handleStockChange(producto._id, stockEditValue); setStockEditId(null); }
+                            if (e.key === 'Escape') setStockEditId(null);
+                          }}
+                          className="w-16 border rounded px-2 py-1 text-sm text-center"
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleStockChange(producto._id, (producto.stock || 0) - 1)}
+                            className="w-6 h-6 rounded border text-gray-500 hover:bg-gray-100 flex items-center justify-center"
+                          ><Minus className="w-3 h-3" /></button>
+                          <span
+                            className="w-10 text-center text-sm cursor-pointer hover:text-blue-600 font-medium"
+                            title="Click para editar"
+                            onClick={() => { setStockEditId(producto._id); setStockEditValue(String(producto.stock || 0)); }}
+                          >{producto.stock || 0}</span>
+                          <button
+                            onClick={() => handleStockChange(producto._id, (producto.stock || 0) + 1)}
+                            className="w-6 h-6 rounded border text-gray-500 hover:bg-gray-100 flex items-center justify-center"
+                          ><Plus className="w-3 h-3" /></button>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded text-xs ${
                         producto.mostrar === 'si' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'

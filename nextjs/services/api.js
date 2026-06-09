@@ -215,6 +215,16 @@ export const generarEspecificacionesIA = async (productId, nombre, categoria) =>
   return response.data;
 };
 
+export const actualizarStock = async (id, stock) => {
+  const response = await api.patch(`/admin?action=stock&id=${id}`, { stock });
+  return response.data;
+};
+
+export const importarStockExcel = async (excelBase64) => {
+  const response = await api.post('/admin?action=import-stock', { excelBase64 });
+  return response.data;
+};
+
 // =================== MERCADO PAGO ===================
 
 export const crearPreferenciaPago = async (items, payer, shippingAddress) => {

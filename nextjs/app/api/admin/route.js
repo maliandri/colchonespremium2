@@ -8,6 +8,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import { getCloudinaryUrl, IMG_THUMB, IMG_CARD } from '@/lib/cloudinary';
 import { MAPEO_NOMBRES_CLOUDINARY } from '@/lib/cloudinary-mapeo-nombres';
 import { generarEspecificaciones, generarDescripcion } from '@/lib/gemini';
+import xlsx from 'xlsx';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -159,6 +160,46 @@ export async function POST(request) {
       }
     }
 
+    // IMPORT STOCK FROM EXCEL
+    if (action === 'import-stock') {
+      const { excelBase64 } = await request.json();
+      if (!excelBase64) {
+        return NextResponse.json({ error: 'Archivo requerido' }, { status: 400 });
+      }
+
+      const buffer = Buffer.from(excelBase64.split(',')[1] || excelBase64, 'base64');
+      const workbook = xlsx.read(buffer, { type: 'buffer' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = xlsx.utils.sheet_to_json(sheet);
+
+      if (!rows.length) {
+        return NextResponse.json({ error: 'El archivo esta vacio' }, { status: 400 });
+      }
+
+      await connectDB();
+      const db = Product.db;
+      const collection = db.collection('productos');
+
+      let actualizados = 0;
+      const errores = [];
+
+      for (const row of rows) {
+        const id = row._id || row.ID || row.id;
+        const stock = parseInt(row.stock ?? row.Stock ?? row.STOCK);
+
+        if (!id || isNaN(stock) || stock < 0) {
+          errores.push(`Fila inválida: ${JSON.stringify(row)}`);
+          continue;
+        }
+
+        const result = await collection.updateOne({ _id: String(id) }, { $set: { stock } });
+        if (result.matchedCount > 0) actualizados++;
+        else errores.push(`Producto no encontrado: ${id}`);
+      }
+
+      return NextResponse.json({ success: true, actualizados, errores, total: rows.length });
+    }
+
     // UPLOAD IMAGE
     if (action === 'upload') {
       const { image } = await request.json();
@@ -235,6 +276,19 @@ export async function PATCH(request) {
     await connectDB();
     const body = await request.json();
     const { role, banned } = body;
+
+    // UPDATE STOCK
+    if (action === 'stock') {
+      const { stock } = await request.json();
+      if (stock === undefined || isNaN(stock) || stock < 0) {
+        return NextResponse.json({ error: 'Stock invalido' }, { status: 400 });
+      }
+      await connectDB();
+      const db = Product.db;
+      const collection = db.collection('productos');
+      await collection.updateOne({ _id: id }, { $set: { stock: parseInt(stock) } });
+      return NextResponse.json({ success: true, stock: parseInt(stock) });
+    }
 
     // No permitir que el admin se modifique a si mismo
     if (id === decoded.userId) {
