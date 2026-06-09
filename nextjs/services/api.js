@@ -215,15 +215,6 @@ export const generarEspecificacionesIA = async (productId, nombre, categoria) =>
   return response.data;
 };
 
-export const generarEspecificacionesIA = async (productId, nombre, categoria) => {
-  const response = await api.post('/admin?action=generate-specs', {
-    productId,
-    nombre,
-    categoria
-  });
-  return response.data;
-};
-
 // =================== MERCADO PAGO ===================
 
 export const crearPreferenciaPago = async (items, payer, shippingAddress) => {
